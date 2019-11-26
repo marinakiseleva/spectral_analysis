@@ -1,0 +1,5 @@
+xlrd
+ipykernel
+numpy
+pandas
+
