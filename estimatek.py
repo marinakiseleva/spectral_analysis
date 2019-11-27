@@ -11,6 +11,10 @@ import pandas as pd
 import numpy as np
 import math
 
+from functools import partial
+import multiprocessing
+
+
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
 
@@ -149,6 +153,8 @@ def get_reflectance_rmse(sid, sample_spectra, k, D):
 
 
 def get_D_average_rmse(sid, sample_spectra, k):
+    print("Runnign D average RMSE with params " + str(sid) + " and k " + str(k))
+
     d_min, d_max = get_grain_sizes(sid, sample_spectra)
     # D = d_min
     grain_sizes = list(range(int(d_min), int(d_max)))
@@ -161,17 +167,26 @@ def get_D_average_rmse(sid, sample_spectra, k):
 
 def get_best_k(sid, sample_spectra):
     # 100,000 values from 10^-14 to 1, in log space
-    # k_space = np.logspace(-14, -1, 1e5)
-    k_space = [0.0006, 0.0001]
-    min_rmse = 20000
-    min_k = None
-    for k in k_space:
-        rmse = get_D_average_rmse(sid, sample_spectra, k)
-        if rmse < min_rmse:
-            min_k = k
-            min_rmse = rmse
-    if k is None:
-        print("Could not estimate k.")
+    k_space = np.logspace(-14, -1, 1e5)
+    # min_rmse = 20000
+    # min_k = None
+    # for k in k_space:
+    #     rmse = get_D_average_rmse(sid, sample_spectra, k)
+    #     if rmse < min_rmse:
+    #         min_k = k
+    #         min_rmse = rmse
+
+    pool = multiprocessing.Pool()  # ThreadPool(4)
+    all_rmses = []
+    func = partial(get_D_average_rmse, sid, sample_spectra)
+    all_rmses = pool.map(func, k_space)
+
+    pool.close()
+    pool.join()
+    min_index = all_rmses.index(min(all_rmses))
+    min_rmse = min(all_rmses)
+    min_k = k_space[min_index]
+
     return min_k, min_rmse
 
 
