@@ -31,6 +31,7 @@ def get_w_mixed_hapke_estimate(m, D):
         n = sids_n[endmember]
         k = sids_k[endmember]
         w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
+
         w_mix = w_mix + (F[endmember] * w)
 
     r = get_derived_reflectance(w_mix, mu, mu_0)
@@ -112,13 +113,16 @@ def get_Theta(k, wavelengths, brackets_D):
               r_i  + exp(- sqrt(alpha(alpha+s) <D> ))
      Theta =  --------------------------------------
               1 + r_i exp(- sqrt(alpha(alpha+s) <D> ))
+    Which simplifies when s = 0 to:
+
+     Theta = exp(- sqrt(alpha^2 <D>))
     :param k: imaginary index of refraction (scalar)
     :param wavelengths: Numpy array, wavelength values (lambda)
     :param brackets_D: scalar, <D>
     :return: Theta as Numpy array
     """
     alpha = get_alpha(k, wavelengths)
-    return np.exp(- np.sqrt((alpha**2) * brackets_D))
+    return np.exp(-1 * np.sqrt((alpha**2) * brackets_D))
 
 
 def get_alpha(k, wavelengths):
