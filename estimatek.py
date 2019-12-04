@@ -16,6 +16,7 @@ import multiprocessing
 
 from hapke_model import get_reflectance_hapke_estimate
 from access_data import *
+from constants import *
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
@@ -24,68 +25,6 @@ pd.set_option('display.max_rows', None)
 ######################################################
 # Define constants
 ######################################################
-
-
-# Spectrum IDs
-pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
-pure_enstatite_sid = "C2PE12"
-pure_anorthite_sid = "C1PA12"
-
-sids_n = {pure_olivine_sid: 1.66,
-          pure_enstatite_sid: 1.66,
-          pure_anorthite_sid: 1.57}
-
-pure = [pure_olivine_sid, pure_enstatite_sid, pure_anorthite_sid]
-
-olivine_enstatite_mix_sid5 = "CBXO15"
-olivine_enstatite_mix_sid6 = "CBXO16"
-olivine_enstatite_mix_sid7 = "CBXO17"
-olivine_enstatite_mix_sid8 = "CBXO18"
-olivine_enstatite_mix_sid9 = "CBXO19"
-
-olivine_anorthite_mix_sid0 = "CBXO20"
-olivine_anorthite_mix_sid1 = "CBXO21"
-olivine_anorthite_mix_sid2 = "CBXO22"
-olivine_anorthite_mix_sid3 = "CBXO23"
-olivine_anorthite_mix_sid4 = "CBXO24"
-
-enstatite_anorthite_mix_sid1 = "CBXA01"
-enstatite_anorthite_mix_sid2 = "CBXA02"
-enstatite_anorthite_mix_sid3 = "CBXA03"
-enstatite_anorthite_mix_sid4 = "CBXA04"
-enstatite_anorthite_mix_sid5 = "CBXA05"
-
-ternary_mix_sid0 = "CMXO30"
-ternary_mix_sid1 = "CMXO31"
-ternary_mix_sid2 = "CMXO32"
-ternary_mix_sid3 = "CMXO33"
-ternary_mix_sid4 = "CMXO34"
-ternary_mix_sid5 = "CMXO35"
-ternary_mix_sid6 = "CMXO36"
-
-mixtures = [olivine_enstatite_mix_sid5,
-            olivine_enstatite_mix_sid6,
-            olivine_enstatite_mix_sid7,
-            olivine_enstatite_mix_sid8,
-            olivine_enstatite_mix_sid9,
-            olivine_anorthite_mix_sid0,
-            olivine_anorthite_mix_sid1,
-            olivine_anorthite_mix_sid2,
-            olivine_anorthite_mix_sid3,
-            olivine_anorthite_mix_sid4,
-            enstatite_anorthite_mix_sid1,
-            enstatite_anorthite_mix_sid2,
-            enstatite_anorthite_mix_sid3,
-            enstatite_anorthite_mix_sid4,
-            enstatite_anorthite_mix_sid5,
-            ternary_mix_sid0,
-            ternary_mix_sid1,
-            ternary_mix_sid2,
-            ternary_mix_sid3,
-            ternary_mix_sid4,
-            ternary_mix_sid5,
-            ternary_mix_sid6]
-all_sids = mixtures + pure
 
 
 def get_reflectance_rmse(sid, sample_spectra, k, D):
