@@ -5,7 +5,8 @@ from constants import *
 
 def get_w_mixed_hapke_estimate(m, D):
     """
-    Get estimated w mix 
+    Gets mixture of SSAs of endmembers as single SSA:
+    w_mix = sum_i^N (f_i * w_i)
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
@@ -36,13 +37,40 @@ def get_w_mixed_hapke_estimate(m, D):
     return r
 
 
+def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
+    """
+    Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
+    :param mu: cosine of detect angle
+    :param mu_0: cosine of source angle 
+    :param n: real index of refraction (sclar)
+    :param k: imaginary index of refraction (scalar)
+    :param D: grain size (scalar)
+    :param wavelengths: lambdas/wavelengths of data (Numpy array)
+    :return reflectance: as Numpy array
+    """
+    w = get_w_hapke_estimate(n, k, D, wavelengths)
+    return get_derived_reflectance(w, mu, mu_0)
+
+
+def get_derived_reflectance(w, mu, mu_0):
+    """
+    Get reflectance from SSA
+    :param w: SSA (Numpy array)
+    :param mu: cosine of detect angle
+    :param mu_0: cosine of source angle
+    """
+    d = 4 * (mu + mu_0)
+    return (w / d) * get_H(mu, w) * get_H(mu_0, w)
+
+
 def get_w_hapke_estimate(n, k, D, wavelengths):
     """
-    Get w, SSA, as estimated by the Hapke model
-    :param k: Numpy array, imaginary index of refraction
-    :param n: scalar, real index of refraction
-    :param D: scalar, grain size
-    :param wavelengths: Numpy array, Wavelengths (lambda values)
+    Get SSA for particular endmember as estimated by the Hapke model:
+    w = S_e + (1-S_e) * (1-S_i)*Theta/(1- Theta*S_i )
+    :param k: imaginary index of refraction (scalar)
+    :param n: real index of refraction (sclar)
+    :param D: grain size (scalar)
+    :param wavelengths: lambdas/wavelengths of data (Numpy array)
     """
     Se = get_S_e(k, n)
     Si = get_S_i(n)
@@ -55,8 +83,8 @@ def get_w_hapke_estimate(n, k, D, wavelengths):
 def get_brackets_D(n, D):
     """
     Get the mean free path
-    :param n: scalar, real index of refraction
-    :param D: scalar, grain size
+    :param n: real index of refraction (sclar)
+    :param D: grain size (scalar)
     """
     return (2 / 3) * ((n**2) - (1 / n) * ((n**2) - 1)**(3 / 2)) * D
 
@@ -64,8 +92,8 @@ def get_brackets_D(n, D):
 def get_S_e(k, n):
     """
     Get S_e, surface reflection coefficient S_e for externally incident light
-    :param k: Numpy array 
-    :param n: scalar, real index of refraction
+    :param k: imaginary index of refraction (scalar)
+    :param n: real index of refraction (sclar)
     """
     return ((((n - 1)**2) + k**2) / (((n + 1)**2) + k**2)) + 0.05
 
@@ -73,17 +101,21 @@ def get_S_e(k, n):
 def get_S_i(n):
     """
     Get S_i, reflection coefficient for internally scattered light
-    :param n: scalar, real index of refraction
+    :param n: real index of refraction (sclar)
     """
     return 1.014 - (4 / (n * ((n + 1)**2)))
 
 
 def get_Theta(k, wavelengths, brackets_D):
     """
-    :param k: scalar, k value for this wavelength
+    Gets the reflection coefficient for internally scattered light:
+              r_i  + exp(- sqrt(alpha(alpha+s) <D> ))
+     Theta =  --------------------------------------
+              1 + r_i exp(- sqrt(alpha(alpha+s) <D> ))
+    :param k: imaginary index of refraction (scalar)
     :param wavelengths: Numpy array, wavelength values (lambda)
     :param brackets_D: scalar, <D>
-    :return: Numpy array
+    :return: Theta as Numpy array
     """
     alpha = get_alpha(k, wavelengths)
     return np.exp(- np.sqrt((alpha**2) * brackets_D))
@@ -91,42 +123,27 @@ def get_Theta(k, wavelengths, brackets_D):
 
 def get_alpha(k, wavelengths):
     """
-    Gets internal absorption coefficient
-    :param k: scalar, k value for this wavelength
-    :param wavelengths: Numpy array, wavelength values (lambda)
-    :return: Numpy array
+    Gets internal absorption coefficient:
+    alpha = 4*pi*k/ lambda
+    :param k: imaginary index of refraction (scalar)
+    :param wavelengths: lambdas/wavelengths of data (Numpy array)
+    :return: alpha as Numpy array
     """
     return (4 * math.pi * k) / wavelengths
 
 
-def get_derived_reflectance(w, mu, mu_0):
-    """
-    Get reflectance from SSA, w
-    """
-    d = 4 * (mu + mu_0)
-    return (w / d) * get_H(mu, w) * get_H(mu_0, w)
-
-
-def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
-    """
-    Gets reflectance r(mu, mu_0, w)
-    :param mu: cosine of detect angle
-    :param mu_0: cosine of source angle 
-    """
-    w = get_w_hapke_estimate(n, k, D, wavelengths)
-    return get_derived_reflectance(w, mu, mu_0)
-
-
 def get_H(x, w):
     """
-    get output of Chandrasekhar integral function given x and SSA w
+    Gets Chandrasekhar integral function given x and SSA w
+    H(x) = 1 / ( 1 - wx(r_0 + (1-2r_0x)/2 ln((1+x)/x) ))
     :param x: scalar value 
     :param w: Numpy array of SSA 
     """
     # Solve for gamma
     gamma = (1 - w) ** (1 / 2)
+
     # Solve for r_0
-    r_0 = (1 - gamma) / (1 + gamma)
+    r_0 = get_r_0(gamma)
 
     # Inner fraction
     f = (1 - (2 * x * r_0)) / 2
@@ -137,3 +154,12 @@ def get_H(x, w):
     # Denominator
     d = 1 - ((w * x) * nf)
     return 1 / d
+
+
+def get_r_0(gamma):
+    """
+    Gets the bihemispherical reflectance for isotropic scatterers:
+    r_0 = (1-gamma)/(1+gamma)
+    :param gamma: scalar value
+    """
+    return (1 - gamma) / (1 + gamma)
