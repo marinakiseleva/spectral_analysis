@@ -1,11 +1,39 @@
 import numpy as np
 import math
+from constants import *
 
 
 def get_w_mixed_hapke_estimate(m, D):
-    raise ValueError("NEED TO IMPLEMENT!")
-#     for f in m:
-#         f * get_w_hapke_estimate(n, k, D, wavelengths)
+    """
+    Get estimated w mix 
+    :param m: Map from SID to abundance
+    :param D: Map from SID to grain size
+    """
+    sigmas = {}
+    for endmember in m.keys():
+        m_cur = m[endmember]
+        D_cur = D[endmember]
+        n = sids_n[endmember]
+        k = sids_k[endmember]
+
+        rho = sids_densities[endmember]
+
+        sigmas[endmember] = m_cur / (rho * D_cur)
+
+    sigma_sum = sum(sigmas.values())
+    # F is the mapping of fractional abundances
+    F = {k: v / sigma_sum for k, v in sigmas.items()}
+
+    w_mix = np.zeros(len(c_wavelengths))
+    for endmember in m.keys():
+        D_cur = D[endmember]
+        n = sids_n[endmember]
+        k = sids_k[endmember]
+        w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
+        w_mix = w_mix + (F[endmember] * w)
+
+    r = get_derived_reflectance(w_mix, mu, mu_0)
+    return r
 
 
 def get_w_hapke_estimate(n, k, D, wavelengths):
@@ -71,6 +99,14 @@ def get_alpha(k, wavelengths):
     return (4 * math.pi * k) / wavelengths
 
 
+def get_derived_reflectance(w, mu, mu_0):
+    """
+    Get reflectance from SSA, w
+    """
+    d = 4 * (mu + mu_0)
+    return (w / d) * get_H(mu, w) * get_H(mu_0, w)
+
+
 def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
     """
     Gets reflectance r(mu, mu_0, w)
@@ -78,8 +114,7 @@ def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
     :param mu_0: cosine of source angle 
     """
     w = get_w_hapke_estimate(n, k, D, wavelengths)
-    d = 4 * (mu + mu_0)
-    return (w / d) * get_H(mu, w) * get_H(mu_0, w)
+    return get_derived_reflectance(w, mu, mu_0)
 
 
 def get_H(x, w):
