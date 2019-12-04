@@ -1,5 +1,5 @@
 import pandas as pd
-data_dir = "../RelabDB2018Dec31/data/"
+from constants import DATA_PATH, CATALOGUE_PATH
 
 
 def get_data():
@@ -7,32 +7,33 @@ def get_data():
     Pull down and merge spectral data sources, return as pandas DataFrame
     """
 
-    file_name = "../RelabDB2018Dec31/catalogues/Minerals.xls"
+    file_name = CATALOGUE_PATH + "Minerals.xls"
     minerals = pd.read_excel(file_name)
 
-    file_name = "../RelabDB2018Dec31/catalogues/Spectra_Catalogue.xls"
+    file_name = CATALOGUE_PATH + "Spectra_Catalogue.xls"
     Spectra_Catalogue = pd.read_excel(file_name)
     Spectra_Catalogue['SampleID'] = Spectra_Catalogue['SampleID'].str.strip()
 
-    file_name = "../RelabDB2018Dec31/catalogues/Sample_Catalogue.xls"
+    file_name = CATALOGUE_PATH + "Sample_Catalogue.xls"
     Sample_Catalogue = pd.read_excel(file_name)
     Sample_Catalogue['SampleID'] = Sample_Catalogue['SampleID'].str.strip()
 
-    file_name = "../RelabDB2018Dec31/catalogues/Chem_Analyses.xls"
-    Chem_Analyses = pd.read_excel(file_name)
+    # file_name = CATALOGUE_PATH + "Chem_Analyses.xls"
+    # Chem_Analyses = pd.read_excel(file_name)
 
-    file_name = "../RelabDB2018Dec31/catalogues/Modal_Mineralogy.xls"
-    Modal_Mineralogy = pd.read_excel(file_name)
-    Modal_Mineralogy['SampleID'] = Modal_Mineralogy['Sample ID'].str.strip()
-
-    sample_spectra = pd.merge(left=Spectra_Catalogue,
-                              right=Sample_Catalogue,
-                              on='SampleID')
+    # file_name = CATALOGUE_PATH + "Modal_Mineralogy.xls"
+    # Modal_Mineralogy = pd.read_excel(file_name)
+    # Modal_Mineralogy['SampleID'] = Modal_Mineralogy['Sample ID'].str.strip()
 
     # All endmember samples are in 'sample_spectra_mixtures' except for pure
     # sample_spectra_mixtures = pd.merge(left=sample_spectra,
     #                                    right=Modal_Mineralogy,
     #                                    on='SampleID')
+
+    sample_spectra = pd.merge(left=Spectra_Catalogue,
+                              right=Sample_Catalogue,
+                              on='SampleID')
+
     return sample_spectra
 
 
@@ -72,7 +73,7 @@ def get_reflectance_data(spectrum_id, sample_spectra):
     pi = pi.lower()
     pre_sampleid = sampleid[0:2].lower()
     spectrum_id = spectrum_id.lower()
-    file_name = data_dir + pi + "/" + pre_sampleid + "/" + spectrum_id + ".txt"
+    file_name = DATA_PATH + pi + "/" + pre_sampleid + "/" + spectrum_id + ".txt"
 
     reflectance_df = pd.read_csv(file_name, sep="\t", header=0, skiprows=1)
     return reflectance_df

@@ -1,3 +1,9 @@
+import os
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
+CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
+DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
+
 # Spectrum IDs
 pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
 pure_enstatite_sid = "C2PE12"
