@@ -43,7 +43,7 @@ def get_m_prob(M, A=None):
             numerator *= math.gamma(a)
         denominator = math.gamma(np.sum(A))
         return numerator / denominator
-    if A is not None:
+    if A is None:
         A = np.array([1] * len(M))
     f = 1 / get_B(A)
     running_prod = 1
