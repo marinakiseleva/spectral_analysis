@@ -73,14 +73,12 @@ def get_best_k(sid, sample_spectra):
     min_ks = []
     min_k_errors = []
 
-    c = c_wavelengths[5:9] + c_wavelengths[80:93]
-
-    for index, l in enumerate(c):
+    for index, l in enumerate(c_wavelengths):
         print("Getting best k error for SID: " + str(sid) + ", on index " + str(index))
 
         # 100,000 values from 10^-14 to 1, in log space
-        k_space = np.logspace(-14, -1, 1e5)
-
+        #k_space = np.logspace(-14, -1, 1e5)
+        k_space = np.logspace(-14,-1,1000)
         pool = multiprocessing.Pool()
         l_errors = []
         func = partial(get_D_avg_refl_error, sid, sample_spectra, index)
