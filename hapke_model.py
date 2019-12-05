@@ -3,7 +3,7 @@ import math
 from constants import *
 
 
-def get_w_mixed_hapke_estimate(m, D):
+def get_r_mixed_hapke_estimate(m, D):
     """
     Gets mixture of SSAs of endmembers as single SSA:
     w_mix = sum_i^N (f_i * w_i)
@@ -15,7 +15,7 @@ def get_w_mixed_hapke_estimate(m, D):
         m_cur = m[endmember]
         D_cur = D[endmember]
         n = sids_n[endmember]
-        k = sids_k[endmember]
+        k = np.array(sids_k[endmember])
 
         rho = sids_densities[endmember]
 
@@ -23,13 +23,13 @@ def get_w_mixed_hapke_estimate(m, D):
 
     sigma_sum = sum(sigmas.values())
     # F is the mapping of fractional abundances
-    F = {k: v / sigma_sum for k, v in sigmas.items()}
+    F = {s: v / sigma_sum for s, v in sigmas.items()}
 
     w_mix = np.zeros(len(c_wavelengths))
     for endmember in m.keys():
         D_cur = D[endmember]
         n = sids_n[endmember]
-        k = sids_k[endmember]
+        k = np.array(sids_k[endmember])
         w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
 
         w_mix = w_mix + (F[endmember] * w)
