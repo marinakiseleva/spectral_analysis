@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from constants import c_wavelengths
+from constants import c_wavelengths, sids_names
 from access_data import get_reflectance_spectra
 from inference import get_log_likelihood
 from hapke_model import get_r_mixed_hapke_estimate
