@@ -43,22 +43,22 @@ def get_reflectance_error(wavelength, r, n, k, D):
     return get_rmse(r, r_e)
 
 
-def get_D_avg_refl_error(sid, sample_spectra, index, k):
+def get_D_avg_refl_error(sid, spectra_db, index, k):
     """
     Gets average reflectance error over range of grain sizes
     :param sid: Spectrum ID
-    :param sample_spectra: Pandas DataFrame of data
+    :param spectra_db: Pandas DataFrame of data
     :param index: Index of wavelength to check error on
     :param k: k value to evaluate
     """
 
-    d_min, d_max = get_grain_sizes(sid, sample_spectra)
+    d_min, d_max = get_grain_sizes(sid, spectra_db)
     grain_sizes = list(range(int(d_min), int(d_max)))
 
     # Get wavelength at wavelength index
-    wavelength = get_wavelengths(sid, sample_spectra)[index]
+    wavelength = get_wavelengths(sid, spectra_db)[index]
     # Get actual reflectance spectra from data, for this wavelength index
-    r = get_reflectance_spectra(sid, sample_spectra)[index]
+    r = get_reflectance_spectra(sid, spectra_db)[index]
 
     n = sids_n[sid]
 
@@ -69,7 +69,7 @@ def get_D_avg_refl_error(sid, sample_spectra, index, k):
     return sum(rmses) / len(rmses)
 
 
-def get_best_k(sid, sample_spectra):
+def get_best_k(sid, spectra_db):
     min_ks = []
     min_k_errors = []
 
@@ -78,10 +78,10 @@ def get_best_k(sid, sample_spectra):
 
         # 100,000 values from 10^-14 to 1, in log space
         #k_space = np.logspace(-14, -1, 1e5)
-        k_space = np.logspace(-14,-1,1000)
+        k_space = np.logspace(-14, -1, 1000)
         pool = multiprocessing.Pool()
         l_errors = []
-        func = partial(get_D_avg_refl_error, sid, sample_spectra, index)
+        func = partial(get_D_avg_refl_error, sid, spectra_db, index)
         # Multithread over different values in the k space
         l_errors = pool.map(func, k_space)
         pool.close()
@@ -134,12 +134,12 @@ def get_cosine(x):
 
 if __name__ == "__main__":
 
-    sample_spectra = get_data()
-    olivine_k, best_rmse = get_best_k(pure_olivine_sid, sample_spectra)
+    spectra_db = get_data()
+    olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
     print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
 
-    enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, sample_spectra)
+    enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, spectra_db)
     print("Best k for enstatite is : " + str(enstatite_k) + " with RMSE: " + str(best_rmse))
 
-    anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, sample_spectra)
+    anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, spectra_db)
     print("Best k for anorthite is : " + str(anorthite_k) + " with RMSE: " + str(best_rmse))

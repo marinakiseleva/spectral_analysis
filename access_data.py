@@ -25,51 +25,51 @@ def get_data():
     # Modal_Mineralogy = pd.read_excel(file_name)
     # Modal_Mineralogy['SampleID'] = Modal_Mineralogy['Sample ID'].str.strip()
 
-    # All endmember samples are in 'sample_spectra_mixtures' except for pure
-    # sample_spectra_mixtures = pd.merge(left=sample_spectra,
+    # All endmember samples are in 'spectra_db_mixtures' except for pure
+    # sample_spectra_mixtures = pd.merge(left=spectra_db,
     #                                    right=Modal_Mineralogy,
     #                                    on='SampleID')
 
-    sample_spectra = pd.merge(left=Spectra_Catalogue,
-                              right=Sample_Catalogue,
-                              on='SampleID')
+    spectra_db = pd.merge(left=Spectra_Catalogue,
+                          right=Sample_Catalogue,
+                          on='SampleID')
 
-    return sample_spectra
+    return spectra_db
 
 
-def get_grain_sizes(spectrum_id, sample_spectra):
+def get_grain_sizes(spectrum_id, spectra_db):
     """
     Get range of grain sizes 
     :param spectrum_id: SpectrumID in dataset to look up
-    :param sample_spectra:  Merge of Spectra_Catalogue and Sample_Catalogue
+    :param spectra_db:  Merge of Spectra_Catalogue and Sample_Catalogue
     """
-    s = sample_spectra[sample_spectra['SpectrumID'] == spectrum_id]
+    s = spectra_db[spectra_db['SpectrumID'] == spectrum_id]
     min_grain_size = s['MinSize'].values[0]
     max_grain_size = s['MaxSize'].values[0]
     return min_grain_size, max_grain_size
 
 
-def get_wavelengths(spectrum_id, sample_spectra, cut=True):
-    r_data = get_reflectance_data(spectrum_id, sample_spectra, cut)
+def get_wavelengths(spectrum_id, spectra_db, cut=True):
+    r_data = get_reflectance_data(spectrum_id, spectra_db, cut)
     return r_data['Wavelength(micron)'].values
 
 
-def get_reflectance_spectra(spectrum_id, sample_spectra, cut=True):
-    r_data = get_reflectance_data(spectrum_id, sample_spectra, cut)
+def get_reflectance_spectra(spectrum_id, spectra_db, cut=True):
+    r_data = get_reflectance_data(spectrum_id, spectra_db, cut)
     return r_data['Reflectance'].values
 
 
-def get_reflectance_data(spectrum_id, sample_spectra, cut):
+def get_reflectance_data(spectrum_id, spectra_db, cut):
     """
     Returns spectral reflectance for the passed-in spectrum ID
     :param spectrum_id: SpectrumID in dataset to look up
-    :param sample_spectra:  Merge of Spectra_Catalogue and Sample_Catalogue
+    :param spectra_db:  Merge of Spectra_Catalogue and Sample_Catalogue
     :param cut: Boolean on whether to keep only wavelenghts in c_wavelengths, or to use all.
     :return reflectance_df: Pandas DataFrame with 2 columns [Wavelength(micron), Reflectance]
     """
-    pi = sample_spectra[sample_spectra['SpectrumID'] == spectrum_id]["PI"].values[0]
-    sampleid = sample_spectra[sample_spectra['SpectrumID']
-                              == spectrum_id]["SampleID"].values[0]
+    pi = spectra_db[spectra_db['SpectrumID'] == spectrum_id]["PI"].values[0]
+    sampleid = spectra_db[spectra_db['SpectrumID']
+                          == spectrum_id]["SampleID"].values[0]
 
     pi = pi.lower()
     pre_sampleid = sampleid[0:2].lower()
