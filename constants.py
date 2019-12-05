@@ -5,6 +5,11 @@ CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
 
+# Min and max grain sizes for these endmembers
+GRAIN_SIZE_MIN = 45
+GRAIN_SIZE_MAX = 75
+
+
 # Spectrum IDs
 pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
 pure_enstatite_sid = "C2PE12"
