@@ -42,6 +42,18 @@ def create_labeled_grid(X, categories, size=200):
     return image
 
 
+class Mixture:
+
+    def __init__(self, m, D, r):
+        """
+        :param m: vector
+        :param D: vector
+        """
+        self.m = m
+        self.D = D
+        self.r = r
+
+
 def create_mixture():
     """
     Create random mixture of 3 endmembers
@@ -55,8 +67,22 @@ def create_mixture():
     for index, endmember in enumerate(pure_endmembers):
         m_map[endmember] = m_random[index]
         D_map[endmember] = D_random[index]
+    r = get_r_mixed_hapke_estimate(m_map, D_map)
+    return Mixture(list(m_map.values()),
+                   list(D_map.values()),
+                   r)
 
-    return get_r_mixed_hapke_estimate(m_map, D_map)
+
+class HSImage:
+
+    def __init__(self, m_image, D_image, r_image, labeled_image):
+        """
+        Save different types of images for HSI
+        """
+        self.m_image = m_image
+        self.D_image = D_image
+        self.r_image = r_image
+        self.labeled_image = labeled_image
 
 
 def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
@@ -67,20 +93,45 @@ def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
     """
     labeled_image = create_labeled_grid(num_regions, num_mixtures, size)
 
-    hs_image = np.ones((size, size, len(c_wavelengths)))
+    # Reflectance image
+    r_image = np.ones((size, size, len(c_wavelengths)))
+    # Mineral assemblage image
+    m_image = np.ones((size, size, 3))
+    # Grain size image
+    D_image = np.ones((size, size, 3))
 
-    mixtures = {}
+    mixtures_r = {}
+    mixtures_m = {}
+    mixtures_D = {}
     for i in range(num_mixtures):
-        mixtures[i + 1] = create_mixture()
+        mix = create_mixture()
+        mixtures_r[i + 1] = mix.r
+        mixtures_m[i + 1] = mix.m
+        mixtures_D[i + 1] = mix.D
 
     for i in range(size):
         for j in range(size):
-            r = mixtures[int(labeled_image[i, j])]
+            mix_i = int(labeled_image[i, j])
+            r = mixtures_r[mix_i]
+            # Add noise to reflectance
             noise = np.random.normal(loc=0, scale=noise_scale, size=len(c_wavelengths))
-            hs_image[i, j] = r + noise
-    return labeled_image, hs_image
 
+            r_image[i, j] = r + noise
+            m_image[i, j] = mixtures_m[mix_i]
+            D_image[i, j] = mixtures_D[mix_i]
 
+    image = HSImage(m_image, D_image, r_image, labeled_image)
+    return image
+
+import matplotlib
 if __name__ == "__main__":
 
-    labeled_image, hs_image = generate_image(5, 5, noise_scale=0.001, size=10)
+    image = generate_image(5, 5, noise_scale=0.001, size=10)
+    rgb_image = image.r_image[:, :, 1:4]
+    plt.imshow(rgb_image, interpolation='nearest')
+    plt.title("RGB of spectral data")
+    plt.show()
+
+    plt.imshow(image.labeled_image, interpolation='nearest')
+    plt.title("Labeled")
+    plt.show()
