@@ -4,9 +4,10 @@ Runs variational inference on the model to estimate the posterior p(m,D|d)
 from scipy.stats import multivariate_normal
 import numpy as np
 import math
+from collections import OrderedDict
 
 from hapke_model import get_r_mixed_hapke_estimate
-from constants import c_wavelengths
+from constants import c_wavelengths, pure_endmembers
 
 
 def sample_dirichlet(x):
@@ -15,16 +16,19 @@ def sample_dirichlet(x):
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
     c = 10
+    # Threshold x values so that they are always valid.
+    for index, value in enumerate(x):
+        if value < 0.001:
+            x[index] = 0.01
     return np.random.dirichlet(alpha=x * c)
 
 
 def sample_multivariate(mean):
     """
-    Sample from multivariate Gaussian
+    Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
     """
     length = mean.shape[0]
-    print("length of mean vector " + str(length))
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 1)
 
@@ -64,17 +68,14 @@ def get_D_prob(X):
     """
     min_grain_size = 25
     max_grain_size = 50
-    D_probs = []
-    for x in X:
-        D_probs.append(1 / (max_grain_size - min_grain_size))
-    return np.array(D_probs)
+    return 1 / (max_grain_size - min_grain_size)
 
 
 def get_log_likelihood(d, m, D):
     """
-    p(d|m, D) 
-    Get likelihood of reflectance spectra d, given the mineral assemblage and grain size.  
-    :param d: Spectral reflectance data, as Numpy vector 
+    p(d|m, D)
+    Get likelihood of reflectance spectra d, given the mineral assemblage and grain size.
+    :param d: Spectral reflectance data, as Numpy vector
     :param m: Dict from SID to abundance
     :param D: Dict from SID to grain size
     """
@@ -82,9 +83,10 @@ def get_log_likelihood(d, m, D):
     length = len(c_wavelengths)
 
     covariance = np.zeros((length, length))
-    np.fill_diagonal(covariance, 5 * (10 ** (-4)))
+    np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))
 
     y = multivariate_normal.pdf(x=d, mean=r_e, cov=covariance)
+
     # Threshold min values to not overflow
     if y < 10**-310:
         y = 10**-310
@@ -92,22 +94,64 @@ def get_log_likelihood(d, m, D):
     return math.log(y)
 
 
-def transition_params(cur_m, cur_D):
-    """
-    Determine whether or not to accept the new parameters, based on the ratio of likelihood*priors
-    :param cur_m: Vector of mineral abundances
-    :param cur_D: Vector of grain sizes
-    """
-    new_m, new_D = sample_params(cur_m, cur_D)
-
-    m_prior = get_m_prob(cur_m)
-    D_prior = get_D_prob(cur_D)
-
-
-def sample_params(cur_m, cur_D):
+def transition_model(cur_m, cur_D):
     """
     Sample new m and D
+    :param cur_m: Vector of mineral abundances
+    :param cur_D: Vector of grain sizes
     """
     new_m = sample_dirichlet(cur_m)
     new_D = sample_multivariate(cur_D)
     return new_m, new_D
+
+
+def convert_arr_to_dict(values):
+    """
+    Convert Numpy array to dict
+    """
+    d = OrderedDict()
+    for index, v in enumerate(values):
+        d[pure_endmembers[index]] = v
+    return d
+
+
+def get_log_posterior_estimate(d, m, D):
+    """
+    Get estimate of posterior in log.
+    log p(d|m, D) + log p(m) + log p(D)
+    """
+    m_prior = math.log(get_m_prob(m))
+    D_prior = math.log(get_D_prob(D))
+    m_dict = convert_arr_to_dict(m)
+    D_dict = convert_arr_to_dict(D)
+    ll = get_log_likelihood(d, m_dict, D_dict)
+    return ll + m_prior + D_prior
+
+
+def run_metropolis(iterations, d):
+    """
+    Run MCMC to estimate m and D
+    :param iterations: Number of iterations to run over
+    :param d: 1 spectral sample (1D Numpy vector)
+    """
+    cur_m = np.array([.33] * 3)
+    cur_D = np.array([30] * 3)
+
+    for i in range(iterations):
+        # Determine whether or not to accept the new parameters, based on the
+        # ratio of log (likelihood*priors)
+        new_m, new_D = transition_model(cur_m, cur_D)
+
+        cur = get_log_posterior_estimate(d, cur_m, cur_D)
+        new = get_log_posterior_estimate(d, new_m, new_D)
+
+        ratio = new / cur
+
+        u = np.random.uniform(0, 1)
+        if ratio > u:
+            cur_m = new_m
+            cur_D = new_D
+
+    print("Final log posterior: " + str(round(new, 10)))
+
+    return cur_m, cur_D
