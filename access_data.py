@@ -1,5 +1,5 @@
 import pandas as pd
-from constants import DATA_PATH, CATALOGUE_PATH
+from constants import DATA_PATH, CATALOGUE_PATH, c_wavelengths
 
 
 def get_data():
@@ -49,21 +49,22 @@ def get_grain_sizes(spectrum_id, sample_spectra):
     return min_grain_size, max_grain_size
 
 
-def get_wavelengths(spectrum_id, sample_spectra):
-    r_data = get_reflectance_data(spectrum_id, sample_spectra)
+def get_wavelengths(spectrum_id, sample_spectra, cut=True):
+    r_data = get_reflectance_data(spectrum_id, sample_spectra, cut)
     return r_data['Wavelength(micron)'].values
 
 
-def get_reflectance_spectra(spectrum_id, sample_spectra):
-    r_data = get_reflectance_data(spectrum_id, sample_spectra)
+def get_reflectance_spectra(spectrum_id, sample_spectra, cut=True):
+    r_data = get_reflectance_data(spectrum_id, sample_spectra, cut)
     return r_data['Reflectance'].values
 
 
-def get_reflectance_data(spectrum_id, sample_spectra):
+def get_reflectance_data(spectrum_id, sample_spectra, cut):
     """
     Returns spectral reflectance for the passed-in spectrum ID
     :param spectrum_id: SpectrumID in dataset to look up
     :param sample_spectra:  Merge of Spectra_Catalogue and Sample_Catalogue
+    :param cut: Boolean on whether to keep only wavelenghts in c_wavelengths, or to use all.
     :return reflectance_df: Pandas DataFrame with 2 columns [Wavelength(micron), Reflectance]
     """
     pi = sample_spectra[sample_spectra['SpectrumID'] == spectrum_id]["PI"].values[0]
@@ -76,4 +77,8 @@ def get_reflectance_data(spectrum_id, sample_spectra):
     file_name = DATA_PATH + pi + "/" + pre_sampleid + "/" + spectrum_id + ".txt"
 
     reflectance_df = pd.read_csv(file_name, sep="\t", header=0, skiprows=1)
+
+    if cut:
+        reflectance_df = reflectance_df.loc[
+            reflectance_df['Wavelength(micron)'].isin(c_wavelengths)]
     return reflectance_df
