@@ -1,3 +1,12 @@
+"""
+Generates data by the following steps:
+
+1. Create grid-based image with X different regions of unique mineralogy & label each region numerically
+2. Create X distinct sets of minerals (different mixtures)
+3. Generate image by assigning mixtures to defined regions
+
+"""
+
 import numpy as np
 import math
 
@@ -50,13 +59,13 @@ def create_mixture():
     return get_r_mixed_hapke_estimate(m_map, D_map)
 
 
-def generate_image(num_mixtures, num_regions, size=200):
+def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
     """
     Creates images with num_mixtures random mixtures, in roughly num_regions^2
     :param num_regions: num_regions X num_regions regions 
     :param num_mixtures: Number of mixtures
     """
-    image = create_labeled_grid(num_regions, num_mixtures, size)
+    labeled_image = create_labeled_grid(num_regions, num_mixtures, size)
 
     hs_image = np.ones((size, size, len(c_wavelengths)))
 
@@ -66,10 +75,12 @@ def generate_image(num_mixtures, num_regions, size=200):
 
     for i in range(size):
         for j in range(size):
-            r = mixtures[int(image[i, j])]
-            hs_image[i, j] = r
-    return hs_image
+            r = mixtures[int(labeled_image[i, j])]
+            noise = np.random.normal(loc=0, scale=noise_scale, size=len(c_wavelengths))
+            hs_image[i, j] = r + noise
+    return labeled_image, hs_image
 
 
 if __name__ == "__main__":
-    hs_image = generate_image(5, 5, size=10)
+
+    labeled_image, hs_image = generate_image(5, 5, noise_scale=0.001, size=10)
