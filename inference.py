@@ -5,7 +5,7 @@ from scipy.stats import multivariate_normal
 import numpy as np
 import math
 
-from hapke_model import get_w_mixed_hapke_estimate
+from hapke_model import get_r_mixed_hapke_estimate
 from constants import c_wavelengths
 
 
@@ -70,7 +70,7 @@ def get_D_prob(X):
     return np.array(D_probs)
 
 
-def get_likelihood(d, m, D):
+def get_log_likelihood(d, m, D):
     """
     p(d|m, D) 
     Get likelihood of reflectance spectra d, given the mineral assemblage and grain size.  
@@ -78,15 +78,18 @@ def get_likelihood(d, m, D):
     :param m: Dict from SID to abundance
     :param D: Dict from SID to grain size
     """
-    r_e = get_w_mixed_hapke_estimate(m, D)
+    r_e = get_r_mixed_hapke_estimate(m, D)
     length = len(c_wavelengths)
 
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 5 * (10 ** (-4)))
 
     y = multivariate_normal.pdf(x=d, mean=r_e, cov=covariance)
+    # Threshold min values to not overflow
+    if y < 10**-310:
+        y = 10**-310
 
-    return y
+    return math.log(y)
 
 
 def transition_params(cur_m, cur_D):
