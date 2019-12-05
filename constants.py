@@ -4,11 +4,15 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
+
 # Spectrum IDs
 pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
 pure_enstatite_sid = "C2PE12"
 pure_anorthite_sid = "C1PA12"
 
+sids_names = {pure_olivine_sid: 'olivine',
+              pure_enstatite_sid: 'enstatite',
+              pure_anorthite_sid: 'anorthite'}
 
 pure = [pure_olivine_sid, pure_enstatite_sid, pure_anorthite_sid]
 
