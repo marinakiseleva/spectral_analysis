@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from constants import c_wavelengths, sids_names
 from access_data import get_reflectance_spectra
@@ -28,3 +29,18 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
     axes[1].set_xlabel("Wavelength")
     axes[1].set_ylabel("Reflectance")
     fig.suptitle(sids_names[SID], fontsize=14)
+
+
+def plot_compare(actual, pred, title, interp=False):
+    if interp:
+        actual = np.interp(actual, (actual.min(), actual.max()), (0, 1))
+        pred = np.interp(pred, (pred.min(), pred.max()), (0, 1))
+    fig, axes = plt.subplots(1, 2, constrained_layout=True)
+
+    axes[0].imshow(actual)
+    axes[0].set_title("Actual")
+
+    axes[1].imshow(pred)
+    axes[1].set_title("Estimated")
+    fig.suptitle(title, fontsize=14)
+    return fig
