@@ -8,7 +8,7 @@ import math
 image = generate_image(num_mixtures=5,
                        num_regions=5,
                        noise_scale=0.001,
-                       size=5)
+                       size=30)
 
 
 m_est, D_est = infer_image(iterations=1000,
