@@ -21,7 +21,7 @@ def sample_dirichlet(x):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
-    c = 10
+    c = 100
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
         if value < 0.001:
