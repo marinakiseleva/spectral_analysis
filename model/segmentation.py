@@ -22,7 +22,10 @@ import numpy as np
 from functools import reduce
 
 
-MAX_SAD = 0.085
+"""
+MAX_SAD is the maximum SAD which likely implies two reflectances are the same. Comes from manually examining pure data spectra vs. derived Hapke model spectra where dominant mineral is 80%. 
+"""
+MAX_SAD = 0.005  # 0.085
 
 
 class Graph:
@@ -76,12 +79,28 @@ class Edge:
 import random
 
 
-def segment_image(image, iterations):
+def get_superpixels(graphs):
     """
-    Segments image using agglomerative clustering. At each iteration, randomly selects graph to potentially merge.
+    Get superpixel for each graph (average reflectance of vertices in that graph)
+    """
+    superpixels = []
+    for index, g in enumerate(graphs):
+        clus_num = index + 1
+        reflectances = []
+
+        for v in g.vertices:
+            reflectances.append(v.value)
+
+        avg_reflectance = np.average(reflectances, axis=0)
+        superpixels.append(avg_reflectance)
+    return superpixels
+
+
+def segment_image(iterations, image):
+    """
+    Segments image using agglomerative clustering. At each iteration, randomly selects graph pair to potentially merge.
 
     """
-    print(image.shape)
     graphs = init_graphs(image)
     for i in range(iterations):
         if len(graphs) == 0:
@@ -90,14 +109,14 @@ def segment_image(image, iterations):
         g2 = random.choice(graphs)
         if g1 == g2:
             continue
-        # for g1 in graphs:
-        #     for g2 in graphs:
         if can_merge(g1, g2):
             g3 = merge(g1, g2)
             graphs.remove(g1)
             graphs.remove(g2)
             graphs.append(g3)
 
+    num_clusters = len(graphs)
+    print(str(num_clusters) + " clusters total.")
     return graphs
 
 
@@ -239,7 +258,6 @@ def can_merge(g1, g2):
         # When graph has no edges, we need to use an initial baseline
         for edge in edges:
             if edge.value < MAX_SAD:
-                print("Going to merge based on min SAD: " + str(edge.value))
                 return True
     scew = get_smallest_common_weight(edges)
     mmew = get_min_max_weight(g1, g2, k=0.001)
@@ -288,10 +306,7 @@ def get_max_weight(g):
     """
     max_edge_weight = 0
     for edge in g.edges:
-        print('edge weight')
-        print(edge.value)
         max_edge_weight = max(edge.value, max_edge_weight)
-    # print('max edge weight ' + str(max_edge_weight))
     return max_edge_weight
 
 
