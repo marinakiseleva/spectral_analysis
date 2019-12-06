@@ -79,7 +79,11 @@ def get_best_k(sid, spectra_db):
         # 100,000 values from 10^-14 to 1, in log space
         #k_space = np.logspace(-14, -1, 1e5)
         k_space = np.logspace(-14, -1, 1000)
-        pool = multiprocessing.Pool(8)
+        # Use 1/4 of CPUs
+        num_processes = int(multiprocessing.cpu_count() / 4)
+        print("Running " + str(num_processes) + " processes.")
+        pool = multiprocessing.Pool(num_processes)
+
         l_errors = []
         func = partial(get_D_avg_refl_error, sid, spectra_db, index)
         # Multithread over different values in the k space
@@ -135,11 +139,11 @@ def get_cosine(x):
 if __name__ == "__main__":
 
     spectra_db = get_data()
-    olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
-    print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
+    # olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
+    # print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
 
-    enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, spectra_db)
-    print("Best k for enstatite is : " + str(enstatite_k) + " with RMSE: " + str(best_rmse))
+    # enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, spectra_db)
+    # print("Best k for enstatite is : " + str(enstatite_k) + " with RMSE: " + str(best_rmse))
 
     anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, spectra_db)
-    print("Best k for anorthite is : " + str(anorthite_k) + " with RMSE: " + str(best_rmse))
+    print("Best k for anorthite is :\n " + str(anorthite_k))
