@@ -185,7 +185,10 @@ def infer_image(iterations, image):
             index += 1
     print("Done indexing image. Starting processing...")
 
-    pool = multiprocessing.Pool()
+    # Use 1/4 of CPUs
+    num_processes = int(multiprocessing.cpu_count() / 4)
+    print("Running " + str(num_processes) + " processes.")
+    pool = multiprocessing.Pool(num_processes)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_datapoint, iterations)
