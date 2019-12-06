@@ -22,6 +22,9 @@ import numpy as np
 from functools import reduce
 
 
+MAX_SAD = 0.085
+
+
 class Graph:
 
     def __init__(self, vertices, edges):
@@ -70,27 +73,32 @@ class Edge:
         self.b = b
         self.value = get_SAD(a.value, b.value)
 
+import random
+
 
 def segment_image(image, iterations):
     """
     Segments image using agglomerative clustering. At each iteration, randomly selects graph to potentially merge.
 
     """
+    print(image.shape)
     graphs = init_graphs(image)
     for i in range(iterations):
-        if len(graphs) == 1:
+        if len(graphs) == 0:
             raise Error("Graph has been reduced to 1 cluster.")
-        for g1 in graphs:
-            for g2 in graphs:
-                if can_merge(g1, g2):
-                    g3 = merge(g1, g2)
-                    graphs.remove(g1)
-                    graphs.remove(g2)
-                    break
-            break
+        g1 = random.choice(graphs)
+        g2 = random.choice(graphs)
+        if g1 == g2:
+            continue
+        # for g1 in graphs:
+        #     for g2 in graphs:
+        if can_merge(g1, g2):
+            g3 = merge(g1, g2)
+            graphs.remove(g1)
+            graphs.remove(g2)
+            graphs.append(g3)
 
-    cluster_image = visualize_clusters(graphs, image)
-    return cluster_image
+    return graphs
 
 
 def visualize_clusters(graphs, image):
@@ -102,12 +110,12 @@ def visualize_clusters(graphs, image):
 
     num_rows = image.shape[0]
     num_cols = image.shape[1]
-    cluster_image = np.ones((num_rows, num_cols, 1))
+    cluster_image = np.zeros((num_rows, num_cols))
     for index, g in enumerate(graphs):
+        clus_num = index + 1
         for v in g.vertices:
-            clus_num = index + 1
             cluster_image[v.x, v.y] = clus_num
-
+    print(cluster_image.shape)
     return cluster_image
 
 
@@ -227,6 +235,12 @@ def can_merge(g1, g2):
     edges = get_connecting_edges(g1, g2)
     if len(edges) == 0:
         return False
+    if len(g1.edges) == 0 or len(g2.edges) == 0:
+        # When graph has no edges, we need to use an initial baseline
+        for edge in edges:
+            if edge.value < MAX_SAD:
+                print("Going to merge based on min SAD: " + str(edge.value))
+                return True
     scew = get_smallest_common_weight(edges)
     mmew = get_min_max_weight(g1, g2, k=0.001)
     return scew <= mmew
@@ -261,20 +275,23 @@ def get_min_max_weight(g1, g2, k):
         min(GMW(A) + k/|A|, GMW(B) + k/|B|)
 
     """
-    length_1 = len(g1.vertices)
-    length_2 = len(g2.vertices)
-    return min(get_max_weight(g1) + k / length_1,
-               get_max_weight(g2) + k / length_2)
+    area1 = len(g1.vertices)
+    area2 = len(g2.vertices)
+    return min(get_max_weight(g1) + k / area1,
+               get_max_weight(g2) + k / area2)
 
 
 def get_max_weight(g):
     """
-    Get largest weight in this segment
+    Get largest weight in this graph.
     :param g: Graph g
     """
     max_edge_weight = 0
     for edge in g.edges:
+        print('edge weight')
+        print(edge.value)
         max_edge_weight = max(edge.value, max_edge_weight)
+    # print('max edge weight ' + str(max_edge_weight))
     return max_edge_weight
 
 
@@ -282,8 +299,8 @@ def get_SAD(a, b):
     """
     Get spectral angle distance:
         d(i,j) =  (i^T * j) / ( ||i|| ||j|| )
-        :param a: Numpy vector
-        :param b:Numpy vector
+    :param a: Numpy vector
+    :param b: Numpy vector
     """
     n = np.dot(a.transpose(), b)
     d = np.linalg.norm(a) * np.linalg.norm(b)
