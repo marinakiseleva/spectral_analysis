@@ -1,3 +1,8 @@
+"""
+Main script to generate data and run inference on it. 
+"""
+
+
 from model.inference import infer_image
 from preprocessing.generate_data import generate_image
 from utils.plotting import plot_compare
@@ -19,13 +24,9 @@ D_actual = image.D_image
 
 # Save output
 save_dir = "output/data/"
-
 np.savetxt(save_dir + "m_actual.txt", m_actual.flatten())
-
 np.savetxt(save_dir + "D_actual.txt", D_actual.flatten())
-
 np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
-
 np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
 
 
