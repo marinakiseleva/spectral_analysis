@@ -1,21 +1,21 @@
 """
 Segment image, by merging when:
 
-	get_smallest_common_weight(A, B) <= get_min_max_weight(A,B)
+    get_smallest_common_weight(A, B) <= get_min_max_weight(A,B)
 
 where get_smallest_common_weight(A,B) is the smallest intersegment distance between 2 segments A and B:
 
-	get_smallest_common_weight(A,B) = min _(i,j) (d(i,j))
+    get_smallest_common_weight(A,B) = min _(i,j) (d(i,j))
 
-and get_min_max_weight(A,B) is the minimum of the greatest weights in each segment 
+and get_min_max_weight(A,B) is the minimum of the greatest weights in each segment
 
-	get_min_max_weight(A,B) = min(GMW(A) + k/|A|, GMW(B) + k/|B|)
+    get_min_max_weight(A,B) = min(GMW(A) + k/|A|, GMW(B) + k/|B|)
 
 where GMW is the maximum edge weight in that minimum spanning tree, and |.| represents length of vector. Distance d, is calculated using SAD:
 
-	          (i^T * j)
-	d(i,j) = -----------
-			 ||i|| ||j|| 
+              (i^T * j)
+    d(i,j) = -----------
+             ||i|| ||j||
 
 """
 import numpy as np
@@ -24,13 +24,17 @@ from functools import reduce
 
 class Graph:
 
-    def __init__(self, edges, vertices):
+    def __init__(self, vertices, edges):
         """
-        :param edge: List of Edge objects
         :param vertices: List of Vertex objects
+        :param edge: List of Edge objects
         """
-        self.edges = edges
+        if type(vertices) != list:
+            raise ValueError("Vertices must be list.")
+        if type(edges) != list:
+            raise ValueError("Edges must be list.")
         self.vertices = vertices
+        self.edges = edges
 
 
 class Vertex:
@@ -42,6 +46,9 @@ class Vertex:
         :param x: x index in image
         :param y: y index in image
         """
+        if type(neighbors) != list:
+            raise ValueError("neighbors must be list.")
+
         self.value = value
         self.neighbors = neighbors
         self.x = x
@@ -55,18 +62,53 @@ class Edge:
         :param a: Vertex a
         :param b: Vertex b
         """
+        if type(a) != Vertex:
+            raise ValueError("a must be Vertex.")
+        if type(b) != Vertex:
+            raise ValueError("b must be Vertex.")
         self.a = a
         self.b = b
         self.value = get_SAD(a.value, b.value)
 
 
-def segment_image(image):
+def segment_image(image, iterations):
     """
     Segments image using agglomerative clustering. At each iteration, randomly selects graph to potentially merge.
 
     """
     graphs = init_graphs(image)
-    return graphs
+    for i in range(iterations):
+        if len(graphs) == 1:
+            raise Error("Graph has been reduced to 1 cluster.")
+        for g1 in graphs:
+            for g2 in graphs:
+                if can_merge(g1, g2):
+                    g3 = merge(g1, g2)
+                    graphs.remove(g1)
+                    graphs.remove(g2)
+                    break
+            break
+
+    cluster_image = visualize_clusters(graphs, image)
+    return cluster_image
+
+
+def visualize_clusters(graphs, image):
+    """
+    Visualize clusters by saving unique cluster assignments
+    """
+    num_clusters = len(graphs)
+    print(str(num_clusters) + " clusters total.")
+
+    num_rows = image.shape[0]
+    num_cols = image.shape[1]
+    cluster_image = np.ones((num_rows, num_cols, 1))
+    for index, g in enumerate(graphs):
+        for v in g.vertices:
+            clus_num = index + 1
+            cluster_image[v.x, v.y] = clus_num
+
+    return cluster_image
 
 
 def init_graphs(image):
@@ -80,25 +122,21 @@ def init_graphs(image):
     for x in range(num_rows):
         for y in range(num_cols):
             v = Vertex(value=image[x, y],
-                       neighbors=None,
+                       neighbors=[],
                        x=x,
                        y=y)
             vertices[x][y] = v
-    # Update all vertices with neighbors
+
     # Flatten vertices to 1d list
     vertices_flatten = reduce(lambda x, y: x + y, vertices)
 
-    edges = []
+    graphs = []
+    # Update all vertices with neighbors
     for v in vertices_flatten:
         nbrs_list = get_neighbors(v, vertices, num_rows, num_cols)
-        for nbr_v in nbrs_list:
-            # Create Edge
-            e = create_edge(v, nbr_v, edges)
-            if e is not None:
-                edges.append(e)
         v.neighbors = nbrs_list
-
-    return Graph(edges, vertices_flatten)
+        graphs.append(Graph([v], []))
+    return graphs
 
 
 def create_edge(a, b, edges):
@@ -165,19 +203,39 @@ def get_neighbors(v, vertices, num_rows, num_cols):
 
 def merge(g1, g2):
     """
+    Merge graphs with smallest edge weight (so that the connection is between the most spectrally similar pixels)
+    """
+    edges = get_connecting_edges(g1, g2)
+    min_edge_weight = 1
+    min_edge = None
+    for edge in edges:
+        if edge.value < min_edge_weight:
+            min_edge_weight = edge.value
+            min_edge = edge
+
+    combined_vertices = g1.vertices + g2.vertices
+    combined_edges = g1.edges + g2.edges + [min_edge]
+    new_graph = Graph(combined_vertices, combined_edges)
+    return new_graph
+
+
+def can_merge(g1, g2):
+    """
     Boolean on whether to merge graphs. Returns True when:
         get_smallest_common_weight(A, B) <= get_min_max_weight(A,B)
     """
-    scew = get_smallest_common_weight(g1, g2)
+    edges = get_connecting_edges(g1, g2)
+    if len(edges) == 0:
+        return False
+    scew = get_smallest_common_weight(edges)
     mmew = get_min_max_weight(g1, g2, k=0.001)
     return scew <= mmew
 
 
-def get_smallest_common_weight(g1, g2):
+def get_smallest_common_weight(edges):
     """
-    Get the smallest edge weight that connects Graph g1 to Graph g2
+    Get the smallest edge weight in list of edges
     """
-    edges = get_connecting_edges(g1, g2)
     min_edge_weight = 1
     for edge in edges:
         min_edge_weight = min(edge.value, min_edge_weight)
