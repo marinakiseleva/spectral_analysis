@@ -36,7 +36,7 @@ def sample_multivariate(mean):
     """
     length = mean.shape[0]
     covariance = np.zeros((length, length))
-    np.fill_diagonal(covariance, 1)
+    np.fill_diagonal(covariance, .1)
 
     return np.random.multivariate_normal(mean, covariance)
 
