@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from constants import c_wavelengths, sids_names
-from access_data import get_reflectance_spectra
-from inference import get_log_likelihood
-from hapke_model import get_r_mixed_hapke_estimate
+from utils.constants import c_wavelengths, sids_names
+from utils.access_data import get_reflectance_spectra
+from model.inference import get_log_likelihood
+from model.hapke_model import get_r_mixed_hapke_estimate
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):

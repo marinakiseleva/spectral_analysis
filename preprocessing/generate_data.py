@@ -10,9 +10,9 @@ Generates data by the following steps:
 import numpy as np
 import math
 
-from hapke_model import get_r_mixed_hapke_estimate
-from constants import pure_endmembers, c_wavelengths
-from plotting import *
+from model.hapke_model import get_r_mixed_hapke_estimate
+from utils.constants import pure_endmembers, c_wavelengths
+from utils.plotting import *
 
 
 def create_labeled_grid(X, categories, size=200):

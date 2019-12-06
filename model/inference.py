@@ -12,8 +12,8 @@ import numpy as np
 import math
 
 
-from hapke_model import get_r_mixed_hapke_estimate
-from constants import c_wavelengths, pure_endmembers
+from model.hapke_model import get_r_mixed_hapke_estimate
+from utils.constants import c_wavelengths, pure_endmembers
 
 
 def sample_dirichlet(x):

@@ -1,5 +1,5 @@
 import pandas as pd
-from constants import DATA_PATH, CATALOGUE_PATH, c_wavelengths
+from utils.constants import DATA_PATH, CATALOGUE_PATH, c_wavelengths
 
 
 def get_data():

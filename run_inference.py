@@ -1,17 +1,17 @@
-from inference import infer_image
-from generate_data import generate_image
-from plotting import plot_compare
+from model.inference import infer_image
+from preprocessing.generate_data import generate_image
+from utils.plotting import plot_compare
 
 import numpy as np
 import math
 
 image = generate_image(num_mixtures=5,
-                       num_regions=5,
+                       num_regions=2,
                        noise_scale=0.001,
-                       size=30)
+                       size=4)
 
 
-m_est, D_est = infer_image(iterations=1000,
+m_est, D_est = infer_image(iterations=2,
                            image=image.r_image)
 m_actual = image.m_image
 D_actual = image.D_image

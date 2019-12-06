@@ -1,6 +1,6 @@
 import numpy as np
 import math
-from constants import *
+from utils.constants import *
 
 
 def get_r_mixed_hapke_estimate(m, D):

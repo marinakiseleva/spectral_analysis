@@ -14,9 +14,9 @@ import math
 from functools import partial
 import multiprocessing
 
-from hapke_model import get_reflectance_hapke_estimate
-from access_data import *
-from constants import *
+from model.hapke_model import get_reflectance_hapke_estimate
+from utils.access_data import *
+from utils.constants import *
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)
