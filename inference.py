@@ -1,10 +1,16 @@
 """
 Runs variational inference on the model to estimate the posterior p(m,D|d)
 """
+
+from functools import partial
+import multiprocessing
+
+
 from scipy.stats import multivariate_normal
+from collections import OrderedDict
 import numpy as np
 import math
-from collections import OrderedDict
+
 
 from hapke_model import get_r_mixed_hapke_estimate
 from constants import c_wavelengths, pure_endmembers
@@ -151,7 +157,7 @@ def infer_datapoint(iterations, d):
         if ratio > u:
             cur_m = new_m
             cur_D = new_D
-    return cur_m, cur_D
+    return [cur_m, cur_D]
 
 
 def infer_image(iterations, image):
@@ -160,17 +166,44 @@ def infer_image(iterations, image):
     :param iterations: Number of MCMC iterations to run for each datapoint 
     :param image: 3D Numpy array with 3d dimension equal to len(c_wavelengths)
     """
-    # Mineral assemblage predictions
+
     num_rows = image.shape[0]
     num_cols = image.shape[1]
+    # Mineral assemblage predictions
     m_image = np.ones((num_rows, num_cols, 3))
     # Grain size predictions
     D_image = np.ones((num_rows, num_cols, 3))
 
+    # For clarity: create map from numeric index to X,Y coords in image
+    index = 0
+    index_coords = {}  # List index to image index
+    r_space = []  # List of reflectances for image
     for i in range(num_rows):
         for j in range(num_cols):
-            r = image[i, j]
-            m, D = infer_datapoint(iterations, r)
-            m_image[i, j] = m
-            D_image[i, j] = D
+            index_coords[index] = [i, j]
+            r_space.append(image[i, j])
+            index += 1
+    print("Done indexing image. Starting processing...")
+
+    pool = multiprocessing.Pool()
+
+    # Pass in parameters that don't change for parallel processes (# of iterations)
+    func = partial(infer_datapoint, iterations)
+
+    m_and_Ds = []
+    # Multithread over the pixels' reflectances
+    m_and_Ds = pool.map(func, r_space)
+
+    pool.close()
+    pool.join()
+    print("Done processing...")
+
+    # pool.map results are ordered - save them in image format
+    for index, pair in enumerate(m_and_Ds):
+        # retrieve x, y coords
+        [i, j] = index_coords[index]
+        m, D = pair
+        m_image[i, j] = m
+        D_image[i, j] = D
+
     return m_image, D_image
