@@ -79,7 +79,7 @@ def get_best_k(sid, spectra_db):
         # 100,000 values from 10^-14 to 1, in log space
         #k_space = np.logspace(-14, -1, 1e5)
         k_space = np.logspace(-14, -1, 1000)
-        pool = multiprocessing.Pool()
+        pool = multiprocessing.Pool(8)
         l_errors = []
         func = partial(get_D_avg_refl_error, sid, spectra_db, index)
         # Multithread over different values in the k space
