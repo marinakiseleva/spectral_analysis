@@ -160,6 +160,30 @@ def infer_datapoint(iterations, d):
     return [cur_m, cur_D]
 
 
+def infer_segmented_image(iterations, superpixels):
+    """
+    Infer m and D for each superpixel 
+    :param superpixels: List of reflectances
+    """
+    # Use 1/4 of CPUs
+    num_processes = int(multiprocessing.cpu_count() / 4)
+    print("Running " + str(num_processes) + " processes.")
+    pool = multiprocessing.Pool(num_processes)
+
+    # Pass in parameters that don't change for parallel processes (# of iterations)
+    func = partial(infer_datapoint, iterations)
+
+    m_and_Ds = []
+    # Multithread over the pixels' reflectances
+    m_and_Ds = pool.map(func, superpixels)
+
+    pool.close()
+    pool.join()
+    print("Done processing...")
+
+    return m_and_Ds
+
+
 def infer_image(iterations, image):
     """
     Infer m and D for entire image
