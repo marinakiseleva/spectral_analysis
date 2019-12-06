@@ -1,6 +1,6 @@
 import os
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
