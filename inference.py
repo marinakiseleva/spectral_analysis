@@ -128,9 +128,9 @@ def get_log_posterior_estimate(d, m, D):
     return ll + m_prior + D_prior
 
 
-def run_metropolis(iterations, d):
+def infer_datapoint(iterations, d):
     """
-    Run MCMC to estimate m and D
+    Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
     """
@@ -151,7 +151,26 @@ def run_metropolis(iterations, d):
         if ratio > u:
             cur_m = new_m
             cur_D = new_D
-
-    print("Final log posterior: " + str(round(new, 10)))
-
     return cur_m, cur_D
+
+
+def infer_image(iterations, image):
+    """
+    Infer m and D for entire image
+    :param iterations: Number of MCMC iterations to run for each datapoint 
+    :param image: 3D Numpy array with 3d dimension equal to len(c_wavelengths)
+    """
+    # Mineral assemblage predictions
+    num_rows = image.shape[0]
+    num_cols = image.shape[1]
+    m_image = np.ones((num_rows, num_cols, 3))
+    # Grain size predictions
+    D_image = np.ones((num_rows, num_cols, 3))
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            r = image[i, j]
+            m, D = infer_datapoint(iterations, r)
+            m_image[i, j] = m
+            D_image[i, j] = D
+    return m_image, D_image
