@@ -8,12 +8,12 @@ from model.segmentation import segment_image, get_superpixels
 from preprocessing.generate_data import generate_image
 from utils.plotting import plot_compare
 from utils.constants import NUM_ENDMEMBERS
-
+import multiprocessing
 import numpy as np
 import math
 
 
-def run_segmented_inference(iterations, image):
+def run_segmented_inference(iterations, image, rec):
     """
     Run segmented inference on image 
     """
@@ -42,17 +42,17 @@ def run_segmented_inference(iterations, image):
             m_est[v.x, v.y] = m
             D_est[v.x, v.y] = D
 
-    return m_est, D_est
+    rec['seg'] = [m_est, D_est]
 
 
-def run_independent_inference(iterations, image):
+def run_independent_inference(iterations, image, rec):
     """
     Run pixel-independent inference
     """
     m_est, D_est = infer_image(iterations=iterations,
                                image=image.r_image)
 
-    return m_est, D_est
+    rec['ind'] = [m_est, D_est]
 
 
 def record_output(m_actual, D_actual, m_est, D_est, dir):
@@ -111,8 +111,19 @@ if __name__ == "__main__":
                            res=res)
     m_actual = image.m_image
     D_actual = image.D_image
-    m_est, D_est = run_independent_inference(iterations, image)
-    record_output(m_actual, D_actual, m_est, D_est, 'independent')
 
-    m_est_S, D_est_S = run_segmented_inference(iterations, image)
+    manager = multiprocessing.Manager()
+    record = manager.dict()
+    p1 = multiprocessing.Process(target=run_independent_inference,
+                                 args=(iterations, image, record))
+    p1.start()
+    p2 = multiprocessing.Process(target=run_segmented_inference,
+                                 args=(iterations, image, record))
+    p2.start()
+    p1.join()
+    p2.join()
+    m_est_I, D_est_I = record['ind']
+    m_est_S, D_est_S = record['seg']
+
+    record_output(m_actual, D_actual, m_est_I, D_est_I, 'independent')
     record_output(m_actual, D_actual, m_est_S, D_est_S, 'segmented')
