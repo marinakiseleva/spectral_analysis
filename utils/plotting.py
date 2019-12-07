@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from utils.constants import c_wavelengths, sids_names
+from utils.constants import c_wavelengths, sids_names, NUM_ENDMEMBERS
 from utils.access_data import get_reflectance_spectra
 from model.inference import get_log_likelihood
 from model.hapke_model import get_r_mixed_hapke_estimate
@@ -55,6 +55,10 @@ def plot_compare(actual, pred, title, interp=False):
         actual = np.interp(actual, (actual.min(), actual.max()), (0, 1))
         pred = np.interp(pred, (pred.min(), pred.max()), (0, 1))
     fig, axes = plt.subplots(1, 2, constrained_layout=True)
+
+    if NUM_ENDMEMBERS != 3:
+        raise ValueError(
+            "Plotting with imshow only handles 3 endmembers- since this maps to R,G,B.")
 
     axes[0].imshow(actual)
     axes[0].set_title("Actual")
