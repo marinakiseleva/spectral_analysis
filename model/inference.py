@@ -157,6 +157,7 @@ def infer_datapoint(iterations, d):
         if ratio > u:
             cur_m = new_m
             cur_D = new_D
+    print("Finished datapoint.")
     return [cur_m, cur_D]
 
 
