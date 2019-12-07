@@ -5,6 +5,8 @@ CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
 
+NUM_ENDMEMBERS = 3
+
 # Min and max grain sizes for these endmembers
 GRAIN_SIZE_MIN = 45
 GRAIN_SIZE_MAX = 75
