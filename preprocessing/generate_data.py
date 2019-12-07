@@ -11,30 +11,32 @@ import numpy as np
 import math
 
 from model.hapke_model import get_r_mixed_hapke_estimate
-from utils.constants import pure_endmembers, c_wavelengths
+from utils.constants import pure_endmembers, c_wavelengths, NUM_ENDMEMBERS
 from utils.plotting import *
 
 
-def create_labeled_grid(X, categories, size=200):
+def create_labeled_grid(grid_res, num_mixtures, pixel_res):
     """
-    Create grid (Numpy 2D array), with each quadrant corresponding to one of X numeric labels
-    :param X: Grid dimensions, XxX grid squares
-    :param categories: Number of categories, 1 up to this number will be randomly generated for each grid.
+    Create grid (Numpy 2D array), with each quadrant corresponding to one of num_mixtures numeric labels
+    :param grid_res: Resoltion of grid: grid_res X grid_res grid squares
+    :param num_mixtures: Number of mixtures, 1 up to this number will be randomly generated for each grid.
+    :param pixel_res: Resolution of image in pixels: pixel_res X pixel_res pixels
     """
-    image = np.ones((size, size))
-    quadrant_size = math.floor(size / X)
+    image = np.ones((pixel_res, pixel_res))
+    quadrant_size = math.floor(pixel_res / grid_res)
     i_start_index = 0
-    for i in range(X):
+    for i in range(grid_res):
         i_end_index = i_start_index + quadrant_size
         j_start_index = 0
-        for j in range(X):
+        for j in range(grid_res):
             j_end_index = j_start_index + quadrant_size
-            if j_end_index >= size:
-                j_end_index = size - 1
-            if i_end_index >= size:
-                i_end_index = size - 1
+            if j_end_index >= pixel_res:
+                j_end_index = pixel_res - 1
+            if i_end_index >= pixel_res:
+                i_end_index = pixel_res - 1
 
-            a = np.random.randint(1, categories + 1)
+            # add 1 to max, because randint is min,max exclusive of y
+            a = np.random.randint(1, num_mixtures + 1)
             image[i_start_index:i_end_index + 1, j_start_index:j_end_index + 1] = a
 
             j_start_index = j_end_index
@@ -85,20 +87,25 @@ class HSImage:
         self.labeled_image = labeled_image
 
 
-def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
+def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
     """
-    Creates images with num_mixtures random mixtures, in roughly num_regions^2
-    :param num_regions: num_regions X num_regions regions 
+    Creates images with num_mixtures random mixtures, in grid_res X grid_res grid
     :param num_mixtures: Number of mixtures
+    :param grid_res: grid_res X grid_res regions 
+    :param noise_scale: Variance of 0-mean noise added to generated spectra.
+    :param res: Resolution of image in pixels, image will be res X res pixels.
     """
-    labeled_image = create_labeled_grid(num_regions, num_mixtures, size)
+
+    labeled_image = create_labeled_grid(grid_res=grid_res,
+                                        num_mixtures=num_mixtures,
+                                        pixel_res=res)
 
     # Reflectance image
-    r_image = np.ones((size, size, len(c_wavelengths)))
+    r_image = np.ones((res, res, len(c_wavelengths)))
     # Mineral assemblage image
-    m_image = np.ones((size, size, 3))
-    # Grain size image
-    D_image = np.ones((size, size, 3))
+    m_image = np.ones((res, res, NUM_ENDMEMBERS))
+    # Grain-size image
+    D_image = np.ones((res, res, NUM_ENDMEMBERS))
 
     mixtures_r = {}
     mixtures_m = {}
@@ -109,8 +116,8 @@ def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
         mixtures_m[i + 1] = mix.m
         mixtures_D[i + 1] = mix.D
 
-    for i in range(size):
-        for j in range(size):
+    for i in range(res):
+        for j in range(res):
             mix_i = int(labeled_image[i, j])
             r = mixtures_r[mix_i]
             # Add noise to reflectance
@@ -126,7 +133,7 @@ def generate_image(num_mixtures, num_regions, noise_scale=0.01, size=200):
 import matplotlib
 if __name__ == "__main__":
 
-    image = generate_image(5, 5, noise_scale=0.001, size=10)
+    image = generate_image(5, 5, noise_scale=0.001, res=10)
     rgb_image = image.r_image[:, :, 1:4]
     plt.imshow(rgb_image, interpolation='nearest')
     plt.title("RGB of spectral data")
