@@ -1,10 +1,23 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+
 import numpy as np
 
-from utils.constants import c_wavelengths, sids_names, NUM_ENDMEMBERS
+from utils.constants import *
 from utils.access_data import get_reflectance_spectra
 from model.inference import get_log_likelihood
 from model.hapke_model import get_r_mixed_hapke_estimate
+
+
+def prep_file_name(text):
+    """
+    Remove unnecessary characters from text in order to save it as valid file name
+    """
+    replace_strs = ["\n", " ", ":", ".", ",", "/"]
+    for r in replace_strs:
+        text = text.replace(r, "_")
+    return text
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
@@ -33,6 +46,15 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
 
     fig, axes = plt.subplots(2, 1, constrained_layout=True)
 
+    min_grain = min(D_map.values())
+    max_grain = max(D_map.values())
+    grain_text = ""
+    if min_grain == max_grain:
+        grain_text = str(min_grain)
+    else:
+        grain_text = str(min_grain) + " - " + str(max_grain)
+
+    plt.ylim((0, 1))
     axes[0].plot(c_wavelengths, data_reflectance)
     axes[0].set_title("Actual")
     axes[0].set_ylabel("Reflectance")
@@ -41,30 +63,85 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
     axes[1].set_title("Estimated")
     axes[1].set_xlabel("Wavelength")
     axes[1].set_ylabel("Reflectance")
-    fig.suptitle(sids_names[SID], fontsize=14)
+    fig.suptitle(sids_names[SID] + ", for grain sizes: " + grain_text, fontsize=14)
 
 
-def plot_compare(actual, pred, title, interp=False):
+def plot_overlay_reflectances(SIDs, m_maps, D_maps):
     """
-    Plot images side by side
+    Plots multiple reflectances on same plot
+    """
+    fig, ax = plt.subplots(1, 1, constrained_layout=True,
+                           figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    viridis = cm.get_cmap('Paired', 12)
+    for index, m_map in enumerate(m_maps):
+        D_map = D_maps[index]
+        SID_name = sids_names[SIDs[index]]
+        estimated_reflectance = get_r_mixed_hapke_estimate(m_map, D_map)
+
+        min_grain = min(D_map.values())
+        max_grain = max(D_map.values())
+        grain_text = ""
+        if min_grain == max_grain:
+            grain_text = str(min_grain)
+        else:
+            grain_text = str(min_grain) + " - " + str(max_grain)
+
+        ax.plot(c_wavelengths,
+                estimated_reflectance,
+                color=viridis.colors[index],
+                label=SID_name + ", grain size : " + grain_text)
+        ax.set_xlabel("Wavelength")
+        ax.set_ylabel("Reflectance")
+        ax.legend()
+
+        plt.ylim((0, 1))
+
+    title = "Estimated endmembers with 45 vs 75 grain size"
+    fig.suptitle(title, fontsize=14)
+
+    fig.savefig("../output/data/" + prep_file_name(title))
+
+
+def interpolate_image(img):
+    """
+    Convert 3d dimension of images to values between 0 and 1 (so they may be plotted as RGB)
+    """
+    return np.interp(img, (img.min(), img.max()), (0, 1))
+
+from textwrap import wrap
+
+
+def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=False):
+    """
+    Compare actual to 2 different predictions
     :param actual: Numpy 3D array with 2 dimensions as image and 3d dimension as array of values (for actual image)
-    :param pred: Numpy 3D array with 2 dimensions as image and 3d dimension as array of values (for predicted)
+    :param preds: List of predicted images (2d Numpy arrays)
+    :param fig_title: Title of entire Figure
+    :param subplot_titles: Titles of sub-figures, 1 for each preds
     :param interp: if Numpy third dimension is not between 0 and 1 values, need to interpolate
     """
     if interp:
-        actual = np.interp(actual, (actual.min(), actual.max()), (0, 1))
-        pred = np.interp(pred, (pred.min(), pred.max()), (0, 1))
-    fig, axes = plt.subplots(1, 2, constrained_layout=True)
+        actual = interpolate_image(actual)
+        new_preds = []
+        for pred in preds:
+            new_preds.append(interpolate_image(pred))
+        preds = new_preds
 
-    if NUM_ENDMEMBERS != 3:
-        raise ValueError(
-            "Plotting with imshow only handles 3 endmembers- since this maps to R,G,B.")
+    num_subplots = len(preds) + 1
 
+    fig, axes = plt.subplots(1, num_subplots, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
     axes[0].imshow(actual)
     axes[0].set_title("Actual")
+    for index, pred in enumerate(preds):
+        axes[index + 1].imshow(pred)
+        title = '\n'.join(wrap(subplot_titles[index], 14))
+        axes[index + 1].set_title(title)
 
-    axes[1].imshow(pred)
-    axes[1].set_title("Estimated")
-    fig.suptitle(title, fontsize=14)
+    fig.suptitle(t=fig_title,  fontsize=14)
+
+    if num_subplots == 2:
+        fig.tight_layout()
+    else:
+        fig.tight_layout(rect=[0, 0.03, 1, 1.2])
 
     return fig

@@ -1,10 +1,18 @@
 import os
 
+
+# For data
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
+# For plotting
+FIG_WIDTH = 6
+FIG_HEIGHT = 4
+DPI = 300
 
+
+# For endmember-specifics
 NUM_ENDMEMBERS = 3
 
 # Min and max grain sizes for these endmembers
