@@ -23,9 +23,11 @@ from functools import reduce
 
 
 """
-MAX_SAD is the maximum SAD which likely implies two reflectances are the same. Comes from manually examining pure data spectra vs. derived Hapke model spectra where dominant mineral is 80%. 
+MAX_SAD is the initial threshold by which to merge pixels when both segments do not have edges to compare. If their SAD is <MAX_SAD we merge them. Comes from manually examining pure data spectra vs. derived Hapke model spectra where dominant mineral is 80%. 
+for noise sigma = 0.001, MAX_SAD = 0.005
+for noise sigma = 0.01, MAX_SAD = 0.03
 """
-MAX_SAD = 0.005  # 0.085
+MAX_SAD = 0.005
 
 
 class Graph:
