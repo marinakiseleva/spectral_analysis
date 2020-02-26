@@ -9,8 +9,15 @@ DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 # For plotting
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
-DPI = 300
+DPI = 240
 
+#########################################
+# Below are constants for the 3 pure endmembers:
+# olivine
+# enstatite
+# anorthite
+# Other minerals, even mixtures of these 3, may have different constants.
+#########################################
 
 # For endmember-specifics
 NUM_ENDMEMBERS = 3
