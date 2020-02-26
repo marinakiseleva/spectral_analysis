@@ -35,16 +35,11 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
         d = np.linalg.norm(a) * np.linalg.norm(b)
         return np.arccos(n / d)
 
-    data_reflectance = get_reflectance_spectra(SID, spectra_db)
-    ll = get_log_likelihood(data_reflectance, m_map, D_map)
-    print("For " + sids_names[SID])
-    print("Log Likelihood: " + str(round(ll, 3)))
-
-    estimated_reflectance = get_r_mixed_hapke_estimate(m_map, D_map)
-
-    print("SAD : " + str(get_SAD(data_reflectance, estimated_reflectance)))
-
-    fig, axes = plt.subplots(2, 1, constrained_layout=True)
+    # Set metadata names
+    if SID not in sids_names:
+        sid_name = "Mixture"
+    else:
+        sid_name = sids_names[SID]
 
     min_grain = min(D_map.values())
     max_grain = max(D_map.values())
@@ -54,25 +49,41 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
     else:
         grain_text = str(min_grain) + " - " + str(max_grain)
 
-    plt.ylim((0, 1))
-    axes[0].plot(c_wavelengths, data_reflectance)
-    axes[0].set_title("Actual")
-    axes[0].set_ylabel("Reflectance")
+    # Get reflectance
+    data_reflectance = get_reflectance_spectra(SID, spectra_db)
+    ll = get_log_likelihood(data_reflectance, m_map, D_map)
+    # Derive reflectance from m and D
+    estimated_reflectance = get_r_mixed_hapke_estimate(m_map, D_map)
 
-    axes[1].plot(c_wavelengths, estimated_reflectance)
-    axes[1].set_title("Estimated")
-    axes[1].set_xlabel("Wavelength")
-    axes[1].set_ylabel("Reflectance")
-    fig.suptitle(sids_names[SID] + ", for grain sizes: " + grain_text, fontsize=14)
+    print("For " + sid_name)
+    print("Log Likelihood: " + str(round(ll, 3)))
+    print("SAD : " + str(get_SAD(data_reflectance, estimated_reflectance)))
+
+    # fig, axes = plt.subplots(2, 1, constrained_layout=True)
+    # fig, axes = plt.subplots(1, 2, dpi=200)
+    fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    ax1.set_ylim((0, 1))
+    ax1.plot(c_wavelengths, data_reflectance, label='Actual', color='crimson')
+    ax1.set_title("Actual vs Estimated")
+    ax1.set_ylabel("Reflectance")
+    ax1.set_xlabel("Wavelength")
+
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.set_ylim((0, 1))
+    ax2.plot(c_wavelengths, estimated_reflectance, label='Estimated', color='pink')
+    fig.legend()
+    fig.suptitle(sid_name + ", for grain sizes: " + grain_text, fontsize=14, x=.6)
+    # rect : tuple (left, bottom, right, top)
+    fig.tight_layout(rect=[0, 0, 1.2, .9])
 
 
-def plot_overlay_reflectances(SIDs, m_maps, D_maps):
+def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
     """
     Plots multiple reflectances on same plot
     """
     fig, ax = plt.subplots(1, 1, constrained_layout=True,
                            figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    viridis = cm.get_cmap('Paired', 12)
+    colormap = cm.get_cmap('Paired')
     for index, m_map in enumerate(m_maps):
         D_map = D_maps[index]
         SID_name = sids_names[SIDs[index]]
@@ -88,7 +99,7 @@ def plot_overlay_reflectances(SIDs, m_maps, D_maps):
 
         ax.plot(c_wavelengths,
                 estimated_reflectance,
-                color=viridis.colors[index],
+                color=colormap.colors[index],
                 label=SID_name + ", grain size : " + grain_text)
         ax.set_xlabel("Wavelength")
         ax.set_ylabel("Reflectance")
@@ -96,7 +107,6 @@ def plot_overlay_reflectances(SIDs, m_maps, D_maps):
 
         plt.ylim((0, 1))
 
-    title = "Estimated endmembers with 45 vs 75 grain size"
     fig.suptitle(title, fontsize=14)
 
     fig.savefig("../output/data/" + prep_file_name(title))
