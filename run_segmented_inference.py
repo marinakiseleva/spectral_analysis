@@ -5,7 +5,6 @@ Main script to generate data and run inference on it.
 from model.segmentation import segment_image, get_superpixels
 from model.inference import infer_segmented_image
 from preprocessing.generate_data import generate_image
-from utils.plotting import plot_compare
 from utils.constants import NUM_ENDMEMBERS
 
 import numpy as np

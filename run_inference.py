@@ -5,7 +5,6 @@ Main script to generate data and run inference on it.
 
 from model.inference import infer_image
 from preprocessing.generate_data import generate_image
-from utils.plotting import plot_compare
 
 import numpy as np
 import math
