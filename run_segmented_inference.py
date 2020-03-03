@@ -11,6 +11,39 @@ import numpy as np
 import math
 
 
+def run_segmented_inference(seg_iterations, mcmc_iterations, image, rec=None):
+    """
+    Run segmented inference on image
+    """
+    graphs = segment_image(iterations=seg_iterations,
+                           image=image.r_image
+                           )
+    superpixels = get_superpixels(graphs)
+
+    m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
+                                     superpixels=superpixels)
+
+    # Reconstruct image
+    num_rows = image.r_image.shape[0]
+    num_cols = image.r_image.shape[1]
+    # Mineral assemblage predictions
+    m_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
+    # Grain size predictions
+    D_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
+    for index, pair in enumerate(m_and_Ds):
+        graph = graphs[index]
+        for v in graph.vertices:
+            # retrieve x, y coords
+            # [i, j] = index_coords[index]
+            m, D = pair
+            m_est[v.x, v.y] = m
+            D_est[v.x, v.y] = D
+
+    if rec is not None:
+        rec['seg'] = [m_est, D_est]
+    return m_est, D_est
+
+
 if __name__ == "__main__":
     num_mixtures = 5
     grid_res = 4
@@ -34,35 +67,8 @@ if __name__ == "__main__":
                            grid_res=grid_res,
                            noise_scale=noise_scale,
                            res=res)
-
-    graphs = segment_image(iterations=seg_iterations,
-                           image=image.r_image
-                           )
-    superpixels = get_superpixels(graphs)
-
-    m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
-                                     superpixels=superpixels)
-
-    # Reconstruct image
-
-    num_rows = image.r_image.shape[0]
-    num_cols = image.r_image.shape[1]
-    # Mineral assemblage predictions
-    m_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
-    # Grain size predictions
-    D_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
-
-    """ 
-    dimensions are same for m_est, D_est, and graphs. Each graph has its own m_est and D_est. This section iterates through each vertex in the graph, and sets their m and D.
-    """
-    for index, pair in enumerate(m_and_Ds):
-        graph = graphs[index]
-        # Get vertices of this graph
-        for v in graph.vertices:
-            # retrieve x, y coords
-            m, D = pair
-            m_est[v.x, v.y] = m
-            D_est[v.x, v.y] = D
+    m_est, D_est = run_segmented_inference(
+        seg_iterations, mcmc_iterations, image, rec=None)
 
     m_actual = image.m_image
     D_actual = image.D_image
