@@ -16,7 +16,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.01  # 0.001
     res = 8
-    seg_iterations = 100000
+    seg_iterations = 10
     mcmc_iterations = 5
 
     # Print metadata
@@ -51,11 +51,15 @@ if __name__ == "__main__":
     m_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
     # Grain size predictions
     D_est = np.ones((num_rows, num_cols, NUM_ENDMEMBERS))
+
+    """ 
+    dimensions are same for m_est, D_est, and graphs. Each graph has its own m_est and D_est. This section iterates through each vertex in the graph, and sets their m and D.
+    """
     for index, pair in enumerate(m_and_Ds):
         graph = graphs[index]
+        # Get vertices of this graph
         for v in graph.vertices:
             # retrieve x, y coords
-            # [i, j] = index_coords[index]
             m, D = pair
             m_est[v.x, v.y] = m
             D_est[v.x, v.y] = D
@@ -77,15 +81,3 @@ if __name__ == "__main__":
     D_rmse = str(round(get_rmse(D_actual, D_est), 2))
     print("RMSE for m: " + m_rmse)
     print("RMSE for D: " + D_rmse)
-
-    # # Plot output
-    # fig_path = "output/figures/segmented/"
-    # p = plot_compare(actual=m_actual,
-    #                  pred=m_est,
-    #                  title="Mineral assemblages m, as RGB (RMSE: " + m_rmse + ")")
-    # p.savefig(fig_path + "m_compare.png")
-    # p = plot_compare(actual=D_actual,
-    #                  pred=D_est,
-    #                  title="Grain size D, as RGB (RMSE: " + D_rmse + ")",
-    #                  interp=True)
-    # p.savefig(fig_path + "D_compare.png")

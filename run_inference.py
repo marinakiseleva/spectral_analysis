@@ -51,15 +51,3 @@ if __name__ == "__main__":
     print("RMSE for m: " + m_rmse)
     D_rmse = str(round(get_rmse(D_actual, D_est), 2))
     print("RMSE for D: " + D_rmse)
-
-    # # Plot output
-    # fig_path = "output/figures/independent/"
-    # p = plot_compare(actual=m_actual,
-    #                  pred=m_est,
-    #                  title="Mineral assemblages m, as RGB (RMSE: " + m_rmse + ")")
-    # p.savefig(fig_path + "m_compare.png")
-    # p = plot_compare(actual=D_actual,
-    #                  pred=D_est,
-    #                  title="Grain size D, as RGB (RMSE: " + D_rmse + ")",
-    #                  interp=True)
-    # p.savefig(fig_path + "D_compare.png")
