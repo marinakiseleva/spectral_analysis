@@ -3,7 +3,7 @@ Main script to generate data and run inference on it.
 """
 
 
-from model.inference import infer_crf_image, infer_segmented_image
+from model.inference import infer_crf_image, infer_segmented_image, infer_image
 from model.segmentation import segment_image, get_superpixels
 from preprocessing.generate_data import generate_image
 from utils.plotting import *
@@ -25,6 +25,18 @@ def run_crf_inference(iterations, image, rec=None):
 
     if rec is not None:
         rec['crf'] = [m_est, D_est]
+    return m_est, D_est
+
+
+def run_independent_inference(iterations, image, rec=None):
+    """
+    Run pixel-independent inference
+    """
+    m_est, D_est = infer_image(iterations=iterations,
+                               image=image.r_image)
+
+    if rec is not None:
+        rec['ind'] = [m_est, D_est]
     return m_est, D_est
 
 
@@ -54,6 +66,10 @@ def record_all_output(m_actual, D_actual, m_est_I, D_est_I, m_est_S, D_est_S):
     p.savefig("output/figures/D_compare.png", bbox_inches='tight')
 
 
+def get_rmse(a, b):
+    return math.sqrt(np.mean((a - b)**2))
+
+
 def record_output(m_actual, D_actual, m_est, D_est, model_type):
     """
     Record error and image output
@@ -67,8 +83,7 @@ def record_output(m_actual, D_actual, m_est, D_est, model_type):
     np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
 
     # Print error
-    def get_rmse(a, b):
-        return math.sqrt(np.mean((a - b)**2))
+
     m_rmse = str(round(get_rmse(m_actual, m_est), 2))
     print("RMSE for m: " + m_rmse)
     D_rmse = str(round(get_rmse(D_actual, D_est), 2))
@@ -126,9 +141,46 @@ if __name__ == "__main__":
     p2 = multiprocessing.Process(target=run_segmented_inference,
                                  args=(seg_iterations, mcmc_iterations, image, record))
     p2.start()
+
+    p3 = multiprocessing.Process(target=run_independent_inference,
+                                 args=(mcmc_iterations, image, record))
+    p3.start()
     p1.join()
     p2.join()
-    m_est_I, D_est_I = record['crf']
+    p3.join()
+    m_est_C, D_est_C = record['crf']
     m_est_S, D_est_S = record['seg']
+    m_est_I, D_est_I = record['ind']
 
-    record_all_output(m_actual, D_actual, m_est_I, D_est_I, m_est_S, D_est_S)
+    C_rmse = get_rmse(m_est_C, m_actual)
+    S_rmse = get_rmse(m_est_S, m_actual)
+    I_rmse = get_rmse(m_est_I, m_actual)
+
+    m_titles = ["CRF (RMSE: " + str(round(C_rmse, 2)) + ")",
+                "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
+                "Independent (RMSE: " + str(round(I_rmse, 2)) + ")"]
+
+    p = plot_compare_predictions(actual=m_actual,
+                                 preds=[m_est_C, m_est_S, m_est_I],
+                                 fig_title="Mineral assemblage predictions as RGB",
+                                 subplot_titles=m_titles)
+
+    p.savefig("output/figures/m_compare.png", bbox_inches='tight')
+
+    m_titles = ["CRF (RMSE: " + str(round(C_rmse, 2)) + ")",
+                "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
+                "Independent (RMSE:  " + str(round(I_rmse, 2)) + ")"]
+
+    # Grain sizes
+    C_rmse_D = get_rmse(D_est_C, D_actual)
+    S_rmse_D = get_rmse(D_est_S, D_actual)
+    I_rmse_D = get_rmse(D_est_I, D_actual)
+    m_titles = ["CRF (RMSE: " + str(round(C_rmse_D, 2)) + ")",
+                "Segmented (RMSE: " + str(round(S_rmse_D, 2)) + ")",
+                "Independent (RMSE: " + str(round(I_rmse_D, 2)) + ")"]
+    p = plot_compare_predictions(actual=D_actual,
+                                 preds=[D_est_C, D_est_S, D_est_I],
+                                 fig_title="Mineral assemblage predictions as RGB",
+                                 subplot_titles=m_titles,
+                                 interp=True)
+    p.savefig("output/figures/D_compare.png", bbox_inches='tight')
