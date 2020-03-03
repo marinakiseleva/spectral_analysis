@@ -13,7 +13,7 @@ import math
 
 
 from model.hapke_model import get_r_mixed_hapke_estimate
-from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS
+from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS, GRAIN_SIZE_MIN, GRAIN_SIZE_MAX
 
 
 def sample_dirichlet(x):
@@ -72,9 +72,7 @@ def get_D_prob(X):
     p(x) = 1 / (b-a)
     :param X: vector grain size
     """
-    min_grain_size = 25
-    max_grain_size = 50
-    return 1 / (max_grain_size - min_grain_size)
+    return 1 / (GRAIN_SIZE_MAX - GRAIN_SIZE_MIN)
 
 
 def get_likelihood(d, m, D):
