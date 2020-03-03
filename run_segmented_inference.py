@@ -5,6 +5,7 @@ Main script to generate data and run inference on it.
 from model.segmentation import segment_image, get_superpixels
 from model.inference import infer_segmented_image
 from preprocessing.generate_data import generate_image
+from utils.plotting import plot_compare_predictions
 from utils.constants import NUM_ENDMEMBERS
 
 import numpy as np
@@ -19,6 +20,7 @@ def run_segmented_inference(seg_iterations, mcmc_iterations, image, rec=None):
                            image=image.r_image
                            )
     superpixels = get_superpixels(graphs)
+    print("Number of superpixels: " + str(len(superpixels)))
 
     m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
                                      superpixels=superpixels)
@@ -47,9 +49,9 @@ def run_segmented_inference(seg_iterations, mcmc_iterations, image, rec=None):
 if __name__ == "__main__":
     num_mixtures = 5
     grid_res = 4
-    noise_scale = 0.01  # 0.001
+    noise_scale = 0.001  # 0.001
     res = 8
-    seg_iterations = 10
+    seg_iterations = 10000
     mcmc_iterations = 5
 
     # Print metadata
@@ -68,7 +70,7 @@ if __name__ == "__main__":
                            noise_scale=noise_scale,
                            res=res)
     m_est, D_est = run_segmented_inference(
-        seg_iterations, mcmc_iterations, image, rec=None)
+        seg_iterations, mcmc_iterations, image)
 
     m_actual = image.m_image
     D_actual = image.D_image
@@ -87,3 +89,10 @@ if __name__ == "__main__":
     D_rmse = str(round(get_rmse(D_actual, D_est), 2))
     print("RMSE for m: " + m_rmse)
     print("RMSE for D: " + D_rmse)
+
+    p = plot_compare_predictions(actual=m_actual,
+                                 preds=[m_est],  # add m_est_Original if want
+                                 fig_title="Mineral assemblage comparison",
+                                 subplot_titles=["Segmented, RMSE: " + str(m_rmse)],
+                                 interp=False)
+    p.savefig("output/figures/segmented/m_compare.png", bbox_inches='tight')

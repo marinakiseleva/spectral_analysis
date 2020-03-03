@@ -95,9 +95,9 @@ def record_output(m_actual, D_actual, m_est, D_est, model_type):
 if __name__ == "__main__":
     num_mixtures = 5
     grid_res = 4
-    noise_scale = 0.01  # 0.001
+    noise_scale = 0.001  # 0.001
     res = 8
-    seg_iterations = 100000
+    seg_iterations = 10000
     mcmc_iterations = 500  # 10000
 
     # Print metadata
