@@ -13,7 +13,7 @@ import math
 
 
 from model.hapke_model import get_r_mixed_hapke_estimate
-from utils.constants import c_wavelengths, pure_endmembers
+from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS
 
 
 def sample_dirichlet(x):
@@ -77,7 +77,7 @@ def get_D_prob(X):
     return 1 / (max_grain_size - min_grain_size)
 
 
-def get_log_likelihood(d, m, D):
+def get_likelihood(d, m, D):
     """
     p(d|m, D)
     Get likelihood of reflectance spectra d, given the mineral assemblage and grain size.
@@ -97,7 +97,18 @@ def get_log_likelihood(d, m, D):
     if y < 10**-310:
         y = 10**-310
 
-    return math.log(y)
+    return y
+
+
+def get_log_likelihood(d, m, D):
+    """
+    log (p(d|m, D))
+    Get log likelihood of reflectance spectra d, given the mineral assemblage and grain size.
+    :param d: Spectral reflectance data, as Numpy vector
+    :param m: Dict from SID to abundance
+    :param D: Dict from SID to grain size
+    """
+    return math.log(get_likelihood(d, m, D))
 
 
 def transition_model(cur_m, cur_D):
@@ -140,6 +151,7 @@ def infer_datapoint(iterations, d):
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
     """
+    # Initialize with 1/3 each mineral and grain size 30 for each
     cur_m = np.array([.33] * 3)
     cur_D = np.array([30] * 3)
 
@@ -164,7 +176,7 @@ def infer_datapoint(iterations, d):
 def infer_segmented_image(iterations, superpixels):
     """
     Infer m and D for each superpixel 
-    :param superpixels: List of reflectances
+    :param superpixels: List of reflectances (each is Numpy array)
     """
     # Use 1/4 of CPUs
     num_processes = int(multiprocessing.cpu_count() / 4)
@@ -233,5 +245,176 @@ def infer_image(iterations, image):
         m, D = pair
         m_image[i, j] = m
         D_image[i, j] = D
+
+    return m_image, D_image
+
+
+def init_gibbs(image):
+    """
+    Set random mineral & grain  assemblage for each pixel and return 3D Numpy array with 3rd dimension as assemblage
+    :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
+    """
+    num_rows = image.shape[0]
+    num_cols = image.shape[1]
+    m_image = np.zeros((num_rows, num_cols, NUM_ENDMEMBERS))
+    D_image = np.zeros((num_rows, num_cols, NUM_ENDMEMBERS))
+    for i in range(num_rows):
+        for j in range(num_cols):
+            reflectance = image[i, j]
+
+            rand_m = sample_dirichlet(np.array([.33] * 3))
+            rand_D = sample_multivariate(np.array([30] * 3))
+
+            m_image[i, j] = rand_m
+            D_image[i, j] = rand_D
+
+    return m_image, D_image
+
+
+def get_posterior_estimate(d, m, D):
+    """
+    Get estimate of posterior in log.
+    p(m,D|d) = p(d|m, D) p(m) p(D)
+    """
+    m_prior = get_m_prob(m)
+    D_prior = get_D_prob(D)
+    m_dict = convert_arr_to_dict(m)
+    D_dict = convert_arr_to_dict(D)
+    ll = get_likelihood(d, m_dict, D_dict)
+    return ll * m_prior * D_prior
+
+
+def get_SAD(a, b):
+    """
+    Get spectral angle distance:
+        d(i,j) =  (i^T * j) / ( ||i|| ||j|| )
+    :param a: Numpy vector
+    :param b: Numpy vector
+    """
+    n = np.dot(a.transpose(), b)
+    d = np.linalg.norm(a) * np.linalg.norm(b)
+    return np.arccos(n / d)
+
+
+def get_crf_posterior(m_image, D_image, i, j, m, D, d):
+    """
+    Compute
+    - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
+     :param m_image: 3D Numpy array, mineral assemblages for pixels
+    :param D_image: 3D Numpy array, grain sizes for pixels
+    :param i: row index for datapoint d
+    :param j: col index for datapoint d
+    :param m: Mineral assemblage for pixel i,j to consider
+    :param D: Grain sizes for pixel i,j to consider
+    :param d: 1 spectral sample (1D Numpy vector)
+    """
+
+    e_spectral = get_posterior_estimate(d, m, D)
+
+    num_rows = m_image.shape[0]
+    num_cols = m_image.shape[1]
+    # get energy of neighbors
+    n_energy = 0
+    cur_row = i
+    cur_col = j
+    row_above = i - 1
+    row_below = i + 1
+    left_col = j - 1
+    right_col = j + 1
+
+    if row_above >= 0:
+        # Above
+        n_energy += get_SAD(m_image[row_above, j], m)
+        if left_col >= 0:
+            # Top left
+            n_energy += get_SAD(m_image[row_above, left_col], m)
+        if right_col < num_cols:
+            # Top right
+            n_energy += get_SAD(m_image[row_above, right_col], m)
+
+    if row_below < num_rows:
+        # Below
+        n_energy += get_SAD(m_image[row_below, j], m)
+        if left_col >= 0:
+            # Bottom left
+            n_energy += get_SAD(m_image[row_below, left_col], m)
+        if right_col < num_cols:
+            # Top right
+            n_energy += get_SAD(m_image[row_below, right_col], m)
+
+    if left_col >= 0:
+        # Left
+        n_energy += get_SAD(m_image[cur_row, left_col], m)
+    if right_col < num_cols:
+        # Right
+        n_energy += get_SAD(m_image[cur_row, right_col], m)
+
+    beta = 1
+    energy = e_spectral * math.exp(n_energy * beta)
+
+    return energy
+
+
+def infer_crf_datapoint(m_image, D_image, i, j, d):
+    """
+    Run metropolis algorithm (MCMC) to estimate m and D using CRF,
+     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
+     Return m_image and D_image with updated values 
+    :param iterations: Number of iterations to run over
+    :param m_image: 3D Numpy array, mineral assemblages for pixels
+    :param D_image: 3D Numpy array, grain sizes for pixels
+    :param i: row index for datapoint d
+    :param j: col index for datapoint d
+    :param d: 1 spectral sample (1D Numpy vector)
+    """
+    cur_m = m_image[i, j]
+    cur_D = D_image[i, j]
+    # Determine whether or not to accept the new parameters, based on the
+    # ratio of log (likelihood*priors)
+    new_m, new_D = transition_model(cur_m, cur_D)
+
+    cur = get_crf_posterior(m_image, D_image, i, j, cur_m, cur_D, d)
+    new = get_crf_posterior(m_image, D_image, i, j, new_m, new_D, d)
+
+    ratio = new / cur
+
+    u = np.random.uniform(0, 1)
+    if ratio > u:
+        cur_m = new_m
+        cur_D = new_D
+    m_image[i, j] = cur_m
+    D_image[i, j] = cur_D
+    return m_image, D_image
+
+
+def infer_crf_image(iterations, image):
+    """
+    Infer m and D for entire image by minimizing:
+    - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
+    using Gibbs sampling. 
+    1. Initialize random mineral assemblages for each pixel
+    2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel. 
+    :param iterations: Number of MCMC iterations to run for each datapoint 
+    :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
+    """
+
+    num_rows = image.shape[0]
+    num_cols = image.shape[1]
+    # Mineral assemblage predictions
+    m_image = np.ones((num_rows, num_cols, 3))
+    # Grain size predictions
+    D_image = np.ones((num_rows, num_cols, 3))
+
+    print("Initialize pixels in image... ")
+    image_reflectances = image
+    m_image, D_image = init_gibbs(image)
+    # For X iterations
+    for iteration in range(iterations):
+        # Iterate over each pixel in image
+        for i in range(num_rows):
+            for j in range(num_cols):
+                d = image[i, j]
+                m_image, D_image = infer_crf_datapoint(m_image, D_image, i, j, d)
+        print("Finished iteration " + str(iteration) + "/" + str(iterations))
 
     return m_image, D_image
