@@ -11,6 +11,8 @@ FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 240
 
+DISTANCE_METRIC = 'SAD'
+
 #########################################
 # Below are constants for the 3 pure endmembers:
 # olivine

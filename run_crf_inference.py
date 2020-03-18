@@ -6,18 +6,43 @@ from model.segmentation import segment_image, get_superpixels
 from model.inference import infer_crf_image
 from preprocessing.generate_data import generate_image
 from utils.plotting import plot_compare_predictions
-from utils.constants import NUM_ENDMEMBERS
+from utils.constants import NUM_ENDMEMBERS, DISTANCE_METRIC
+import utils.constants as consts
 
 import numpy as np
 import math
 
+
+save_dir = "output/data/crf/"
+
+
+def run_crf(distance_metric, image, mcmc_iterations):
+    """
+    Run CRF with passed-in distance metric
+    """
+    consts.DISTANCE_METRIC = distance_metric
+
+    print("Reset distance metric to " + str(distance_metric))
+
+    m_est, D_est = infer_crf_image(iterations=mcmc_iterations,
+                                   image=image)
+
+    np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
+    np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
+
+    return m_est
+
+
+def get_rmse(a, b):
+    # RMSE
+    return math.sqrt(np.mean((a - b)**2))
 
 if __name__ == "__main__":
     num_mixtures = 5
     grid_res = 4
     noise_scale = 0.01  # 0.001
     res = 8
-    mcmc_iterations = 500
+    mcmc_iterations = 100
 
     # Print metadata
     print("Generating data with: ")
@@ -34,31 +59,23 @@ if __name__ == "__main__":
                            noise_scale=noise_scale,
                            res=res)
 
-    m_est, D_est = infer_crf_image(iterations=mcmc_iterations,
-                                   image=image.r_image)
-
     m_actual = image.m_image
     D_actual = image.D_image
 
+    m_est = run_crf('SAD', image.r_image, mcmc_iterations)
+    m_rmse = str(round(get_rmse(m_actual, m_est), 2))
+
+    m_est_Euc = run_crf('Euclidean', image.r_image, mcmc_iterations)
+    m_rmse_Euc = str(round(get_rmse(m_actual, m_est), 2))
+
     # Save output
-    save_dir = "output/data/crf/"
     np.savetxt(save_dir + "m_actual.txt", m_actual.flatten())
     np.savetxt(save_dir + "D_actual.txt", D_actual.flatten())
-    np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
-    np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
-
-    # Print error
-    def get_rmse(a, b):
-        return math.sqrt(np.mean((a - b)**2))
-    m_rmse = str(round(get_rmse(m_actual, m_est), 2))
-    D_rmse = str(round(get_rmse(D_actual, D_est), 2))
-    print("RMSE for m: " + m_rmse)
-    print("RMSE for D: " + D_rmse)
-
     p = plot_compare_predictions(actual=m_actual,
-                                 preds=[m_est],  # add m_est_Original if want
+                                 preds=[m_est, m_est_Euc],  # add m_est_Original if want
                                  fig_title="Mineral assemblage comparison",
-                                 subplot_titles=["CRF Estimated, RMSE: " + str(m_rmse)],
+                                 subplot_titles=[
+                                     "CRF w/ SAD, RMSE: " + str(m_rmse), "CRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
                                  interp=False)
 
     p.savefig("output/figures/crf/m_compare.png", bbox_inches='tight')

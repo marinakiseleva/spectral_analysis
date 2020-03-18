@@ -14,6 +14,7 @@ import math
 
 from model.hapke_model import get_r_mixed_hapke_estimate
 from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS, GRAIN_SIZE_MIN, GRAIN_SIZE_MAX
+import utils.constants as consts
 
 
 def sample_dirichlet(x):
@@ -294,6 +295,17 @@ def get_SAD(a, b):
     return np.arccos(n / d)
 
 
+def get_distance(a,  b):
+    """
+    Get distance between 2 mineral assemblage vectors
+    """
+    if consts.DISTANCE_METRIC == 'SAD':
+        return get_SAD(a, b)
+    else:
+        euclidean_dist = np.linalg.norm(a - b)
+        return euclidean_dist
+
+
 def get_crf_posterior(m_image, D_image, i, j, m, D, d):
     """
     Compute
@@ -322,30 +334,30 @@ def get_crf_posterior(m_image, D_image, i, j, m, D, d):
 
     if row_above >= 0:
         # Above
-        n_energy += get_SAD(m_image[row_above, j], m)
+        n_energy += get_distance(m_image[row_above, j], m)
         if left_col >= 0:
             # Top left
-            n_energy += get_SAD(m_image[row_above, left_col], m)
+            n_energy += get_distance(m_image[row_above, left_col], m)
         if right_col < num_cols:
             # Top right
-            n_energy += get_SAD(m_image[row_above, right_col], m)
+            n_energy += get_distance(m_image[row_above, right_col], m)
 
     if row_below < num_rows:
         # Below
-        n_energy += get_SAD(m_image[row_below, j], m)
+        n_energy += get_distance(m_image[row_below, j], m)
         if left_col >= 0:
             # Bottom left
-            n_energy += get_SAD(m_image[row_below, left_col], m)
+            n_energy += get_distance(m_image[row_below, left_col], m)
         if right_col < num_cols:
             # Top right
-            n_energy += get_SAD(m_image[row_below, right_col], m)
+            n_energy += get_distance(m_image[row_below, right_col], m)
 
     if left_col >= 0:
         # Left
-        n_energy += get_SAD(m_image[cur_row, left_col], m)
+        n_energy += get_distance(m_image[cur_row, left_col], m)
     if right_col < num_cols:
         # Right
-        n_energy += get_SAD(m_image[cur_row, right_col], m)
+        n_energy += get_distance(m_image[cur_row, right_col], m)
 
     beta = 1
     energy = e_spectral * math.exp(n_energy * beta)
@@ -395,7 +407,6 @@ def infer_crf_image(iterations, image):
     :param iterations: Number of MCMC iterations to run for each datapoint 
     :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
     """
-
     num_rows = image.shape[0]
     num_cols = image.shape[1]
     # Mineral assemblage predictions
