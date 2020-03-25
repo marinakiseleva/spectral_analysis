@@ -3,7 +3,7 @@ Main script to generate data and run inference on it.
 """
 
 from model.segmentation import segment_image, get_superpixels
-from model.inference import infer_crf_image
+from model.inference import infer_mrf_image
 from preprocessing.generate_data import generate_image
 from utils.plotting import plot_compare_predictions
 from utils.constants import NUM_ENDMEMBERS, DISTANCE_METRIC
@@ -13,18 +13,18 @@ import numpy as np
 import math
 
 
-save_dir = "output/data/crf/"
+save_dir = "output/data/mrf/"
 
 
-def run_crf(distance_metric, image, mcmc_iterations):
+def run_mrf(distance_metric, image, mcmc_iterations):
     """
-    Run CRF with passed-in distance metric
+    Run MRF with passed-in distance metric
     """
     consts.DISTANCE_METRIC = distance_metric
 
     print("Reset distance metric to " + str(distance_metric))
 
-    m_est, D_est = infer_crf_image(iterations=mcmc_iterations,
+    m_est, D_est = infer_mrf_image(iterations=mcmc_iterations,
                                    image=image)
 
     np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.01  # 0.001
     res = 8
-    mcmc_iterations = 100
+    mcmc_iterations = 5
 
     # Print metadata
     print("Generating data with: ")
@@ -62,10 +62,10 @@ if __name__ == "__main__":
     m_actual = image.m_image
     D_actual = image.D_image
 
-    m_est = run_crf('SAD', image.r_image, mcmc_iterations)
+    m_est = run_mrf('SAD', image.r_image, mcmc_iterations)
     m_rmse = str(round(get_rmse(m_actual, m_est), 2))
 
-    m_est_Euc = run_crf('Euclidean', image.r_image, mcmc_iterations)
+    m_est_Euc = run_mrf('Euclidean', image.r_image, mcmc_iterations)
     m_rmse_Euc = str(round(get_rmse(m_actual, m_est), 2))
 
     # Save output
@@ -75,7 +75,7 @@ if __name__ == "__main__":
                                  preds=[m_est, m_est_Euc],  # add m_est_Original if want
                                  fig_title="Mineral assemblage comparison",
                                  subplot_titles=[
-                                     "CRF w/ SAD, RMSE: " + str(m_rmse), "CRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
+                                     "MRF w/ SAD, RMSE: " + str(m_rmse), "MRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
                                  interp=False)
 
-    p.savefig("output/figures/crf/m_compare.png", bbox_inches='tight')
+    p.savefig("output/figures/mrf/m_compare.png", bbox_inches='tight')

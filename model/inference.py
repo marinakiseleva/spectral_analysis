@@ -306,7 +306,7 @@ def get_distance(a,  b):
         return euclidean_dist
 
 
-def get_crf_posterior(m_image, D_image, i, j, m, D, d):
+def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
     """
     Compute
     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
@@ -365,9 +365,9 @@ def get_crf_posterior(m_image, D_image, i, j, m, D, d):
     return energy
 
 
-def infer_crf_datapoint(m_image, D_image, i, j, d):
+def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
-    Run metropolis algorithm (MCMC) to estimate m and D using CRF,
+    Run metropolis algorithm (MCMC) to estimate m and D using MRF,
      - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
      Return m_image and D_image with updated values 
     :param iterations: Number of iterations to run over
@@ -383,8 +383,8 @@ def infer_crf_datapoint(m_image, D_image, i, j, d):
     # ratio of log (likelihood*priors)
     new_m, new_D = transition_model(cur_m, cur_D)
 
-    cur = get_crf_posterior(m_image, D_image, i, j, cur_m, cur_D, d)
-    new = get_crf_posterior(m_image, D_image, i, j, new_m, new_D, d)
+    cur = get_mrf_posterior(m_image, D_image, i, j, cur_m, cur_D, d)
+    new = get_mrf_posterior(m_image, D_image, i, j, new_m, new_D, d)
 
     ratio = new / cur
 
@@ -397,7 +397,7 @@ def infer_crf_datapoint(m_image, D_image, i, j, d):
     return m_image, D_image
 
 
-def infer_crf_image(iterations, image):
+def infer_mrf_image(iterations, image):
     """
     Infer m and D for entire image by minimizing:
     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
@@ -429,7 +429,7 @@ def infer_crf_image(iterations, image):
         for i in rows:
             for j in cols:
                 d = image[i, j]
-                m_image, D_image = infer_crf_datapoint(m_image, D_image, i, j, d)
+                m_image, D_image = infer_mrf_datapoint(m_image, D_image, i, j, d)
         print("Finished iteration " + str(iteration) + "/" + str(iterations))
 
     return m_image, D_image

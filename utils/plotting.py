@@ -123,7 +123,7 @@ from textwrap import wrap
 
 def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=False):
     """
-    Compare actual to 2 different predictions
+    Compare actual to different predictions
     :param actual: Numpy 3D array with 2 dimensions as image and 3d dimension as array of values (for actual image)
     :param preds: List of predicted images (2d Numpy arrays)
     :param fig_title: Title of entire Figure

@@ -3,7 +3,7 @@ Main script to generate data and run inference on it.
 """
 
 
-from model.inference import infer_crf_image, infer_segmented_image, infer_image
+from model.inference import infer_mrf_image, infer_segmented_image, infer_image
 from model.segmentation import segment_image, get_superpixels
 from preprocessing.generate_data import generate_image
 from utils.plotting import *
@@ -16,15 +16,15 @@ import math
 import matplotlib.pyplot as plt
 
 
-def run_crf_inference(iterations, image, rec=None):
+def run_mrf_inference(iterations, image, rec=None):
     """
     Run pixel-independent inference
     """
-    m_est, D_est = infer_crf_image(iterations=iterations,
+    m_est, D_est = infer_mrf_image(iterations=iterations,
                                    image=image.r_image)
 
     if rec is not None:
-        rec['crf'] = [m_est, D_est]
+        rec['mrf'] = [m_est, D_est]
     return m_est, D_est
 
 
@@ -44,10 +44,10 @@ def record_all_output(m_actual, D_actual, m_est_I, D_est_I, m_est_S, D_est_S):
     """
     """
     m_rmse_I, D_rmse_I = record_output(
-        m_actual, D_actual, m_est_I, D_est_I, 'crf')
+        m_actual, D_actual, m_est_I, D_est_I, 'mrf')
     m_rmse_S, D_rmse_S = record_output(m_actual, D_actual, m_est_S, D_est_S, 'segmented')
 
-    m_titles = ["CRF (RMSE: " + m_rmse_I + ")",
+    m_titles = ["MRF (RMSE: " + m_rmse_I + ")",
                 "Segmented (RMSE: " + m_rmse_S + ")"]
     p = plot_compare_predictions(actual=m_actual,
                                  preds=[m_est_I, m_est_S],
@@ -55,7 +55,7 @@ def record_all_output(m_actual, D_actual, m_est_I, D_est_I, m_est_S, D_est_S):
                                  subplot_titles=m_titles)
     p.savefig("output/figures/m_compare.png", bbox_inches='tight')
 
-    D_titles = ["CRF (RMSE: " + D_rmse_I + ")",
+    D_titles = ["MRF (RMSE: " + D_rmse_I + ")",
                 "Segmented (RMSE: " + D_rmse_S + ")"]
     p = plot_compare_predictions(actual=D_actual,
                                  preds=[D_est_I, D_est_S],
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     noise_scale = 0.001  # 0.001
     res = 8
     seg_iterations = 10000
-    mcmc_iterations = 500  # 10000
+    mcmc_iterations = 1000  # 10000
 
     # Print metadata
     print("Generating data with: ")
@@ -135,7 +135,7 @@ if __name__ == "__main__":
 
     manager = multiprocessing.Manager()
     record = manager.dict()
-    p1 = multiprocessing.Process(target=run_crf_inference,
+    p1 = multiprocessing.Process(target=run_mrf_inference,
                                  args=(mcmc_iterations, image, record))
     p1.start()
     p2 = multiprocessing.Process(target=run_segmented_inference,
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     p1.join()
     p2.join()
     p3.join()
-    m_est_C, D_est_C = record['crf']
+    m_est_C, D_est_C = record['mrf']
     m_est_S, D_est_S = record['seg']
     m_est_I, D_est_I = record['ind']
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     S_rmse = get_rmse(m_est_S, m_actual)
     I_rmse = get_rmse(m_est_I, m_actual)
 
-    m_titles = ["CRF (RMSE: " + str(round(C_rmse, 2)) + ")",
+    m_titles = ["MRF (RMSE: " + str(round(C_rmse, 2)) + ")",
                 "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
                 "Independent (RMSE: " + str(round(I_rmse, 2)) + ")"]
 
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     p.savefig("output/figures/m_compare.png", bbox_inches='tight')
 
-    m_titles = ["CRF (RMSE: " + str(round(C_rmse, 2)) + ")",
+    m_titles = ["MRF (RMSE: " + str(round(C_rmse, 2)) + ")",
                 "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
                 "Independent (RMSE:  " + str(round(I_rmse, 2)) + ")"]
 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     C_rmse_D = get_rmse(D_est_C, D_actual)
     S_rmse_D = get_rmse(D_est_S, D_actual)
     I_rmse_D = get_rmse(D_est_I, D_actual)
-    m_titles = ["CRF (RMSE: " + str(round(C_rmse_D, 2)) + ")",
+    m_titles = ["MRF (RMSE: " + str(round(C_rmse_D, 2)) + ")",
                 "Segmented (RMSE: " + str(round(S_rmse_D, 2)) + ")",
                 "Independent (RMSE: " + str(round(I_rmse_D, 2)) + ")"]
     p = plot_compare_predictions(actual=D_actual,
