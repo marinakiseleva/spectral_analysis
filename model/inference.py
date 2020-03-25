@@ -174,7 +174,7 @@ def infer_datapoint(iterations, d):
 
 def infer_segmented_image(iterations, superpixels):
     """
-    Infer m and D for each superpixel 
+    Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)
     """
     # Use 1/4 of CPUs
@@ -198,7 +198,7 @@ def infer_segmented_image(iterations, superpixels):
 
 def infer_image(iterations, image):
     """
-    Infer m and D for entire image
+    Infer m and D for entire image - each pixel indepedently
     :param iterations: Number of MCMC iterations to run for each datapoint 
     :param image: 3D Numpy array with 3d dimension equal to len(c_wavelengths)
     """
@@ -417,11 +417,17 @@ def infer_crf_image(iterations, image):
     print("Initialize pixels in image... ")
     image_reflectances = image
     m_image, D_image = init_gibbs(image)
-    # For X iterations
+
+    rows = np.arange(0, num_rows)
+    cols = np.arange(0, num_cols)
+
     for iteration in range(iterations):
+        # Randomize order of rows and columns each iteration
+        np.random.shuffle(cols)
+        np.random.shuffle(rows)
         # Iterate over each pixel in image
-        for i in range(num_rows):
-            for j in range(num_cols):
+        for i in rows:
+            for j in cols:
                 d = image[i, j]
                 m_image, D_image = infer_crf_datapoint(m_image, D_image, i, j, d)
         print("Finished iteration " + str(iteration) + "/" + str(iterations))
