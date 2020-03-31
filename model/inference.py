@@ -93,8 +93,10 @@ def get_likelihood(d, m, D):
     y = multivariate_normal.pdf(x=d, mean=r_e, cov=covariance)
 
     # Threshold min values to not overflow
-    if y < 10**-310:
-        y = 10**-310
+    # if y < 10**-310:
+    #     y = 10**-310
+    if y < 10**-10:
+        y = 10**-10
 
     return y
 
@@ -133,7 +135,7 @@ def convert_arr_to_dict(values):
 
 def get_log_posterior_estimate(d, m, D):
     """
-    Get estimate of posterior in log.
+    Get estimate of posterior in log : log p(m, D|d)
     log p(d|m, D) + log p(m) + log p(D)
     """
     m_prior = math.log(get_m_prob(m))
@@ -199,7 +201,7 @@ def infer_segmented_image(iterations, superpixels):
 def infer_image(iterations, image):
     """
     Infer m and D for entire image - each pixel indepedently
-    :param iterations: Number of MCMC iterations to run for each datapoint 
+    :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3d dimension equal to len(c_wavelengths)
     """
 
@@ -272,7 +274,7 @@ def init_gibbs(image):
 
 def get_posterior_estimate(d, m, D):
     """
-    Get estimate of posterior in log.
+    Get estimate of posterior
     p(m,D|d) = p(d|m, D) p(m) p(D)
     """
     m_prior = get_m_prob(m)
@@ -309,7 +311,7 @@ def get_distance(a,  b):
 def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
     """
     Compute
-    - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
+    log(exp( log(P(y_i | x_i)) - beta * sum_{n in neighbors} SAD(y_i, y_n) ) )
      :param m_image: 3D Numpy array, mineral assemblages for pixels
     :param D_image: 3D Numpy array, grain sizes for pixels
     :param i: row index for datapoint d
@@ -319,12 +321,10 @@ def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
     :param d: 1 spectral sample (1D Numpy vector)
     """
 
-    e_spectral = get_posterior_estimate(d, m, D)
-
     num_rows = m_image.shape[0]
     num_cols = m_image.shape[1]
     # get energy of neighbors
-    n_energy = 0
+    e_spatial = 0
     cur_row = i
     cur_col = j
     row_above = i - 1
@@ -334,42 +334,45 @@ def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
 
     if row_above >= 0:
         # Above
-        n_energy += get_distance(m_image[row_above, j], m)
+        e_spatial += get_distance(m_image[row_above, j], m)
         if left_col >= 0:
             # Top left
-            n_energy += get_distance(m_image[row_above, left_col], m)
+            e_spatial += get_distance(m_image[row_above, left_col], m)
         if right_col < num_cols:
             # Top right
-            n_energy += get_distance(m_image[row_above, right_col], m)
+            e_spatial += get_distance(m_image[row_above, right_col], m)
 
     if row_below < num_rows:
         # Below
-        n_energy += get_distance(m_image[row_below, j], m)
+        e_spatial += get_distance(m_image[row_below, j], m)
         if left_col >= 0:
             # Bottom left
-            n_energy += get_distance(m_image[row_below, left_col], m)
+            e_spatial += get_distance(m_image[row_below, left_col], m)
         if right_col < num_cols:
             # Top right
-            n_energy += get_distance(m_image[row_below, right_col], m)
+            e_spatial += get_distance(m_image[row_below, right_col], m)
 
     if left_col >= 0:
         # Left
-        n_energy += get_distance(m_image[cur_row, left_col], m)
+        e_spatial += get_distance(m_image[cur_row, left_col], m)
     if right_col < num_cols:
         # Right
-        n_energy += get_distance(m_image[cur_row, right_col], m)
+        e_spatial += get_distance(m_image[cur_row, right_col], m)
 
-    beta = 1
-    energy = e_spectral * math.exp(n_energy * beta)
+    beta = 100
+    e_spectral = get_log_posterior_estimate(d, m, D)
+    posterior = e_spectral - (e_spatial * beta)
 
-    return energy
+    # Old posterior calculation - works but unclear why.
+    # posterior = get_posterior_estimate(d, m, D) * math.exp(e_spatial * beta)
+    return posterior
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
-    Run metropolis algorithm (MCMC) to estimate m and D using MRF,
-     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
-     Return m_image and D_image with updated values 
+    Run metropolis algorithm (MCMC) to estimate m and D using posterior:
+      log(P(y_i | x_i)) - sum_{n in neighbors} SAD(y_i, y_n)
+     Return m_image and D_image with updated values
     :param iterations: Number of iterations to run over
     :param m_image: 3D Numpy array, mineral assemblages for pixels
     :param D_image: 3D Numpy array, grain sizes for pixels
@@ -379,8 +382,6 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
     cur_m = m_image[i, j]
     cur_D = D_image[i, j]
-    # Determine whether or not to accept the new parameters, based on the
-    # ratio of log (likelihood*priors)
     new_m, new_D = transition_model(cur_m, cur_D)
 
     cur = get_mrf_posterior(m_image, D_image, i, j, cur_m, cur_D, d)
@@ -401,10 +402,10 @@ def infer_mrf_image(iterations, image):
     """
     Infer m and D for entire image by minimizing:
     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
-    using Gibbs sampling. 
+    using Gibbs sampling.
     1. Initialize random mineral assemblages for each pixel
-    2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel. 
-    :param iterations: Number of MCMC iterations to run for each datapoint 
+    2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel.
+    :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
     """
     num_rows = image.shape[0]
