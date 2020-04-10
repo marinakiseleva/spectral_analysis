@@ -412,6 +412,22 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     return m_image, D_image
 
 
+def get_mrf_joint_prob(image, m_image, D_image):
+    """
+    Get the joint probability distribution for the entire MRF
+    """
+    num_rows = m_image.shape[0]
+    num_cols = m_image.shape[1]
+    joint_prob = 0
+    for x in range(num_rows):
+        for y in range(num_cols):
+            d = image[x, y]
+            m = m_image[x, y]
+            D = D_image[x, y]
+            joint_prob += get_mrf_joint(m_image, D_image, x, y, m, D, d)
+    return joint_prob
+
+
 def infer_mrf_image(iterations, image):
     """
     Infer m and D for entire image by minimizing:
@@ -445,6 +461,8 @@ def infer_mrf_image(iterations, image):
             for j in cols:
                 d = image[i, j]
                 m_image, D_image = infer_mrf_datapoint(m_image, D_image, i, j, d)
-        print("Finished iteration " + str(iteration) + "/" + str(iterations))
+        print("\n\nFinished iteration " + str(iteration) + "/" + str(iterations))
+        jp = get_mrf_joint_prob(image, m_image, D_image)
+        print("Joint probability density: " + str(round(jp, 4)))
 
     return m_image, D_image
