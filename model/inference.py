@@ -161,8 +161,8 @@ def infer_datapoint(iterations, d):
         # ratio of log (likelihood*priors)
         new_m, new_D = transition_model(cur_m, cur_D)
 
-        cur = get_log_posterior_estimate(d, cur_m, cur_D)
-        new = get_log_posterior_estimate(d, new_m, new_D)
+        cur = get_posterior_estimate(d, cur_m, cur_D)
+        new = get_posterior_estimate(d, new_m, new_D)
 
         ratio = new / cur
 
@@ -301,29 +301,27 @@ def get_distance(a,  b):
     """
     Get distance between 2 mineral assemblage vectors
     """
+
     if consts.DISTANCE_METRIC == 'SAD':
+        # spectral angle distance, SAD
         return get_SAD(a, b)
     else:
-        euclidean_dist = np.linalg.norm(a - b)
-        return euclidean_dist
+        # Euclidean
+        return np.linalg.norm(a - b)
 
 
-def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
+def get_spatial_energy(m_image, i, j, m):
     """
-    Compute
-    log(exp( log(P(y_i | x_i)) - beta * sum_{n in neighbors} SAD(y_i, y_n) ) )
-     :param m_image: 3D Numpy array, mineral assemblages for pixels
-    :param D_image: 3D Numpy array, grain sizes for pixels
-    :param i: row index for datapoint d
-    :param j: col index for datapoint d
+    Get spatial energy using default distance
+    :param m_image: 3D Numpy array, mineral assemblages for pixels
+    :param i: row index for datapoint
+    :param j: col index for datapoint
     :param m: Mineral assemblage for pixel i,j to consider
-    :param D: Grain sizes for pixel i,j to consider
-    :param d: 1 spectral sample (1D Numpy vector)
     """
 
     num_rows = m_image.shape[0]
     num_cols = m_image.shape[1]
-    # get energy of neighbors
+
     e_spatial = 0
     cur_row = i
     cur_col = j
@@ -331,6 +329,8 @@ def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
     row_below = i + 1
     left_col = j - 1
     right_col = j + 1
+
+    # Sum over distance between pixel and each neighbor
 
     if row_above >= 0:
         # Above
@@ -359,20 +359,34 @@ def get_mrf_posterior(m_image, D_image, i, j, m, D, d):
         # Right
         e_spatial += get_distance(m_image[cur_row, right_col], m)
 
-    beta = 100
-    e_spectral = get_log_posterior_estimate(d, m, D)
-    posterior = e_spectral - (e_spatial * beta)
+    return e_spatial
 
-    # Old posterior calculation - works but unclear why.
-    # posterior = get_posterior_estimate(d, m, D) * math.exp(e_spatial * beta)
+
+def get_mrf_joint(m_image, D_image, i, j, m, D, d):
+    """
+    Get joint probability distribution of MRF:
+    p(m,D) = exp{ P(y_i | x_i) - beta * sum_{n in neighbors} SAD(y_i, y_n) }
+    :param m_image: 3D Numpy array, mineral assemblages for pixels
+    :param D_image: 3D Numpy array, grain sizes for pixels
+    :param i: row index for datapoint d
+    :param j: col index for datapoint d
+    :param m: Mineral assemblage for pixel i,j to consider
+    :param D: Grain sizes for pixel i,j to consider
+    :param d: 1 spectral sample (1D Numpy vector)
+    """
+
+    # get energy of neighbors
+    e_spatial = get_spatial_energy(m_image, i, j, m)
+    beta = 100
+    e_spectral = get_posterior_estimate(d, m, D)
+    posterior = e_spectral - (beta * e_spatial)
     return posterior
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
-    Run metropolis algorithm (MCMC) to estimate m and D using posterior:
-      log(P(y_i | x_i)) - sum_{n in neighbors} SAD(y_i, y_n)
-     Return m_image and D_image with updated values
+    Run metropolis algorithm (MCMC) to estimate m and D using posterior 
+    Return m_image and D_image with updated values
     :param iterations: Number of iterations to run over
     :param m_image: 3D Numpy array, mineral assemblages for pixels
     :param D_image: 3D Numpy array, grain sizes for pixels
@@ -384,8 +398,8 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     cur_D = D_image[i, j]
     new_m, new_D = transition_model(cur_m, cur_D)
 
-    cur = get_mrf_posterior(m_image, D_image, i, j, cur_m, cur_D, d)
-    new = get_mrf_posterior(m_image, D_image, i, j, new_m, new_D, d)
+    cur = get_mrf_joint(m_image, D_image, i, j, cur_m, cur_D, d)
+    new = get_mrf_joint(m_image, D_image, i, j, new_m, new_D, d)
 
     ratio = new / cur
 
