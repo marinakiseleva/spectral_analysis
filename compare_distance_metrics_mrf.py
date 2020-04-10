@@ -62,6 +62,9 @@ if __name__ == "__main__":
     m_actual = image.m_image
     D_actual = image.D_image
 
+    m_est_SAD = run_mrf('SAD', image.r_image, mcmc_iterations)
+    m_rmse_SAD = str(round(get_rmse(m_actual, m_est_SAD), 2))
+
     m_est_Euc = run_mrf('Euclidean', image.r_image, mcmc_iterations)
     m_rmse_Euc = str(round(get_rmse(m_actual, m_est_Euc), 2))
 
@@ -69,10 +72,10 @@ if __name__ == "__main__":
     np.savetxt(save_dir + "m_actual.txt", m_actual.flatten())
     np.savetxt(save_dir + "D_actual.txt", D_actual.flatten())
     p = plot_compare_predictions(actual=m_actual,
-                                 preds=[m_est_Euc],  # add m_est_Original if want
+                                 preds=[m_est_SAD, m_est_Euc],
                                  fig_title="Mineral assemblage comparison",
                                  subplot_titles=[
-                                     "MRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
+                                     "MRF w/ SAD, RMSE: " + str(m_rmse_SAD), "MRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
                                  interp=False)
 
     p.savefig("output/figures/mrf/m_compare.png", bbox_inches='tight')
