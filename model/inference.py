@@ -1,7 +1,7 @@
 """
 Runs variational inference on the model to estimate the posterior p(m,D|d)
 """
-
+import sys
 from functools import partial
 import multiprocessing
 
@@ -379,8 +379,9 @@ def get_mrf_joint(m_image, D_image, i, j, m, D, d):
     e_spatial = get_spatial_energy(m_image, i, j, m)
     beta = 100
     e_spectral = get_posterior_estimate(d, m, D)
-    posterior = e_spectral - (beta * e_spatial)
-    return posterior
+
+    joint_prob = e_spectral - (beta * e_spatial)
+    return joint_prob
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
@@ -401,7 +402,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     cur = get_mrf_joint(m_image, D_image, i, j, cur_m, cur_D, d)
     new = get_mrf_joint(m_image, D_image, i, j, new_m, new_D, d)
 
-    ratio = new / cur
+    ratio = new - cur
 
     u = np.random.uniform(0, 1)
     if ratio > u:
