@@ -377,11 +377,20 @@ def get_mrf_joint(m_image, D_image, i, j, m, D, d):
 
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    beta = 100
+    beta = 1
     e_spectral = get_posterior_estimate(d, m, D)
-
-    joint_prob = e_spectral - (beta * e_spatial)
+    joint_prob = e_spectral * math.exp(-e_spatial * beta)
+    joint_prob_lp = get_log_posterior_estimate(d, m, D) * math.exp(-e_spatial * beta)
     return joint_prob
+
+
+def get_mrf_energy(m_image, D_image, i, j, m, D, d):
+
+    # get energy of neighbors
+    e_spatial = get_spatial_energy(m_image, i, j, m)
+    beta = 10
+    e_spectral = get_log_posterior_estimate(d, m, D)
+    return -e_spectral + (e_spatial * beta)
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
@@ -399,13 +408,13 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     cur_D = D_image[i, j]
     new_m, new_D = transition_model(cur_m, cur_D)
 
-    cur = get_mrf_joint(m_image, D_image, i, j, cur_m, cur_D, d)
-    new = get_mrf_joint(m_image, D_image, i, j, new_m, new_D, d)
+    cur = get_mrf_energy(m_image, D_image, i, j, cur_m, cur_D, d)
+    new = get_mrf_energy(m_image, D_image, i, j, new_m, new_D, d)
 
-    ratio = new - cur
+    ratio = new / cur
 
-    u = np.random.uniform(0, 1)
-    if ratio > u:
+    # u = np.random.uniform(0, 1)
+    if new < cur:
         cur_m = new_m
         cur_D = new_D
     m_image[i, j] = cur_m
