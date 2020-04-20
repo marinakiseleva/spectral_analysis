@@ -12,6 +12,7 @@ FIG_HEIGHT = 4
 DPI = 240
 
 DISTANCE_METRIC = 'SAD'
+BETA = 1
 
 #########################################
 # Below are constants for the 3 pure endmembers:

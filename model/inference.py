@@ -377,10 +377,10 @@ def get_mrf_joint(m_image, D_image, i, j, m, D, d):
 
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    beta = 1
     e_spectral = get_posterior_estimate(d, m, D)
-    joint_prob = e_spectral * math.exp(-e_spatial * beta)
-    joint_prob_lp = get_log_posterior_estimate(d, m, D) * math.exp(-e_spatial * beta)
+    joint_prob = e_spectral * math.exp(-e_spatial * consts.BETA)
+    joint_prob_lp = get_log_posterior_estimate(
+        d, m, D) * math.exp(-e_spatial * consts.BETA)
     return joint_prob
 
 
@@ -388,9 +388,8 @@ def get_mrf_energy(m_image, D_image, i, j, m, D, d):
 
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    beta = 10
     e_spectral = get_log_posterior_estimate(d, m, D)
-    return -e_spectral + (e_spatial * beta)
+    return -e_spectral + (e_spatial * consts.BETA)
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
