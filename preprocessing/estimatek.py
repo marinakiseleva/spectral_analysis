@@ -43,11 +43,11 @@ def get_reflectance_error(wavelength, r, n, k, D):
     return get_rmse(r, r_e)
 
 
-def get_D_avg_refl_error(sid, spectra_db, index, k):
+def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
     """
-    Gets average reflectance error over range of grain sizes
+    Gets average reflectance error over range of grain sizes for RELAB spectral sample
     :param sid: Spectrum ID
-    :param spectra_db: Pandas DataFrame of data
+    :param spectra_db: Pandas DataFrame of RELAB data
     :param index: Index of wavelength to check error on
     :param k: k value to evaluate
     """
@@ -56,7 +56,7 @@ def get_D_avg_refl_error(sid, spectra_db, index, k):
     grain_sizes = list(range(int(d_min), int(d_max)))
 
     # Get wavelength at wavelength index
-    wavelength = get_wavelengths(sid, spectra_db)[index]
+    wavelength = get_RELAB_wavelengths(sid, spectra_db)[index]
     # Get actual reflectance spectra from data, for this wavelength index
     r = get_reflectance_spectra(sid, spectra_db)[index]
 
@@ -70,6 +70,11 @@ def get_D_avg_refl_error(sid, spectra_db, index, k):
 
 
 def get_best_k(sid, spectra_db):
+    """
+    Estiamte best imagingary optical constant k for the reflectance of this endmeber
+    :param sid: Spectrum ID
+    :param spectra_db: Pandas DataFrame of RELAB data
+    """
     min_ks = []
     min_k_errors = []
 
@@ -85,7 +90,7 @@ def get_best_k(sid, spectra_db):
         pool = multiprocessing.Pool(num_processes)
 
         l_errors = []
-        func = partial(get_D_avg_refl_error, sid, spectra_db, index)
+        func = partial(get_RELAB_D_avg_refl_error, sid, spectra_db, index)
         # Multithread over different values in the k space
         l_errors = pool.map(func, k_space)
         pool.close()

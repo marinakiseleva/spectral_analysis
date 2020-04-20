@@ -41,7 +41,7 @@ def get_grain_sizes(spectrum_id, spectra_db):
     return min_grain_size, max_grain_size
 
 
-def get_wavelengths(spectrum_id, spectra_db, cut=True):
+def get_RELAB_wavelengths(spectrum_id, spectra_db, cut=True):
     r_data = get_reflectance_data(spectrum_id, spectra_db, cut)
     return r_data['Wavelength(micron)'].values
 
