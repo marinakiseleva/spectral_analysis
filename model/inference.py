@@ -411,9 +411,6 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     cur = get_mrf_energy(m_image, D_image, i, j, cur_m, cur_D, d)
     new = get_mrf_energy(m_image, D_image, i, j, new_m, new_D, d)
 
-    ratio = new / cur
-
-    # u = np.random.uniform(0, 1)
     if new < cur:
         cur_m = new_m
         cur_D = new_D
