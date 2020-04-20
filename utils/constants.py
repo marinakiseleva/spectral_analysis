@@ -18,7 +18,9 @@ DISTANCE_METRIC = 'SAD'
 BETA = 1
 
 #########################################
-# Below are constants for the 3 pure endmembers:
+# Below are constants for the 3 pure endmembers, for RELAB data and for
+# synthetic data testing
+
 # olivine
 # enstatite
 # anorthite
