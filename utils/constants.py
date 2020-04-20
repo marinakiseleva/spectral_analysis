@@ -2,9 +2,12 @@ import os
 
 
 # For data
+# ROOT_DIR is one level above module root
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
+# Module directory, contains model, preprocessing, etc.
+MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
-DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
+RELAB_DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
 # For plotting
 FIG_WIDTH = 6

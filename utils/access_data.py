@@ -1,5 +1,9 @@
+"""
+Accesses RELAB data for synthetic data testing.
+"""
+
 import pandas as pd
-from utils.constants import DATA_PATH, CATALOGUE_PATH, c_wavelengths
+from utils.constants import RELAB_DATA_PATH, CATALOGUE_PATH, c_wavelengths
 
 
 def get_data():
@@ -17,18 +21,6 @@ def get_data():
     file_name = CATALOGUE_PATH + "Sample_Catalogue.xls"
     Sample_Catalogue = pd.read_excel(file_name)
     Sample_Catalogue['SampleID'] = Sample_Catalogue['SampleID'].str.strip()
-
-    # file_name = CATALOGUE_PATH + "Chem_Analyses.xls"
-    # Chem_Analyses = pd.read_excel(file_name)
-
-    # file_name = CATALOGUE_PATH + "Modal_Mineralogy.xls"
-    # Modal_Mineralogy = pd.read_excel(file_name)
-    # Modal_Mineralogy['SampleID'] = Modal_Mineralogy['Sample ID'].str.strip()
-
-    # All endmember samples are in 'spectra_db_mixtures' except for pure
-    # sample_spectra_mixtures = pd.merge(left=spectra_db,
-    #                                    right=Modal_Mineralogy,
-    #                                    on='SampleID')
 
     spectra_db = pd.merge(left=Spectra_Catalogue,
                           right=Sample_Catalogue,
@@ -74,7 +66,7 @@ def get_reflectance_data(spectrum_id, spectra_db, cut):
     pi = pi.lower()
     pre_sampleid = sampleid[0:2].lower()
     spectrum_id = spectrum_id.lower()
-    file_name = DATA_PATH + pi + "/" + pre_sampleid + "/" + spectrum_id + ".txt"
+    file_name = RELAB_DATA_PATH + pi + "/" + pre_sampleid + "/" + spectrum_id + ".txt"
 
     reflectance_df = pd.read_csv(file_name, sep="\t", header=0, skiprows=1)
 
