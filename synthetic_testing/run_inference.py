@@ -38,7 +38,7 @@ if __name__ == "__main__":
     D_actual = image.D_image
 
     # Save output
-    save_dir = "output/data/independent/"
+    save_dir = "../output/data/independent/"
     np.savetxt(save_dir + "m_actual.txt", m_actual.flatten())
     np.savetxt(save_dir + "D_actual.txt", D_actual.flatten())
     np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())

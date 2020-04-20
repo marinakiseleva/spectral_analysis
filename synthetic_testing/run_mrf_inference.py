@@ -75,4 +75,4 @@ if __name__ == "__main__":
                                      "MRF w/ Euclidean, RMSE: " + str(m_rmse_Euc)],
                                  interp=False)
 
-    p.savefig("output/figures/mrf/m_compare.png", bbox_inches='tight')
+    p.savefig("../output/figures/mrf/m_compare.png", bbox_inches='tight')

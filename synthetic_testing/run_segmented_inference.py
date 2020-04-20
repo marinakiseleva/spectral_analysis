@@ -76,7 +76,7 @@ if __name__ == "__main__":
     D_actual = image.D_image
 
     # Save output
-    save_dir = "output/data/segmented/"
+    save_dir = "../output/data/segmented/"
     np.savetxt(save_dir + "m_actual.txt", m_actual.flatten())
     np.savetxt(save_dir + "D_actual.txt", D_actual.flatten())
     np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
@@ -95,4 +95,4 @@ if __name__ == "__main__":
                                  fig_title="Mineral assemblage comparison",
                                  subplot_titles=["Segmented, RMSE: " + str(m_rmse)],
                                  interp=False)
-    p.savefig("output/figures/segmented/m_compare.png", bbox_inches='tight')
+    p.savefig("../output/figures/segmented/m_compare.png", bbox_inches='tight')

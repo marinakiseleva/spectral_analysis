@@ -13,7 +13,7 @@ import numpy as np
 import math
 
 
-save_dir = "output/data/mrf/"
+save_dir = "../output/data/mrf/"
 
 
 def run_mrf(distance_metric, image, mcmc_iterations):
