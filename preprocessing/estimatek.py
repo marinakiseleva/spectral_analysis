@@ -23,7 +23,7 @@ pd.set_option('display.max_rows', None)
 
 
 ######################################################
-# Define constants
+# RELAB data estimation
 ######################################################
 
 
@@ -69,9 +69,9 @@ def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
     return sum(rmses) / len(rmses)
 
 
-def get_best_k(sid, spectra_db):
+def get_best_RELAB_k(sid, spectra_db):
     """
-    Estiamte best imagingary optical constant k for the reflectance of this endmeber
+    Estimate best imaginary optical constant k for the reflectance of this endmember
     :param sid: Spectrum ID
     :param spectra_db: Pandas DataFrame of RELAB data
     """
@@ -103,6 +103,75 @@ def get_best_k(sid, spectra_db):
         min_k_errors.append(min(l_errors))
 
     return np.array(min_ks), np.array(min_k_errors)
+
+
+######################################################
+# USGS data estimation
+######################################################
+
+def get_best_endmember_k(data, grainsize, n, k):
+    """ 
+    Gets average reflectance error over range of grain sizes for RELAB spectral sample
+    :param data: DataFrame of endmember wavelength, reflectance, standard deviation
+    :param n: Optical constant n
+    :param k: k value to evaluate
+    """
+    wavelengths = data['wavelength'].values
+    r = data['reflectance'].values
+
+    rmses = []
+    for index, wavelength in enumerate(wavelengths):
+
+        r_e = get_reflectance_hapke_estimate(
+            mu=USGS_mu,
+            mu_0=USGS_mu_0,
+            n=n,
+            k=k,
+            D=grainsize,
+            wavelengths=wavelengths[index])
+        rmses.append(get_rmse(r[index], r_e))
+
+    return sum(rmses) / len(rmses)
+
+
+def get_best_USGS_k(endmember):
+    """
+    Estimate best imaginary optical constant k for the reflectance of this endmember
+    :param endmember: Endmember name 
+    """
+
+    endmember_data = get_USGS_data(endmember)
+    grainsize = USGS_GRAIN_SIZES[endmember]
+    n = USGS_n[endmember]
+
+    # X values from 10^-14 to 1, in log space
+    X = 1000
+    k_space = np.logspace(-14, -1, X)
+    pool = multiprocessing.Pool(NUM_CPUS)
+    rmses = []
+    func = partial(get_best_endmember_k, endmember_data, grainsize, n)
+    # Multithread over different values in the k space
+    rmses = pool.map(func, k_space)
+    pool.close()
+    pool.join()
+    min_index = rmses.index(min(rmses))
+    min_k = k_space[min_index]
+    return min_k, rmses[min_index]
+
+
+def estimate_all_USGS_k():
+    """
+    Estimate k for all endmembers from USGS
+    """
+    members = USGS_GRAIN_SIZES.keys()
+    # Map endmember to best k, RMSE
+    members_k = {m: [] for m in members}
+
+    for endmember in members:
+        min_k, min_index = get_best_USGS_k(endmember)
+        members_k[endmember] = [min_k, min_index]
+    print(members_k)
+    return members_k
 
 
 ######################################################

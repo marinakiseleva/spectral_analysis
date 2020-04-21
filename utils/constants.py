@@ -1,7 +1,9 @@
 import os
 
 
-# For data
+"""
+DIRECTORIES
+"""
 # ROOT_DIR is one level above module root
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 # Module directory, contains model, preprocessing, etc.
@@ -9,13 +11,57 @@ MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 RELAB_DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
 
-# For plotting
+"""
+For plotting
+"""
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 240
 
+"""
+Model parameters
+"""
+NUM_CPUS = 6
 DISTANCE_METRIC = 'SAD'
 BETA = 1
+
+
+#########################################
+# Below are constants for the USGS Endmembers
+#########################################
+
+# Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
+USGS_OLIVINE_Fo51_GS = 25
+USGS_OLIVINE_Fo80_GS = 300
+USGS_AUGITE_GS = 35
+USGS_PIGEONITE_GS = 162
+USGS_LABRADORITE_GS = 162
+USGS_MAGNETITE_GS = 162
+USGS_BASALTIC_GLASS_GS = 60
+
+# Name to type dict
+USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
+                    'olivine (Fo80)': USGS_OLIVINE_Fo80_GS,
+                    'augite': USGS_AUGITE_GS,
+                    'labradorite': USGS_LABRADORITE_GS,
+                    'pigeonite': USGS_PIGEONITE_GS,
+                    'magnetite': USGS_MAGNETITE_GS}
+# 'baslatic glass': USGS_BASALTIC_GLASS_GS}
+
+# optical constants from Lapotre DOI:10.1002/2016JE005133
+USGS_n = {'olivine (Fo51)': 1.67,
+          'olivine (Fo80)': 1.67,
+          'augite': 1.7,
+          'labradorite': 1.7,
+          'pigeonite': 1.56,
+          'magnetite': 2.42}
+# 'baslatic glass': 1.5}
+
+# Cosine of incidence angle (30 deg)
+USGS_mu_0 = 0.8660254037844386
+# Cosine of emission angle (0 deg)
+USGS_mu = 1
+
 
 #########################################
 # Below are constants for the 3 pure endmembers, for RELAB data and for
@@ -102,7 +148,8 @@ all_sids = mixtures + pure_endmembers
 
 sids_n = {pure_olivine_sid: 1.66,
           pure_enstatite_sid: 1.66,
-          pure_anorthite_sid: 1.57}
+          pure_anorthite_sid: 1.57
+          }
 
 
 sids_densities = {pure_olivine_sid: 3.32,
@@ -111,7 +158,7 @@ sids_densities = {pure_olivine_sid: 3.32,
 
 
 # cosine of source_angle
-mu_0 = 0.8660254037844387
+mu_0 = 0.8660254037844386
 
 # cosine of detect angle
 mu = 1

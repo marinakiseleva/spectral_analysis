@@ -1,9 +1,34 @@
 """
-Accesses RELAB data for synthetic data testing.
+Accesses RELAB and USGS data 
 """
 
 import pandas as pd
-from utils.constants import RELAB_DATA_PATH, CATALOGUE_PATH, c_wavelengths
+from utils.constants import *
+
+
+"""
+USGS data access
+"""
+
+
+def get_USGS_data(endmember):
+    """
+    Get USGS data as Pandas DataFrame 
+    """
+    usgs_data = ROOT_DIR + "/../data/lab_spectra/USGS/"
+    file_name = usgs_data + endmember + '.txt'
+    for r in ["(", ")", " "]:
+        file_name = file_name.replace(r, "")
+    data = pd.read_csv(file_name, sep='      ', skiprows=16, names=[
+        'wavelength', 'reflectance', 'standard deviation'])
+    INVALID_VALUE = -1.23e34
+    data.loc[data['reflectance'] == INVALID_VALUE, 'reflectance'] = 0
+    return data
+
+
+"""
+RELAB data access
+"""
 
 
 def get_data():
