@@ -9,9 +9,9 @@ Generates data by the following steps:
 
 import numpy as np
 import math
-
-from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
-from utils.constants import pure_endmembers, c_wavelengths, NUM_ENDMEMBERS
+from utils.access_data import get_USGS_wavelengths
+from model.hapke_model import get_USGS_r_mixed_hapke_estimate
+import utils.constants as consts
 from utils.plotting import *
 
 
@@ -61,15 +61,18 @@ def create_mixture():
     Create random mixture of 3 endmembers
     :return mixture: as Numpy array
     """
-    m_random = np.random.dirichlet(np.ones(3), size=1)[0]
-    D_random = np.random.randint(low=45, high=76, size=3)
+    m_random = np.random.dirichlet(np.ones(consts.USGS_NUM_ENDMEMBERS),
+                                   size=1)[0]
+    D_random = np.random.randint(low=45,
+                                 high=76,
+                                 size=consts.USGS_NUM_ENDMEMBERS)
 
     m_map = {}
     D_map = {}
-    for index, endmember in enumerate(pure_endmembers):
+    for index, endmember in enumerate(consts.USGS_PURE_ENDMEMBERS):
         m_map[endmember] = m_random[index]
         D_map[endmember] = D_random[index]
-    r = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
+    r = get_USGS_r_mixed_hapke_estimate(m_map, D_map)
     return Mixture(list(m_map.values()),
                    list(D_map.values()),
                    r)
@@ -99,13 +102,13 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
     labeled_image = create_labeled_grid(grid_res=grid_res,
                                         num_mixtures=num_mixtures,
                                         pixel_res=res)
-
+    wavelengths = get_USGS_wavelengths()
     # Reflectance image
-    r_image = np.ones((res, res, len(c_wavelengths)))
+    r_image = np.ones((res, res, len(wavelengths)))
     # Mineral assemblage image
-    m_image = np.ones((res, res, NUM_ENDMEMBERS))
+    m_image = np.ones((res, res, consts.USGS_NUM_ENDMEMBERS))
     # Grain-size image
-    D_image = np.ones((res, res, NUM_ENDMEMBERS))
+    D_image = np.ones((res, res, consts.USGS_NUM_ENDMEMBERS))
 
     mixtures_r = {}
     mixtures_m = {}
@@ -121,7 +124,9 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
             mix_i = int(labeled_image[i, j])
             r = mixtures_r[mix_i]
             # Add noise to reflectance
-            noise = np.random.normal(loc=0, scale=noise_scale, size=len(c_wavelengths))
+            noise = np.random.normal(loc=0,
+                                     scale=noise_scale,
+                                     size=len(wavelengths))
 
             r_image[i, j] = r + noise
             m_image[i, j] = mixtures_m[mix_i]

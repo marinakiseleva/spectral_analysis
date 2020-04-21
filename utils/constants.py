@@ -21,7 +21,7 @@ DPI = 240
 """
 Model parameters
 """
-NUM_CPUS = 6
+NUM_CPUS = 8
 DISTANCE_METRIC = 'SAD'
 BETA = 1
 
@@ -57,10 +57,34 @@ USGS_n = {'olivine (Fo51)': 1.67,
           'magnetite': 2.42}
 # 'baslatic glass': 1.5}
 
+USGS_densities = {'olivine (Fo51)': 3.32,
+                  'olivine (Fo80)': 3.32,
+                  'augite': 3.4,
+                  'labradorite': 2.69,
+                  'pigeonite': 3.38,
+                  'magnetite': 5.15}
+
+
 # Cosine of incidence angle (30 deg)
 USGS_mu_0 = 0.8660254037844386
 # Cosine of emission angle (0 deg)
 USGS_mu = 1
+
+
+USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
+                        'olivine (Fo80)',
+                        'augite',
+                        'labradorite',
+                        'pigeonite',
+                        'magnetite']
+
+
+# For endmember-specifics
+USGS_NUM_ENDMEMBERS = 6
+
+# Min and max grain sizes for these endmembers
+USGS_GRAIN_SIZE_MIN = 45
+USGS_GRAIN_SIZE_MAX = 75
 
 
 #########################################
@@ -95,55 +119,7 @@ pure_endmembers = [pure_olivine_sid,
                    pure_enstatite_sid,
                    pure_anorthite_sid]
 
-olivine_enstatite_mix_sid5 = "CBXO15"
-olivine_enstatite_mix_sid6 = "CBXO16"
-olivine_enstatite_mix_sid7 = "CBXO17"
-olivine_enstatite_mix_sid8 = "CBXO18"
-olivine_enstatite_mix_sid9 = "CBXO19"
-
-olivine_anorthite_mix_sid0 = "CBXO20"
-olivine_anorthite_mix_sid1 = "CBXO21"
-olivine_anorthite_mix_sid2 = "CBXO22"
-olivine_anorthite_mix_sid3 = "CBXO23"
-olivine_anorthite_mix_sid4 = "CBXO24"
-
-enstatite_anorthite_mix_sid1 = "CBXA01"
-enstatite_anorthite_mix_sid2 = "CBXA02"
-enstatite_anorthite_mix_sid3 = "CBXA03"
-enstatite_anorthite_mix_sid4 = "CBXA04"
-enstatite_anorthite_mix_sid5 = "CBXA05"
-
-ternary_mix_sid0 = "CMXO30"
-ternary_mix_sid1 = "CMXO31"
-ternary_mix_sid2 = "CMXO32"
-ternary_mix_sid3 = "CMXO33"
-ternary_mix_sid4 = "CMXO34"
-ternary_mix_sid5 = "CMXO35"
-ternary_mix_sid6 = "CMXO36"
-
-mixtures = [olivine_enstatite_mix_sid5,
-            olivine_enstatite_mix_sid6,
-            olivine_enstatite_mix_sid7,
-            olivine_enstatite_mix_sid8,
-            olivine_enstatite_mix_sid9,
-            olivine_anorthite_mix_sid0,
-            olivine_anorthite_mix_sid1,
-            olivine_anorthite_mix_sid2,
-            olivine_anorthite_mix_sid3,
-            olivine_anorthite_mix_sid4,
-            enstatite_anorthite_mix_sid1,
-            enstatite_anorthite_mix_sid2,
-            enstatite_anorthite_mix_sid3,
-            enstatite_anorthite_mix_sid4,
-            enstatite_anorthite_mix_sid5,
-            ternary_mix_sid0,
-            ternary_mix_sid1,
-            ternary_mix_sid2,
-            ternary_mix_sid3,
-            ternary_mix_sid4,
-            ternary_mix_sid5,
-            ternary_mix_sid6]
-all_sids = mixtures + pure_endmembers
+all_sids = pure_endmembers
 
 
 sids_n = {pure_olivine_sid: 1.66,

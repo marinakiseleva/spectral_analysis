@@ -11,8 +11,9 @@ from collections import OrderedDict
 import numpy as np
 import math
 
-from utils.access_data import get_USGS_wavelengths
-from model.hapke_model import get_USGS_r_mixed_hapke_estimate
+
+from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
+from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS, GRAIN_SIZE_MIN, GRAIN_SIZE_MAX
 import utils.constants as consts
 
 
@@ -72,7 +73,7 @@ def get_D_prob(X):
     p(x) = 1 / (b-a)
     :param X: vector grain size
     """
-    return 1 / (consts.GRAIN_SIZE_MAX - consts.GRAIN_SIZE_MIN)
+    return 1 / (GRAIN_SIZE_MAX - GRAIN_SIZE_MIN)
 
 
 def get_likelihood(d, m, D):
@@ -83,10 +84,8 @@ def get_likelihood(d, m, D):
     :param m: Dict from SID to abundance
     :param D: Dict from SID to grain size
     """
-    r_e = get_USGS_r_mixed_hapke_estimate(m, D)
-
-    wavelengths = get_USGS_wavelengths()
-    length = len(wavelengths)
+    r_e = get_synthetic_r_mixed_hapke_estimate(m, D)
+    length = len(c_wavelengths)
 
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))
@@ -124,13 +123,13 @@ def transition_model(cur_m, cur_D):
     return new_m, new_D
 
 
-def convert_USGS_arr_to_dict(values):
+def convert_arr_to_dict(values):
     """
-    Converts Numpy array of proportions to dictionary from endmember name to proportion
+    Convert Numpy array to dict
     """
     d = OrderedDict()
     for index, v in enumerate(values):
-        d[consts.USGS_PURE_ENDMEMBERS[index]] = v
+        d[pure_endmembers[index]] = v
     return d
 
 
@@ -141,8 +140,8 @@ def get_log_posterior_estimate(d, m, D):
     """
     m_prior = math.log(get_m_prob(m))
     D_prior = math.log(get_D_prob(D))
-    m_dict = convert_USGS_arr_to_dict(m)
-    D_dict = convert_USGS_arr_to_dict(D)
+    m_dict = convert_arr_to_dict(m)
+    D_dict = convert_arr_to_dict(D)
     ll = get_log_likelihood(d, m_dict, D_dict)
     return ll + m_prior + D_prior
 
@@ -153,10 +152,9 @@ def infer_datapoint(iterations, d):
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
     """
-    # Initialize with 1/# endmembers each mineral and grain size 30 for each
-    cur_m = np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)]
-                     * consts.USGS_NUM_ENDMEMBERS)
-    cur_D = np.array([30] * consts.USGS_NUM_ENDMEMBERS)
+    # Initialize with 1/3 each mineral and grain size 30 for each
+    cur_m = np.array([.33] * 3)
+    cur_D = np.array([30] * 3)
 
     for i in range(iterations):
         # Determine whether or not to accept the new parameters, based on the
@@ -181,7 +179,10 @@ def infer_segmented_image(iterations, superpixels):
     Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)
     """
-    pool = multiprocessing.Pool(consts.NUM_CPUS)
+    # Use 1/4 of CPUs
+    num_processes = int(multiprocessing.cpu_count() / 4)
+    print("Running " + str(num_processes) + " processes.")
+    pool = multiprocessing.Pool(num_processes)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_datapoint, iterations)
@@ -201,16 +202,15 @@ def infer_image(iterations, image):
     """
     Infer m and D for entire image - each pixel indepedently
     :param iterations: Number of MCMC iterations to run for each datapoint
-    :param image: 3D Numpy array with 3d dimension equal to wavelengths
+    :param image: 3D Numpy array with 3d dimension equal to len(c_wavelengths)
     """
 
     num_rows = image.shape[0]
     num_cols = image.shape[1]
-
     # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.ones((num_rows, num_cols, 3))
     # Grain size predictions
-    D_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    D_image = np.ones((num_rows, num_cols, 3))
 
     # For clarity: create map from numeric index to X,Y coords in image
     index = 0
@@ -223,7 +223,10 @@ def infer_image(iterations, image):
             index += 1
     print("Done indexing image. Starting processing...")
 
-    pool = multiprocessing.Pool(consts.NUM_CPUS)
+    # Use 1/4 of CPUs
+    num_processes = int(multiprocessing.cpu_count() / 4)
+    print("Running " + str(num_processes) + " processes.")
+    pool = multiprocessing.Pool(num_processes)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_datapoint, iterations)
@@ -250,34 +253,23 @@ def infer_image(iterations, image):
 def init_gibbs(image):
     """
     Set random mineral & grain  assemblage for each pixel and return 3D Numpy array with 3rd dimension as assemblage
-    :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
+    :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
     """
     num_rows = image.shape[0]
     num_cols = image.shape[1]
-    m_image = np.zeros((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
-    D_image = np.zeros((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.zeros((num_rows, num_cols, NUM_ENDMEMBERS))
+    D_image = np.zeros((num_rows, num_cols, NUM_ENDMEMBERS))
     for i in range(num_rows):
         for j in range(num_cols):
             reflectance = image[i, j]
 
-            rand_m = sample_dirichlet(
-                np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)] * consts.USGS_NUM_ENDMEMBERS))
-            rand_D = sample_multivariate(np.array([30] * consts.USGS_NUM_ENDMEMBERS))
+            rand_m = sample_dirichlet(np.array([.33] * 3))
+            rand_D = sample_multivariate(np.array([30] * 3))
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D
 
     return m_image, D_image
-
-
-def convert_arr_to_dict(values):
-    """
-    Convert Numpy array to dict
-    """
-    d = OrderedDict()
-    for index, v in enumerate(values):
-        d[consts.USGS_PURE_ENDMEMBERS[index]] = v
-    return d
 
 
 def get_posterior_estimate(d, m, D):
@@ -450,14 +442,14 @@ def infer_mrf_image(iterations, image):
     1. Initialize random mineral assemblages for each pixel
     2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel.
     :param iterations: Number of MCMC iterations to run for each datapoint
-    :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
+    :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
     """
     num_rows = image.shape[0]
     num_cols = image.shape[1]
     # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.ones((num_rows, num_cols, 3))
     # Grain size predictions
-    D_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    D_image = np.ones((num_rows, num_cols, 3))
 
     print("Initialize pixels in image... ")
     image_reflectances = image

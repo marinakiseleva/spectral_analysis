@@ -3,7 +3,7 @@ Main script to generate data and run inference on it.
 """
 
 from model.segmentation import segment_image, get_superpixels
-from model.inference import infer_crf_image
+from model.inference import infer_mrf_image
 from utils.plotting import plot_compare_predictions
 
 import pickle

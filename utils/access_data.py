@@ -1,14 +1,37 @@
 """
 Accesses RELAB and USGS data 
 """
-
+import pickle
 import pandas as pd
+import numpy as np
+
 from utils.constants import *
 
 
 """
 USGS data access
 """
+
+
+def get_USGS_wavelengths(endmember=None):
+    """
+    Get wavelengths for the endmember as numpy vector
+    """
+    if endmember == None:
+        endmember = 'olivine (Fo80)'
+    return get_USGS_data(endmember)['wavelength'].values
+
+
+def get_USGS_endmember_k(endmember):
+    """
+    Get k as numpy vector for endmember
+    """
+    usgs_data = MODULE_DIR + "/output/data/derived/"
+    file_name = usgs_data + endmember
+
+    with open(file_name + '_k.pickle', 'rb') as handle:
+        ks = pickle.load(handle)
+    return np.array(ks)
 
 
 def get_USGS_data(endmember):

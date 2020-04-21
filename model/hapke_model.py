@@ -1,9 +1,42 @@
 import numpy as np
 import math
 from utils.constants import *
+from utils.access_data import get_USGS_endmember_k, get_USGS_wavelengths
 
 
-def get_r_mixed_hapke_estimate(m, D):
+def get_USGS_r_mixed_hapke_estimate(m, D):
+    """
+    Gets mixture of SSAs of endmembers as single SSA:
+    w_mix = sum_i^N (f_i * w_i)
+    :param m: Map from SID to abundance
+    :param D: Map from SID to grain size
+    """
+    wavelengths = get_USGS_wavelengths()
+    sigmas = {}
+    for endmember in m.keys():
+        m_cur = m[endmember]
+        D_cur = D[endmember]
+        rho = USGS_densities[endmember]
+        sigmas[endmember] = m_cur / (rho * D_cur)
+    sigma_sum = sum(sigmas.values())
+
+    # F is the mapping of fractional abundances
+    F = {s: v / sigma_sum for s, v in sigmas.items()}
+
+    w_mix = np.zeros(len(wavelengths))
+    for endmember in m.keys():
+        D_cur = D[endmember]
+        n = USGS_n[endmember]
+        k = get_USGS_endmember_k(endmember)
+        w = get_w_hapke_estimate(n, k, D_cur, wavelengths)
+
+        w_mix = w_mix + (F[endmember] * w)
+
+    r = get_derived_reflectance(w_mix, mu, mu_0)
+    return r
+
+
+def get_synthetic_r_mixed_hapke_estimate(m, D):
     """
     Gets mixture of SSAs of endmembers as single SSA:
     w_mix = sum_i^N (f_i * w_i)
@@ -14,11 +47,7 @@ def get_r_mixed_hapke_estimate(m, D):
     for endmember in m.keys():
         m_cur = m[endmember]
         D_cur = D[endmember]
-        n = sids_n[endmember]
-        k = np.array(sids_k[endmember])
-
         rho = sids_densities[endmember]
-
         sigmas[endmember] = m_cur / (rho * D_cur)
 
     sigma_sum = sum(sigmas.values())

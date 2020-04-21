@@ -6,6 +6,7 @@
 # Documentation available:
 # http://www.planetary.brown.edu/relabdata/catalogues/Catalogue_README.html
 
+import pickle
 
 import pandas as pd
 import numpy as np
@@ -82,7 +83,6 @@ def get_best_RELAB_k(sid, spectra_db):
         print("Getting best k error for SID: " + str(sid) + ", on index " + str(index))
 
         # 100,000 values from 10^-14 to 1, in log space
-        #k_space = np.logspace(-14, -1, 1e5)
         k_space = np.logspace(-14, -1, 1000)
         # Use 1/4 of CPUs
         num_processes = int(multiprocessing.cpu_count() / 4)
@@ -109,29 +109,22 @@ def get_best_RELAB_k(sid, spectra_db):
 # USGS data estimation
 ######################################################
 
-def get_best_endmember_k(data, grainsize, n, k):
+def get_best_endmember_k(data, grainsize, wavelength, index, n, k):
     """ 
     Gets average reflectance error over range of grain sizes for RELAB spectral sample
     :param data: DataFrame of endmember wavelength, reflectance, standard deviation
     :param n: Optical constant n
     :param k: k value to evaluate
     """
-    wavelengths = data['wavelength'].values
+    r_e = get_reflectance_hapke_estimate(
+        mu=USGS_mu,
+        mu_0=USGS_mu_0,
+        n=n,
+        k=k,
+        D=grainsize,
+        wavelengths=wavelength)
     r = data['reflectance'].values
-
-    rmses = []
-    for index, wavelength in enumerate(wavelengths):
-
-        r_e = get_reflectance_hapke_estimate(
-            mu=USGS_mu,
-            mu_0=USGS_mu_0,
-            n=n,
-            k=k,
-            D=grainsize,
-            wavelengths=wavelengths[index])
-        rmses.append(get_rmse(r[index], r_e))
-
-    return sum(rmses) / len(rmses)
+    return get_rmse(r[index], r_e)
 
 
 def get_best_USGS_k(endmember):
@@ -144,32 +137,65 @@ def get_best_USGS_k(endmember):
     grainsize = USGS_GRAIN_SIZES[endmember]
     n = USGS_n[endmember]
 
-    # X values from 10^-14 to 1, in log space
-    X = 1000
-    k_space = np.logspace(-14, -1, X)
-    pool = multiprocessing.Pool(NUM_CPUS)
-    rmses = []
-    func = partial(get_best_endmember_k, endmember_data, grainsize, n)
-    # Multithread over different values in the k space
-    rmses = pool.map(func, k_space)
-    pool.close()
-    pool.join()
-    min_index = rmses.index(min(rmses))
-    min_k = k_space[min_index]
-    return min_k, rmses[min_index]
+    wavelengths = endmember_data['wavelength'].values
+
+    ks = []  # k per wavelength
+    error = 0  # overall RMSE
+    # Get best k per wavelength
+    for index, wavelength in enumerate(wavelengths):
+        print(str(index) + " / " + str(len(wavelengths)))
+
+        # X values from 10^-14 to 1, in log space
+        X = 1000
+        k_space = np.logspace(-14, -1, X)
+        pool = multiprocessing.Pool(NUM_CPUS)
+
+        rmses = []
+        func = partial(get_best_endmember_k,
+                       endmember_data,
+                       grainsize,
+                       wavelength,
+                       index,
+                       n)
+        # Multithread over different values in the k space
+        rmses = pool.map(func, k_space)
+        pool.close()
+        pool.join()
+
+        min_index = rmses.index(min(rmses))
+        min_k = k_space[min_index]
+        ks.append(min_k)
+        error += rmses[min_index]
+
+    RMSE = error / len(wavelengths)
+    print("Found with error " + str(RMSE))
+
+    endmember_file = "../output/data/derived/" + endmember
+    with open(endmember_file + '_k.pickle', 'wb') as f:
+        pickle.dump(ks, f)
+    with open(endmember_file + '_k_RMSE.pickle', 'wb') as f:
+        pickle.dump(RMSE, f)
+
+    return ks, RMSE
 
 
 def estimate_all_USGS_k():
     """
     Estimate k for all endmembers from USGS
     """
-    members = USGS_GRAIN_SIZES.keys()
+    # members = USGS_GRAIN_SIZES.keys()
+    members = ['olivine (Fo51)',
+               'olivine (Fo80)',
+               'augite',
+               'pigeonite',
+               'magnetite']
     # Map endmember to best k, RMSE
     members_k = {m: [] for m in members}
 
     for endmember in members:
-        min_k, min_index = get_best_USGS_k(endmember)
-        members_k[endmember] = [min_k, min_index]
+        min_k, RMSE = get_best_USGS_k(endmember)
+        members_k[endmember] = [min_k, RMSE]
+
     print(members_k)
     return members_k
 
@@ -211,13 +237,13 @@ def get_cosine(x):
 
 
 if __name__ == "__main__":
-
-    spectra_db = get_data()
+    estimate_all_USGS_k()
+    # spectra_db = get_data()
     # olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
     # print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
 
     # enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, spectra_db)
     # print("Best k for enstatite is : " + str(enstatite_k) + " with RMSE: " + str(best_rmse))
 
-    anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, spectra_db)
-    print("Best k for anorthite is :\n " + str(anorthite_k))
+    # anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, spectra_db)
+    # print("Best k for anorthite is :\n " + str(anorthite_k))

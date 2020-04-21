@@ -1,13 +1,14 @@
-import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 import numpy as np
+from textwrap import wrap
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
 
 from utils.constants import *
 from utils.access_data import get_reflectance_spectra
 from model.inference import get_log_likelihood
-from model.hapke_model import get_r_mixed_hapke_estimate
+from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
 
 
 def prep_file_name(text):
@@ -53,7 +54,7 @@ def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
     data_reflectance = get_reflectance_spectra(SID, spectra_db)
     ll = get_log_likelihood(data_reflectance, m_map, D_map)
     # Derive reflectance from m and D
-    estimated_reflectance = get_r_mixed_hapke_estimate(m_map, D_map)
+    estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
 
     print("For " + sid_name)
     print("Log Likelihood: " + str(round(ll, 3)))
@@ -87,7 +88,7 @@ def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
     for index, m_map in enumerate(m_maps):
         D_map = D_maps[index]
         SID_name = sids_names[SIDs[index]]
-        estimated_reflectance = get_r_mixed_hapke_estimate(m_map, D_map)
+        estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
 
         min_grain = min(D_map.values())
         max_grain = max(D_map.values())
@@ -118,7 +119,27 @@ def interpolate_image(img):
     """
     return np.interp(img, (img.min(), img.max()), (0, 1))
 
-from textwrap import wrap
+
+def plot_compare_highd_predictions(actual, pred):
+    """
+    Compare actual to different predictions, for high-dimensional data (over 3 dimensions)
+    :param actual: Numpy 3D array with > 3 endmember proportions per pixel
+    :param pred: Predicted image 
+    """
+
+    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
+        fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        endmember_actual = actual[:, :, index]
+        endmember_pred = pred[:, :, index]
+
+        axes[0].imshow(endmember_actual)
+        axes[0].set_title("Actual")
+        axes[1].imshow(endmember_pred)
+        axes[1].set_title(endmember + " prediction")
+
+        fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
+
+    return fig
 
 
 def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=False):
