@@ -17,6 +17,14 @@ For plotting
 FIG_WIDTH = 6
 FIG_HEIGHT = 4
 DPI = 240
+LIGHT_GREEN = "#b3e6b3"
+DARK_GREEN = "#339966"
+LIGHT_BLUE = "#668cff"
+DARK_BLUE = "#002699"
+PINK = "#ff99c2"
+RED = "#ff1a1a"
+PURPLE = "#8c1aff"
+
 
 """
 Model parameters
@@ -29,6 +37,8 @@ BETA = 1
 #########################################
 # Below are constants for the USGS Endmembers
 #########################################
+
+USGS_DATA = ROOT_DIR + "/../data/lab_spectra/USGS/"
 
 # Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
 USGS_OLIVINE_Fo51_GS = 25

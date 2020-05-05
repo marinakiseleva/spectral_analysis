@@ -18,6 +18,7 @@ def get_USGS_wavelengths(endmember=None):
     Get wavelengths for the endmember as numpy vector
     """
     if endmember == None:
+        # Default, since all the endmembers used have the same wavelengths
         endmember = 'olivine (Fo80)'
     return get_USGS_data(endmember)['wavelength'].values
 
@@ -38,12 +39,11 @@ def get_USGS_data(endmember):
     """
     Get USGS data as Pandas DataFrame 
     """
-    usgs_data = ROOT_DIR + "/../data/lab_spectra/USGS/"
-    file_name = usgs_data + endmember + '.txt'
+    file_name = USGS_DATA + endmember + '.txt'
     for r in ["(", ")", " "]:
         file_name = file_name.replace(r, "")
     data = pd.read_csv(file_name, sep='      ', skiprows=16, names=[
-        'wavelength', 'reflectance', 'standard deviation'])
+        'wavelength', 'reflectance', 'standard deviation'], engine='python')
     INVALID_VALUE = -1.23e34
     data.loc[data['reflectance'] == INVALID_VALUE, 'reflectance'] = 0
     return data
@@ -56,7 +56,7 @@ RELAB data access
 
 def get_data():
     """
-    Pull down and merge spectral data sources, return as pandas DataFrame
+    Get RELAB data - Pull down and merge spectral data sources, return as pandas DataFrame
     """
 
     file_name = CATALOGUE_PATH + "Minerals.xls"

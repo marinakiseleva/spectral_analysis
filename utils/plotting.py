@@ -1,12 +1,13 @@
 
 import numpy as np
+import pandas as pd
 from textwrap import wrap
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
 
 from utils.constants import *
-from utils.access_data import get_reflectance_spectra
+from utils.access_data import *
 from model.inference import get_log_likelihood
 from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
 
@@ -19,6 +20,42 @@ def prep_file_name(text):
     for r in replace_strs:
         text = text.replace(r, "_")
     return text
+
+
+def plot_endmembers():
+    """
+    Plot wavelength vs reflectance for each endmember
+    """
+    names = ['olivine (Fo80)', 'olivine (Fo51)', 'augite',
+             'labradorite', 'pigeonite', 'magnetite']
+    endmembers = ['olivinefo80', 'olivinefo51', 'augite',
+                  'labradorite', 'pigeonite', 'magnetite']
+    colors = [LIGHT_GREEN, DARK_GREEN, LIGHT_BLUE, PINK, DARK_BLUE, RED]
+
+    fig, ax = plt.subplots(figsize=(4, 4), dpi=140)
+
+    for index, endmember in enumerate(endmembers):
+
+        data = get_USGS_data(endmember)
+
+        ax.plot(data['wavelength'],
+                data['reflectance'],
+                color=colors[index],
+                label=names[index])
+
+    # Plot RELAB basaltic glass
+    ss = get_data()
+    wavelengths = get_RELAB_wavelengths(spectrum_id='C1BE100', spectra_db=ss, cut=False)
+    reflectance = get_reflectance_spectra(
+        spectrum_id='C1BE100', spectra_db=ss, cut=False)
+    ax.plot(wavelengths,
+            reflectance,
+            color='purple',
+            label='basaltic glass')
+
+    ax.set_xlim((0.5, 2.5))
+    ax.set_ylim((0, 1))
+    plt.legend()
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
