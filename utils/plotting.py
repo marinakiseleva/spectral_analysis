@@ -173,7 +173,7 @@ def plot_compare_highd_predictions(actual, pred):
         axes[0].set_title("Actual")
         axes[1].imshow(endmember_pred)
         axes[1].set_title(endmember + " prediction")
-
+        plt.colorbar()
         fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
 
     return fig

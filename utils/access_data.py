@@ -13,14 +13,33 @@ USGS data access
 """
 
 
+def reduce_wavelengths(short, long_w):
+    """
+    Reduce long list, long_w, to short. Each is a list of wavelengths, and we keep the wavelength in the long_w that is closest to the next value in the short list. 
+    """
+    long_w = w
+    short = r
+    s_index = 0
+    new_long = []
+    for l_index, l in enumerate(long_w):
+        if s_index >= len(short):
+            break
+        cur_s = short[s_index]
+        if l > cur_s:
+            new_long.append(l)
+            s_index += 1
+    return new_long
+
+
 def get_USGS_wavelengths(endmember=None):
     """
     Get wavelengths for the endmember as numpy vector
     """
-    if endmember == None:
-        # Default, since all the endmembers used have the same wavelengths
-        endmember = 'olivine (Fo80)'
-    return get_USGS_data(endmember)['wavelength'].values
+    return np.array(USGS_REDUCED_WAVELENGTHS)
+    # if endmember == None:
+    #     # Default, since all the endmembers used have the same wavelengths
+    #     endmember = 'olivine (Fo80)'
+    # return get_USGS_data(endmember)['wavelength'].values
 
 
 def get_USGS_endmember_k(endmember):
@@ -46,6 +65,14 @@ def get_USGS_data(endmember):
         'wavelength', 'reflectance', 'standard deviation'], engine='python')
     INVALID_VALUE = -1.23e34
     data.loc[data['reflectance'] == INVALID_VALUE, 'reflectance'] = 0
+
+    # Only keep rows with reduced wavelengths (to match basaltic glass, which
+    # comes from RELAB)
+    data = data[data['wavelength'].isin(USGS_REDUCED_WAVELENGTHS)]
+
+    print("For endmember : " + str(endmember))
+    print(data.shape)
+
     return data
 
 

@@ -61,7 +61,7 @@ def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
     # Get actual reflectance spectra from data, for this wavelength index
     r = get_reflectance_spectra(sid, spectra_db)[index]
 
-    n = sids_n[sid]
+    n = ENDMEMBERS_N[sid]
 
     rmses = []
     for D in grain_sizes:
@@ -84,10 +84,7 @@ def get_best_RELAB_k(sid, spectra_db):
 
         # 100,000 values from 10^-14 to 1, in log space
         k_space = np.logspace(-14, -1, 1000)
-        # Use 1/4 of CPUs
-        num_processes = int(multiprocessing.cpu_count() / 4)
-        print("Running " + str(num_processes) + " processes.")
-        pool = multiprocessing.Pool(num_processes)
+        pool = multiprocessing.Pool(4)
 
         l_errors = []
         func = partial(get_RELAB_D_avg_refl_error, sid, spectra_db, index)
@@ -135,7 +132,7 @@ def get_best_USGS_k(endmember):
 
     endmember_data = get_USGS_data(endmember)
     grainsize = USGS_GRAIN_SIZES[endmember]
-    n = USGS_n[endmember]
+    n = ENDMEMBERS_N[endmember]
 
     wavelengths = endmember_data['wavelength'].values
 

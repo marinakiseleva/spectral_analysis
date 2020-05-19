@@ -103,6 +103,7 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
                                         num_mixtures=num_mixtures,
                                         pixel_res=res)
     wavelengths = get_USGS_wavelengths()
+    print("Wavelengths length " + str(len(wavelengths)))
     # Reflectance image
     r_image = np.ones((res, res, len(wavelengths)))
     # Mineral assemblage image
