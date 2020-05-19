@@ -185,7 +185,8 @@ def estimate_all_USGS_k():
                'olivine (Fo80)',
                'augite',
                'pigeonite',
-               'magnetite']
+               'magnetite',
+               'labradorite']
     # Map endmember to best k, RMSE
     members_k = {m: [] for m in members}
 

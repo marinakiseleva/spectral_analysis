@@ -46,11 +46,10 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
                 'labradorite': 1.7,
                 'pigeonite': 1.56,
                 'magnetite': 2.42,
-                'baslatic glass': 1.5,
                 "C1PO17": 1.66,  # Pure RELAB olivine
                 "C2PE12": 1.66,  # Pure RELAB enstatite
                 "C1PA12": 1.57,  # Pure RELAB anorthite
-                "C1BE100": 2.78  # RELAB Basaltic glass
+                "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
                 }
 
 
@@ -76,7 +75,7 @@ USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
                     'labradorite': USGS_LABRADORITE_GS,
                     'pigeonite': USGS_PIGEONITE_GS,
                     'magnetite': USGS_MAGNETITE_GS,
-                    'baslatic glass': USGS_BASALTIC_GLASS_GS}
+                    'basaltic glass': USGS_BASALTIC_GLASS_GS}
 
 
 # Densities from http://webmineral.com/ and Lapotre DOI:10.1002/2016JE005133
@@ -86,7 +85,7 @@ USGS_densities = {'olivine (Fo51)': 3.32,
                   'labradorite': 2.69,
                   'pigeonite': 3.38,
                   'magnetite': 5.15,
-                  'baslatic glass': 2.78}
+                  'basaltic glass': 2.78}
 
 
 # Cosine of incidence angle (30 deg)
@@ -101,7 +100,7 @@ USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
                         'labradorite',
                         'pigeonite',
                         'magnetite',
-                        'baslatic glass']
+                        'basaltic glass']
 
 
 # For endmember-specifics

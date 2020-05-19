@@ -36,10 +36,6 @@ def get_USGS_wavelengths(endmember=None):
     Get wavelengths for the endmember as numpy vector
     """
     return np.array(USGS_REDUCED_WAVELENGTHS)
-    # if endmember == None:
-    #     # Default, since all the endmembers used have the same wavelengths
-    #     endmember = 'olivine (Fo80)'
-    # return get_USGS_data(endmember)['wavelength'].values
 
 
 def get_USGS_endmember_k(endmember):
@@ -50,8 +46,9 @@ def get_USGS_endmember_k(endmember):
     file_name = usgs_data + endmember
 
     with open(file_name + '_k.pickle', 'rb') as handle:
-        ks = pickle.load(handle)
-    return np.array(ks)
+        ks = np.array(pickle.load(handle))
+
+    return ks
 
 
 def get_USGS_data(endmember):

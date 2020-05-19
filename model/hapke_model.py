@@ -26,7 +26,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
     w_mix = np.zeros(len(wavelengths))
     for endmember in m.keys():
         D_cur = D[endmember]
-        n = USGS_n[endmember]
+        n = ENDMEMBERS_N[endmember]
         k = get_USGS_endmember_k(endmember)
         w = get_w_hapke_estimate(n, k, D_cur, wavelengths)
 
@@ -57,7 +57,7 @@ def get_synthetic_r_mixed_hapke_estimate(m, D):
     w_mix = np.zeros(len(c_wavelengths))
     for endmember in m.keys():
         D_cur = D[endmember]
-        n = sids_n[endmember]
+        n = ENDMEMBERS_N[endmember]
         k = np.array(sids_k[endmember])
         w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
 
