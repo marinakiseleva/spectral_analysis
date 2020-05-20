@@ -36,7 +36,7 @@ def plot_endmembers():
 
     for index, endmember in enumerate(endmembers):
 
-        data = get_USGS_data(endmember)
+        data = get_USGS_data(endmember, True)
 
         ax.plot(data['wavelength'],
                 data['reflectance'],
@@ -48,8 +48,9 @@ def plot_endmembers():
     wavelengths = get_RELAB_wavelengths(spectrum_id='C1BE100', spectra_db=ss, cut=False)
     reflectance = get_reflectance_spectra(
         spectrum_id='C1BE100', spectra_db=ss, cut=False)
-    ax.plot(wavelengths,
-            reflectance,
+    print(len(wavelengths[60:]))
+    ax.plot(wavelengths[60:],
+            reflectance[60:],
             color='purple',
             label='basaltic glass')
 
