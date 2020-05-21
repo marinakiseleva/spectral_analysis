@@ -7,16 +7,9 @@ import numpy as np
 import spectral.io.envi as envi
 from utils.constants import *
 
-
-def filter_USGS_to_CRISM(arr):
-    """
-    Reduce USGS endmember spectra (as array) to same length as reduced CRISM spectra, by starting at index 60, wavelength = 1.006.
-    History: CRISM wavelengths have 438 values from  1.00135 - 4.0 μm
-    Reduced USGS spectra are 211 values from 0.4011 - 2.72 μm
-    We reduce CRISM to USGS using reduce_wavelengths
-    This function then reduces USGS to the new CRISM length.
-    """
-    return arr[60:]
+"""
+Helper functions to normalize the different wavelengths from the different data sources
+"""
 
 
 def match_lists(target, source):
@@ -66,44 +59,6 @@ def match_lists(target, source):
     return new_target, new_source
 
 
-"""
-CRISM data access
-"""
-
-
-def open_image(file_name, image_name):
-    """
-    Open TRDR image as SpyFile
-    :param file_name: Full directory + file name, .hdr
-    :param image_name:  Full directory + file name, .img
-
-    """
-    spy_image = envi.open(file=file_name, image=image_name)
-    return spy_image
-
-
-# def get_CRISM_data():
-#     """
-#     """
-#     crism_dir =  ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
-
-#     crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
-
-#     image_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img'
-#     file_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img.hdr'
-
-#     img = open_image(file_name, image_name)
-#     return img[1:80, 50:100, :]
-
-
-def get_CRISM_wavelengths():
-    # import pandas as pd
-    crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
-    CRISM_data = pd.read_csv(crism_dir + "../wavelengths/z.txt", sep="  ", header=0)
-    CRISM_data.columns = ["wavelength", "pixelval"]
-    return CRISM_data['wavelength'].values.tolist()
-
-
 def record_reduced_spectra():
     """
 
@@ -146,6 +101,64 @@ def record_reduced_spectra():
 
 
 """
+CRISM data access
+"""
+
+
+def open_image(file_name, image_name):
+    """
+    Open TRDR image as SpyFile
+    :param file_name: Full directory + file name, .hdr
+    :param image_name:  Full directory + file name, .img
+
+    """
+
+    spy_image = envi.open(file=file_name, image=image_name)
+
+    # b = np.take(a=img[1:80, 50:100], indices=inrange_indices, axis=2)
+
+    return spy_image
+
+
+def get_CRISM_data():
+    """
+    """
+    crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
+
+    image_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img'
+    file_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img.hdr'
+
+    print('here')
+    print(file_name)
+    print(image_name)
+    img = open_image(file_name, image_name)
+    print(img)
+
+    # Only keep rows with reduced wavelengths
+    with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
+        RW_CRISM = pickle.load(handle)
+
+    # Get indices of reduced wavelengths
+    wavelengths = get_CRISM_wavelengths()
+    RW_CRISM_indices = []
+    for index, wavelength in enumerate(wavelengths):
+        if wavelength in RW_CRISM:
+            RW_CRISM_indices.append(index)
+
+            # Take inrange_indices of third dimension for img
+    b = np.take(a=img[1:80, 50:100], indices=RW_CRISM_indices, axis=2)
+
+    return b
+
+
+def get_CRISM_wavelengths():
+    crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
+    CRISM_data = pd.read_csv(crism_dir + "../wavelengths/z.txt", sep="  ", header=0)
+    CRISM_data.columns = ["wavelength", "pixelval"]
+    return CRISM_data['wavelength'].values.tolist()
+
+
+"""
 USGS data access
 """
 
@@ -154,15 +167,15 @@ def get_USGS_wavelengths(CRISM_match=False):
     """
     Get wavelengths for the endmember as numpy vector
     """
-    data = USGS_REDUCED_WAVELENGTHS
-    if CRISM_match:
-        data = filter_USGS_to_CRISM(data)
-    return np.array(data)
+    # Default to olivine (Fo51) wavelengths
+    data = get_USGS_data(endmember='olivine (Fo51)', CRISM_match=CRISM_match)
+    return data['wavelength'].values
 
 
 def get_USGS_endmember_k(endmember):
     """
     Get k as numpy vector for endmember
+    These were estimated using entire USGS spectra.
     """
     usgs_data = MODULE_DIR + "/output/data/derived/"
     file_name = usgs_data + endmember
@@ -186,10 +199,11 @@ def get_USGS_data(endmember, CRISM_match=False):
     data.loc[data['reflectance'] == INVALID_VALUE, 'reflectance'] = 0
 
     if CRISM_match:
-        # Only keep rows with reduced wavelengths (to match basaltic glass, which
-        # comes from RELAB)
-        data = data[data['wavelength'].isin(USGS_REDUCED_WAVELENGTHS)]
-        data = filter_USGS_to_CRISM(data).reset_index(drop=True)
+        # Only keep rows with reduced wavelengths
+        with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_USGS.pickle", 'rb') as handle:
+            RW_USGS = pickle.load(handle)
+
+        data = data[data['wavelength'].isin(RW_USGS)]
     print("For endmember : " + str(endmember))
     print(data.shape)
 

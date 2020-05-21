@@ -11,7 +11,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
-    wavelengths = get_USGS_wavelengths()
+    wavelengths = get_USGS_wavelengths(True)
     sigmas = {}
     for endmember in m.keys():
         m_cur = m[endmember]
