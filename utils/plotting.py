@@ -45,9 +45,9 @@ def plot_endmembers():
 
     # Plot RELAB basaltic glass
     ss = get_data()
-    wavelengths = get_RELAB_wavelengths(spectrum_id='C1BE100', spectra_db=ss, cut=False)
+    wavelengths = get_RELAB_wavelengths(spectrum_id='C1BE100', spectra_db=ss)
     reflectance = get_reflectance_spectra(
-        spectrum_id='C1BE100', spectra_db=ss, cut=False)
+        spectrum_id='C1BE100', spectra_db=ss)
     print(len(wavelengths[60:]))
     ax.plot(wavelengths[60:],
             reflectance[60:],

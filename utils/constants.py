@@ -10,6 +10,7 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
 RELAB_DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
+CRISM_DATA_PATH = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
 
 """
 For plotting
@@ -49,6 +50,7 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
                 "C1PO17": 1.66,  # Pure RELAB olivine
                 "C2PE12": 1.66,  # Pure RELAB enstatite
                 "C1PA12": 1.57,  # Pure RELAB anorthite
+                "C1BE100": 2.78,  # RELAB Basaltic glass
                 "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
                 }
 

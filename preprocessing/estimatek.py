@@ -57,9 +57,9 @@ def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
     grain_sizes = list(range(int(d_min), int(d_max)))
 
     # Get wavelength at wavelength index
-    wavelength = get_RELAB_wavelengths(sid, spectra_db)[index]
+    wavelength = get_RELAB_wavelengths(sid, spectra_db, True)[index]
     # Get actual reflectance spectra from data, for this wavelength index
-    r = get_reflectance_spectra(sid, spectra_db)[index]
+    r = get_reflectance_spectra(sid, spectra_db, True)[index]
 
     n = ENDMEMBERS_N[sid]
 
@@ -130,7 +130,7 @@ def get_best_USGS_k(endmember):
     :param endmember: Endmember name 
     """
 
-    endmember_data = get_USGS_data(endmember)
+    endmember_data = get_USGS_data(endmember, CRISM_match=True)
     grainsize = USGS_GRAIN_SIZES[endmember]
     n = ENDMEMBERS_N[endmember]
 

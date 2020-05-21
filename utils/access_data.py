@@ -122,17 +122,12 @@ def open_image(file_name, image_name):
 
 def get_CRISM_data():
     """
+    Gets CRISM data with spectra filtered to same range as endmembers
+    Currently taking one sample image and cutting it down to a narrow size to run efficiently. 
     """
-    crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
-
-    image_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img'
-    file_name = crism_dir + 'ato0002ec79_01_if169l_trr3_CAT.img.hdr'
-
-    print('here')
-    print(file_name)
-    print(image_name)
+    image_name = CRISM_DATA_PATH + 'ato0002ec79_01_if169l_trr3_CAT.img'
+    file_name = CRISM_DATA_PATH + 'ato0002ec79_01_if169l_trr3_CAT.img.hdr'
     img = open_image(file_name, image_name)
-    print(img)
 
     # Only keep rows with reduced wavelengths
     with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
@@ -146,14 +141,17 @@ def get_CRISM_data():
             RW_CRISM_indices.append(index)
 
             # Take inrange_indices of third dimension for img
-    b = np.take(a=img[1:80, 50:100], indices=RW_CRISM_indices, axis=2)
+    b = np.take(a=img[1:20, 50:60], indices=RW_CRISM_indices, axis=2)
 
     return b
 
 
 def get_CRISM_wavelengths():
-    crism_dir = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
-    CRISM_data = pd.read_csv(crism_dir + "../wavelengths/z.txt", sep="  ", header=0)
+    """
+    Get the wavelengths of CRISM data - taken from random pixel in ATO0002EC79 image.
+    """
+    CRISM_data = pd.read_csv(
+        CRISM_DATA_PATH + "../wavelengths/z.txt", sep="  ", header=0)
     CRISM_data.columns = ["wavelength", "pixelval"]
     return CRISM_data['wavelength'].values.tolist()
 
@@ -250,19 +248,19 @@ def get_grain_sizes(spectrum_id, spectra_db):
     return min_grain_size, max_grain_size
 
 
-def get_RELAB_wavelengths(spectrum_id, spectra_db, cut=True):
-    r_data = get_reflectance_data(spectrum_id, spectra_db, cut)
+def get_RELAB_wavelengths(spectrum_id, spectra_db, CRISM_match=False):
+    r_data = get_reflectance_data(spectrum_id, spectra_db, CRISM_match)
     return r_data['Wavelength(micron)'].values
 
 
-def get_reflectance_spectra(spectrum_id, spectra_db, cut=True):
-    r_data = get_reflectance_data(spectrum_id, spectra_db, cut)
+def get_reflectance_spectra(spectrum_id, spectra_db, CRISM_match=False):
+    r_data = get_reflectance_data(spectrum_id, spectra_db, CRISM_match)
     return r_data['Reflectance'].values
 
 
-def get_reflectance_data(spectrum_id, spectra_db, cut):
+def get_reflectance_data(spectrum_id, spectra_db, CRISM_match=False):
     """
-    Returns spectral reflectance for the passed-in spectrum ID
+    Returns spectral reflectance for the passed-in spectrum ID from RELAB
     :param spectrum_id: SpectrumID in dataset to look up
     :param spectra_db:  Merge of Spectra_Catalogue and Sample_Catalogue
     :param cut: Boolean on whether to keep only wavelenghts in c_wavelengths, or to use all.
@@ -279,7 +277,17 @@ def get_reflectance_data(spectrum_id, spectra_db, cut):
 
     reflectance_df = pd.read_csv(file_name, sep="\t", header=0, skiprows=1)
 
-    if cut:
+    if CRISM_match:
+
         reflectance_df = reflectance_df.loc[
             reflectance_df['Wavelength(micron)'].isin(c_wavelengths)]
+
+    if CRISM_match:
+        # Only keep rows with reduced wavelengths
+        with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_BASALT.pickle", 'rb') as handle:
+            RW_BASALT = pickle.load(handle)
+
+        reflectance_df = reflectance_df.loc[
+            reflectance_df['Wavelength(micron)'].isin(RW_BASALT)]
+
     return reflectance_df
