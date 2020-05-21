@@ -61,7 +61,7 @@ def match_lists(target, source):
 
 def record_reduced_spectra():
     """
-
+    Saves the wavelengths that are found to be as equal as possible between RELAB (basaltic glass), USGS (olivine Fo80), and CRISM (random pixel from ATO0002EC79 image) spectra. The result is 184 wavelengths. The unique wavelengths are saved per data source because this is how their spectral values will be accessed. 
     """
     # Get data
     ss = get_data()
@@ -110,13 +110,8 @@ def open_image(file_name, image_name):
     Open TRDR image as SpyFile
     :param file_name: Full directory + file name, .hdr
     :param image_name:  Full directory + file name, .img
-
     """
-
     spy_image = envi.open(file=file_name, image=image_name)
-
-    # b = np.take(a=img[1:80, 50:100], indices=inrange_indices, axis=2)
-
     return spy_image
 
 
@@ -125,8 +120,8 @@ def get_CRISM_data():
     Gets CRISM data with spectra filtered to same range as endmembers
     Currently taking one sample image and cutting it down to a narrow size to run efficiently. 
     """
-    image_name = CRISM_DATA_PATH + 'ato0002ec79_01_if169l_trr3_CAT.img'
-    file_name = CRISM_DATA_PATH + 'ato0002ec79_01_if169l_trr3_CAT.img.hdr'
+    image_name = CRISM_IMG
+    file_name = CRISM_IMG + '.hdr'
     img = open_image(file_name, image_name)
 
     # Only keep rows with reduced wavelengths
@@ -140,7 +135,8 @@ def get_CRISM_data():
         if wavelength in RW_CRISM:
             RW_CRISM_indices.append(index)
 
-            # Take inrange_indices of third dimension for img
+    # Take inrange_indices of third dimension for img
+    # x and y are filtered down for faster testing
     b = np.take(a=img[1:20, 50:60], indices=RW_CRISM_indices, axis=2)
 
     return b
@@ -179,7 +175,7 @@ def get_USGS_endmember_k(endmember):
 
     with open(file_name + '_k.pickle', 'rb') as handle:
         ks = np.array(pickle.load(handle))
-    print("Length of endmember k " + str(endmember) + " is " + str(len(ks)))
+
     return ks
 
 
@@ -201,8 +197,6 @@ def get_USGS_data(endmember, CRISM_match=False):
             RW_USGS = pickle.load(handle)
 
         data = data[data['wavelength'].isin(RW_USGS)]
-    print("For endmember : " + str(endmember))
-    print(data.shape)
 
     return data
 

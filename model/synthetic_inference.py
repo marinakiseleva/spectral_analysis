@@ -1,4 +1,6 @@
 """
+for RELAB only endmembers, on synthetic image based on them
+
 Runs variational inference on the model to estimate the posterior p(m,D|d)
 """
 import sys
@@ -13,8 +15,7 @@ import math
 
 
 from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
-from utils.constants import c_wavelengths, pure_endmembers, NUM_ENDMEMBERS, GRAIN_SIZE_MIN, GRAIN_SIZE_MAX
-import utils.constants as consts
+from utils.constants import *
 
 
 def sample_dirichlet(x):
@@ -85,7 +86,7 @@ def get_likelihood(d, m, D):
     :param D: Dict from SID to grain size
     """
     r_e = get_synthetic_r_mixed_hapke_estimate(m, D)
-    length = len(c_wavelengths)
+    length = RELAB_WAVELENGTH_COUNT
 
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))
@@ -302,7 +303,7 @@ def get_distance(a,  b):
     Get distance between 2 mineral assemblage vectors
     """
 
-    if consts.DISTANCE_METRIC == 'SAD':
+    if DISTANCE_METRIC == 'SAD':
         # spectral angle distance, SAD
         return get_SAD(a, b)
     else:
@@ -378,9 +379,9 @@ def get_mrf_joint(m_image, D_image, i, j, m, D, d):
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
     e_spectral = get_posterior_estimate(d, m, D)
-    joint_prob = e_spectral * math.exp(-e_spatial * consts.BETA)
+    joint_prob = e_spectral * math.exp(-e_spatial * BETA)
     # joint_prob_lp = get_log_posterior_estimate(
-    #     d, m, D) * math.exp(-e_spatial * consts.BETA)
+    #     d, m, D) * math.exp(-e_spatial * BETA)
     return joint_prob
 
 
@@ -389,7 +390,7 @@ def get_mrf_energy(m_image, D_image, i, j, m, D, d):
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
     e_spectral = get_log_posterior_estimate(d, m, D)
-    return -e_spectral + (e_spatial * consts.BETA)
+    return -e_spectral + (e_spatial * BETA)
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
@@ -442,7 +443,7 @@ def infer_mrf_image(iterations, image):
     1. Initialize random mineral assemblages for each pixel
     2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel.
     :param iterations: Number of MCMC iterations to run for each datapoint
-    :param image: 3D Numpy array with 3rd dimension equal to len(c_wavelengths)
+    :param image: 3D Numpy array with 3rd dimension equal to number of wavelengths in reflectance.
     """
     num_rows = image.shape[0]
     num_cols = image.shape[1]
