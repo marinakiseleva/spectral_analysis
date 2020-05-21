@@ -4,7 +4,7 @@ Runs variational inference on the model to estimate the posterior p(m,D|d)
 import sys
 from functools import partial
 import multiprocessing
-
+from datetime import datetime
 
 from scipy.stats import multivariate_normal
 from collections import OrderedDict
@@ -473,7 +473,11 @@ def infer_mrf_image(iterations, image):
             for j in cols:
                 d = image[i, j]
                 m_image, D_image = infer_mrf_datapoint(m_image, D_image, i, j, d)
-        print("\n\nFinished iteration " + str(iteration) + "/" + str(iterations))
+
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+        print("\n\n" + str(dt_string) + "  iteration " +
+              str(iteration + 1) + "/" + str(iterations))
         jp = get_mrf_joint_prob(image, m_image, D_image)
         print("Joint probability density: " + str(round(jp, 4)))
 
