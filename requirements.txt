@@ -4,4 +4,4 @@ xlrd
 ipykernel
 numpy
 pandas
-
+spectral==0.20
