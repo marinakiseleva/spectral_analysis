@@ -90,8 +90,7 @@ def get_best_RELAB_k(sid, spectra_db):
         print("Getting best k error for SID: " + str(sid) + ", on index " + str(index))
 
         # 100,000 values from 10^-14 to 1, in log space
-        # k_space = np.logspace(-14, -1, 1000)
-        k_space = [0.2, 0.6]
+        k_space = np.logspace(-14, -1, 1000)
         pool = multiprocessing.Pool(8)
 
         l_errors = []
