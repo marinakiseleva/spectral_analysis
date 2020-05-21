@@ -28,10 +28,6 @@ def plot_as_rgb(img, bands, title, ax):
     :param img: 3d numpy array
     :param bands: The 3 wavelength bands being used to visualize the data
     """
-    print("Shape of image")
-    print(img.shape)
-    # fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    # fig, ax = plt.subplots(figsize=(4, 4), dpi=140)
     ax.set_title(title)
     ax.imshow(img)
 
@@ -170,6 +166,21 @@ def interpolate_image(img):
     Convert 3d dimension of images to values between 0 and 1 (so they may be plotted as RGB)
     """
     return np.interp(img, (img.min(), img.max()), (0, 1))
+
+
+def plot_highd_img(img_m):
+    """
+    Plots each endmember on different heatmap plot
+    :param img_m: Numpy 3D array with > 3 endmember proportions per pixel
+    """
+    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
+        fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        endmember_img = img_m[:, :, index]
+        axp = ax.imshow(endmember_img)
+        ax.set_title(endmember)
+        fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".png")
+
+    return fig
 
 
 def plot_compare_highd_predictions(actual, pred):

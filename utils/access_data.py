@@ -137,7 +137,7 @@ def get_CRISM_data():
 
     # Take inrange_indices of third dimension for img
     # x and y are filtered down for faster testing
-    b = np.take(a=img[1:20, 50:60], indices=RW_CRISM_indices, axis=2)
+    b = np.take(a=img[:, :], indices=RW_CRISM_indices, axis=2)
 
     return b
 
