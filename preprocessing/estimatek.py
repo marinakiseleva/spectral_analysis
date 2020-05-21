@@ -176,13 +176,18 @@ def get_best_USGS_k(endmember):
     RMSE = error / len(wavelengths)
     print("Found with error " + str(RMSE))
 
+    return ks, RMSE
+
+
+def record_estimation(endmember, ks, RMSE):
+    """
+    Pickle k and RMSE is designated place
+    """
     endmember_file = ENDMEMBERS_K + endmember
     with open(endmember_file + '_k.pickle', 'wb') as f:
         pickle.dump(ks, f)
     with open(endmember_file + '_k_RMSE.pickle', 'wb') as f:
         pickle.dump(RMSE, f)
-
-    return ks, RMSE
 
 
 def estimate_all_USGS_k():
@@ -196,15 +201,11 @@ def estimate_all_USGS_k():
                'pigeonite',
                'magnetite',
                'labradorite']
-    # Map endmember to best k, RMSE
-    members_k = {m: [] for m in members}
 
     for endmember in members:
-        min_k, RMSE = get_best_USGS_k(endmember)
-        members_k[endmember] = [min_k, RMSE]
-
-    print(members_k)
-    return members_k
+        ks, RMSE = get_best_USGS_k(endmember)
+        print("\n\n" + str(endmember) + " length: " + str(len(ks)))
+        record_estimation(endmember, ks, RMSE)
 
 
 ######################################################

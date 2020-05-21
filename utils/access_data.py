@@ -179,7 +179,7 @@ def get_USGS_endmember_k(endmember):
 
     with open(file_name + '_k.pickle', 'rb') as handle:
         ks = np.array(pickle.load(handle))
-
+    print("Length of endmember k " + str(endmember) + " is " + str(len(ks)))
     return ks
 
 
