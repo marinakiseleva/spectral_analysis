@@ -1,4 +1,4 @@
-
+import math
 import numpy as np
 import pandas as pd
 from textwrap import wrap
@@ -20,6 +20,20 @@ def prep_file_name(text):
     for r in replace_strs:
         text = text.replace(r, "_")
     return text
+
+
+def plot_as_rgb(img, bands, title, ax):
+    """
+    Plot 3d Numpy array as rgb image
+    :param img: 3d numpy array
+    :param bands: The 3 wavelength bands being used to visualize the data
+    """
+    print("Shape of image")
+    print(img.shape)
+    # fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    # fig, ax = plt.subplots(figsize=(4, 4), dpi=140)
+    ax.set_title(title)
+    ax.imshow(img)
 
 
 def plot_endmembers():
@@ -148,7 +162,7 @@ def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
 
     fig.suptitle(title, fontsize=14)
 
-    fig.savefig("../output/data/" + prep_file_name(title))
+    fig.savefig(MODULE_DIR + "/output/data/" + prep_file_name(title))
 
 
 def interpolate_image(img):
@@ -173,7 +187,10 @@ def plot_compare_highd_predictions(actual, pred):
         axes[0].imshow(endmember_actual)
         axes[0].set_title("Actual")
         axp = axes[1].imshow(endmember_pred)
-        axes[1].set_title(endmember + " prediction")
+
+        rmse = math.sqrt(np.mean((endmember_actual - endmember_pred)**2))
+
+        axes[1].set_title(endmember + " prediction\n" + "RMSE: " + str(round(rmse, 3)))
         cb = plt.colorbar(mappable=axp, ax=axes, location='right')
 
         fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
