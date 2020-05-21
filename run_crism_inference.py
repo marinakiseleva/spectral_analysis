@@ -1,56 +1,86 @@
 """
-Main script to generate data and run inference on it.
+Estimate m and D per pixel of CRISM image. Image specified in constants file.
 """
 
-from model.segmentation import segment_image, get_superpixels
-from model.inference import infer_mrf_image
-from utils.plotting import plot_compare_predictions
-
-import pickle
 import numpy as np
+import math
+import matplotlib.pyplot as plt
+from spectral import *
 
 
-def get_image(name):
+from model.inference import infer_mrf_image, convert_arr_to_dict
+from preprocessing.generate_USGS_data import generate_image
+from model.hapke_model import get_USGS_r_mixed_hapke_estimate
+from utils.plotting import *
+import utils.constants as consts
+
+
+def run_mrf(image, mcmc_iterations):
     """
-    Load image
+    Run MRF with passed-in distance metric
     """
-    data_dir = "/Users/marina/Documents/PhD/research/mars_research/data/custom/"
-    with open(data_dir + name, 'rb') as f:
-        x = pickle.load(f)
-        return x
+
+    m_est, D_est = infer_mrf_image(iterations=mcmc_iterations,
+                                   image=image)
+    np.savetxt(consts.MODULE_DIR + "/output/data/m_estimated.txt", m_est.flatten())
+    np.savetxt(consts.MODULE_DIR + "/output/data/D_estimated.txt", D_est.flatten())
+    return m_est, D_est
+
+
+def estimate_image(m, D):
+    """
+    Convert m and D estimates to reflectance, to visualize estimated image
+    """
+    num_rows = m.shape[0]
+    num_cols = m.shape[1]
+    r_image = np.ones((num_rows, num_cols, consts.REDUCED_WAVELENGTH_COUNT))
+    for row in range(num_rows):
+        for element in range(num_cols):
+            cur_m = m[row, element]
+            cur_D = D[row, element]
+            m_dict = convert_arr_to_dict(cur_m)
+            D_dict = convert_arr_to_dict(cur_D)
+            restimate = get_USGS_r_mixed_hapke_estimate(m_dict, D_dict)
+            r_image[row, element] = restimate
+    return r_image
+
+
+def get_rmse(a, b):
+    # RMSE
+    return math.sqrt(np.mean((a - b)**2))
 
 if __name__ == "__main__":
-    mcmc_iterations = 5
-    data_name = 'frt000047a3_07_if166l_trr3_CLEAN.pkl'
+    num_mixtures = 5
+    grid_res = 4
+    noise_scale = 0.01  # 0.001
+    res = 8
+    mcmc_iterations = 1
 
     # Print metadata
-    print("Using CRISM data")
+    print("Generating data with: ")
+    print("\t" + str(num_mixtures) + " unique mixtures")
+    print("\t" + str(noise_scale) + " noise (sigma)")
+    print("\t" + str(grid_res) + " grid resolution")
+    print("\t" + str(res) + " pixel resolution")
+
     print("Conducting MCMC with: ")
     print("\t" + str(mcmc_iterations) + " iterations")
 
-    image = get_image(data_name)
+    image = get_CRISM_data()
+    print("Image type " + str(type(image)))
+    print("Image size " + str(image.shape))
 
-    # Only go up to 211th band.
-    image = image[50:60, 10:20, :211]
+    m_est, D_est = run_mrf(image, mcmc_iterations)
 
-    m_est, D_est = infer_crf_image(iterations=mcmc_iterations,
-                                   image=image)
+    p = plot_highd_img(m_est)
 
-    # Save output
-    save_dir = "output/data/crf/"
-    np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
-    np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
+    # Compare reflectances in certain bands.
+    bands = [30, 80, 150]
+    est = estimate_image(m_est, D_est)
+    estimated_img = np.take(a=est[:, :], indices=bands, axis=2)
 
-    # Select 3 bands of CRISM image to visualize
-    band1 = 50
-    band2 = 120
-    band3 = 200
-    rgb_img = np.dstack((image[:, :, band1], image[:, :, band2], image[:, :, band3]))
+    fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
-    p = plot_compare_predictions(actual=rgb_img,
-                                 preds=[m_est],  # add m_est_Original if want
-                                 fig_title="Mineral assemblage comparison",
-                                 subplot_titles=["CRF Estimated"],
-                                 interp=False)
-
-    p.savefig("output/figures/crf/CRISM_compare.png", bbox_inches='tight')
+    plot_as_rgb(estimated_img, bands, "Estimated", ax)
+    fig.suptitle("Reflectance as RGB, using bands " + str(bands))
+    fig.savefig(consts.MODULE_DIR + "/output/figures/rgb.png")
