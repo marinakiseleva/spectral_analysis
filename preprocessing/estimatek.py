@@ -44,7 +44,7 @@ def get_reflectance_error(wavelength, r, n, k, D):
     return get_rmse(r, r_e)
 
 
-def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
+def get_RELAB_D_avg_refl_error(grain_sizes, wavelengths, reflectance, sid, spectra_db, index, k):
     """
     Gets average reflectance error over range of grain sizes for RELAB spectral sample
     :param sid: Spectrum ID
@@ -53,14 +53,10 @@ def get_RELAB_D_avg_refl_error(sid, spectra_db, index, k):
     :param k: k value to evaluate
     """
 
-    d_min, d_max = get_grain_sizes(sid, spectra_db)
-    grain_sizes = list(range(int(d_min), int(d_max)))
-
     # Get wavelength at wavelength index
-    wavelength = get_RELAB_wavelengths(sid, spectra_db, True)[index]
+    wavelength = wavelengths[index]
     # Get actual reflectance spectra from data, for this wavelength index
-    r = get_reflectance_spectra(sid, spectra_db, True)[index]
-
+    r = reflectance[index]
     n = ENDMEMBERS_N[sid]
 
     rmses = []
@@ -79,15 +75,28 @@ def get_best_RELAB_k(sid, spectra_db):
     min_ks = []
     min_k_errors = []
 
-    for index, l in enumerate(c_wavelengths):
+    d_min, d_max = get_grain_sizes(sid, spectra_db)
+    grain_sizes = list(range(int(d_min), int(d_max)))
+
+    wavelengths = get_RELAB_wavelengths(sid, spectra_db, True)
+    reflectance = get_reflectance_spectra(sid, spectra_db, True)
+
+    # Only keep rows with reduced wavelengths
+    with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_BASALT.pickle", 'rb') as handle:
+        RW_BASALT = pickle.load(handle)
+
+    # Parallelize over wavelengths
+    for index, l in enumerate(RW_BASALT):
         print("Getting best k error for SID: " + str(sid) + ", on index " + str(index))
 
         # 100,000 values from 10^-14 to 1, in log space
         k_space = np.logspace(-14, -1, 1000)
-        pool = multiprocessing.Pool(4)
+        # k_space = [0.2, 0.6]
+        pool = multiprocessing.Pool(8)
 
         l_errors = []
-        func = partial(get_RELAB_D_avg_refl_error, sid, spectra_db, index)
+        func = partial(get_RELAB_D_avg_refl_error, grain_sizes,
+                       wavelengths, reflectance, sid, spectra_db, index)
         # Multithread over different values in the k space
         l_errors = pool.map(func, k_space)
         pool.close()

@@ -278,11 +278,6 @@ def get_reflectance_data(spectrum_id, spectra_db, CRISM_match=False):
     reflectance_df = pd.read_csv(file_name, sep="\t", header=0, skiprows=1)
 
     if CRISM_match:
-
-        reflectance_df = reflectance_df.loc[
-            reflectance_df['Wavelength(micron)'].isin(c_wavelengths)]
-
-    if CRISM_match:
         # Only keep rows with reduced wavelengths
         with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_BASALT.pickle", 'rb') as handle:
             RW_BASALT = pickle.load(handle)
