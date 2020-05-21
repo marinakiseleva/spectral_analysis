@@ -175,8 +175,7 @@ def get_USGS_endmember_k(endmember):
     Get k as numpy vector for endmember
     These were estimated using entire USGS spectra.
     """
-    usgs_data = MODULE_DIR + "/output/data/derived/"
-    file_name = usgs_data + endmember
+    file_name = ENDMEMBERS_K + endmember
 
     with open(file_name + '_k.pickle', 'rb') as handle:
         ks = np.array(pickle.load(handle))

@@ -90,8 +90,8 @@ def get_best_RELAB_k(sid, spectra_db):
         print("Getting best k error for SID: " + str(sid) + ", on index " + str(index))
 
         # 100,000 values from 10^-14 to 1, in log space
-        k_space = np.logspace(-14, -1, 1000)
-        # k_space = [0.2, 0.6]
+        # k_space = np.logspace(-14, -1, 1000)
+        k_space = [0.2, 0.6]
         pool = multiprocessing.Pool(8)
 
         l_errors = []
@@ -176,7 +176,7 @@ def get_best_USGS_k(endmember):
     RMSE = error / len(wavelengths)
     print("Found with error " + str(RMSE))
 
-    endmember_file = "../output/data/derived/" + endmember
+    endmember_file = ENDMEMBERS_K + endmember
     with open(endmember_file + '_k.pickle', 'wb') as f:
         pickle.dump(ks, f)
     with open(endmember_file + '_k_RMSE.pickle', 'wb') as f:

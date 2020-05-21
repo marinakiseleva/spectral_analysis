@@ -8,9 +8,13 @@ DIRECTORIES
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 # Module directory, contains model, preprocessing, etc.
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
-CATALOGUE_PATH = ROOT_DIR + "/RelabDB2018Dec31/catalogues/"
-RELAB_DATA_PATH = ROOT_DIR + "/RelabDB2018Dec31/data/"
-CRISM_DATA_PATH = ROOT_DIR + '/../data/20200420T120530535238/cartorder/'
+
+DATA_DIR = ROOT_DIR + "/../data/"
+CATALOGUE_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/catalogues/"
+RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/data/"
+USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
+ENDMEMBERS_K = DATA_DIR + "lab_spectra/derived/"
+CRISM_DATA_PATH = DATA_DIR + '20200420T120530535238/cartorder/'
 
 """
 For plotting
@@ -59,7 +63,6 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
 # Below are constants for the USGS Endmembers
 #########################################
 
-USGS_DATA = ROOT_DIR + "/../data/lab_spectra/USGS/"
 
 # Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
 USGS_OLIVINE_Fo51_GS = 25
