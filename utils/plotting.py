@@ -176,6 +176,7 @@ def plot_highd_img(img_m):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_img = img_m[:, :, index]
         axp = ax.imshow(endmember_img)
+        cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
         fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".png")
 
