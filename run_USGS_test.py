@@ -52,9 +52,9 @@ def get_rmse(a, b):
 if __name__ == "__main__":
     num_mixtures = 5
     grid_res = 4
-    noise_scale = 0.01  # 0.001
+    noise_scale = 0.001  # 0.001
     res = 8
-    mcmc_iterations = 1
+    mcmc_iterations = 400
 
     # Print metadata
     print("Generating data with: ")
@@ -72,9 +72,6 @@ if __name__ == "__main__":
                            res=res)
     print("Image size " + str(image.r_image.shape))
 
-    # print("Image shape " + str(image.shape))
-    # bands = (4, 80, 100)
-    # view = imshow(data=image, bands=bands)
     m_actual = image.m_image
     D_actual = image.D_image
 
