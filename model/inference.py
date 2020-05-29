@@ -368,30 +368,10 @@ def get_spatial_energy(m_image, i, j, m):
     return e_spatial
 
 
-def get_mrf_joint(m_image, D_image, i, j, m, D, d):
-    """
-    Get joint probability distribution of MRF:
-    p(m,D) = exp{ P(y_i | x_i) - beta * sum_{n in neighbors} SAD(y_i, y_n) }
-    :param m_image: 3D Numpy array, mineral assemblages for pixels
-    :param D_image: 3D Numpy array, grain sizes for pixels
-    :param i: row index for datapoint d
-    :param j: col index for datapoint d
-    :param m: Mineral assemblage for pixel i,j to consider
-    :param D: Grain sizes for pixel i,j to consider
-    :param d: 1 spectral sample (1D Numpy vector)
-    """
-
-    # get energy of neighbors
-    e_spatial = get_spatial_energy(m_image, i, j, m)
-    e_spectral = get_posterior_estimate(d, m, D)
-    joint_prob = e_spectral * math.exp(-e_spatial * consts.BETA)
-    # joint_prob_lp = get_log_posterior_estimate(
-    #     d, m, D) * math.exp(-e_spatial * consts.BETA)
-    return joint_prob
-
-
 def get_mrf_energy(m_image, D_image, i, j, m, D, d):
-
+    """
+    Get energy at this pixel i,j in image
+    """
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
     e_spectral = get_log_posterior_estimate(d, m, D)
@@ -424,20 +404,27 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     return m_image, D_image
 
 
-def get_mrf_joint_prob(image, m_image, D_image):
+def get_total_energy(image, m_image, D_image):
     """
-    Get the joint probability distribution for the entire MRF
+    Get the total MRF energy; we want this to decrease at each iteration
+    :param m_image: 3D Numpy array, mineral assemblages for pixels
+    :param D_image: 3D Numpy array, grain sizes for pixels
     """
     num_rows = m_image.shape[0]
     num_cols = m_image.shape[1]
-    joint_prob = 0
+
+    energy_sum = 0
     for x in range(num_rows):
         for y in range(num_cols):
             d = image[x, y]
             m = m_image[x, y]
             D = D_image[x, y]
-            joint_prob += get_mrf_joint(m_image, D_image, x, y, m, D, d)
-    return joint_prob
+            e_spatial = get_spatial_energy(m_image, x, y, m)
+            e_spectral = get_log_posterior_estimate(d, m, D)
+            pixel_energy = -e_spectral + (e_spatial * consts.BETA)
+            energy_sum += pixel_energy
+
+    return energy_sum
 
 
 def infer_mrf_image(iterations, image):
@@ -464,6 +451,8 @@ def infer_mrf_image(iterations, image):
     rows = np.arange(0, num_rows)
     cols = np.arange(0, num_cols)
 
+    prev_energies = [0]
+    energy_diffs = []
     for iteration in range(iterations):
         # Randomize order of rows and columns each iteration
         np.random.shuffle(cols)
@@ -474,11 +463,24 @@ def infer_mrf_image(iterations, image):
                 d = image[i, j]
                 m_image, D_image = infer_mrf_datapoint(m_image, D_image, i, j, d)
 
+        # Print out iteration performance
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+
+        energy = get_total_energy(image, m_image, D_image)
+        energy_diff = energy - prev_energies[-1]
+        prev_energies.append(energy)
+        energy_diffs.append(energy_diff)
+
         print("\n\n" + str(dt_string) + "  iteration " +
               str(iteration + 1) + "/" + str(iterations))
-        jp = get_mrf_joint_prob(image, m_image, D_image)
-        print("Joint probability density: " + str(round(jp, 4)))
+        print("Energy change: " + str(round(energy_diff, 4)))
+        print("Total MRF Energy: " + str(round(energy, 4)))
+
+        # ENERGY_CUTOFF = 5  # cutoff used for early stopping
+        # if len(energy_diffs) > 25 and all(abs(i) <= ENERGY_CUTOFF
+        #                                   for i in energy_diffs[-5:]):
+        #     print("\nEARLY STOPPING AT THIS ITERATION.\n")
+        #     break
 
     return m_image, D_image
