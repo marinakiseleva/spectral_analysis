@@ -105,16 +105,6 @@ CRISM data access
 """
 
 
-def open_image(file_name, image_name):
-    """
-    Open TRDR image as SpyFile
-    :param file_name: Full directory + file name, .hdr
-    :param image_name:  Full directory + file name, .img
-    """
-    spy_image = envi.open(file=file_name, image=image_name)
-    return spy_image
-
-
 def get_CRISM_data():
     """
     Gets CRISM data with spectra filtered to same range as endmembers
@@ -122,7 +112,8 @@ def get_CRISM_data():
     """
     image_name = CRISM_IMG
     file_name = CRISM_IMG + '.hdr'
-    img = open_image(file_name, image_name)
+    # Open TRDR image as SpyFile
+    img = envi.open(file=file_name, image=image_name)
 
     # Only keep rows with reduced wavelengths
     with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:

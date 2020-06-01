@@ -197,11 +197,12 @@ def plot_compare_highd_predictions(actual, pred):
 
         axes[0].imshow(endmember_actual)
         axes[0].set_title("Actual")
-        axp = axes[1].imshow(endmember_pred)
+        axp = axes[1].imshow(endmember_pred, vmin=0, vmax=1)
 
         rmse = math.sqrt(np.mean((endmember_actual - endmember_pred)**2))
 
         axes[1].set_title(endmember + " prediction\n" + "RMSE: " + str(round(rmse, 3)))
+
         cb = plt.colorbar(mappable=axp, ax=axes, location='right')
 
         fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")

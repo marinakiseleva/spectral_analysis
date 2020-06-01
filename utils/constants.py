@@ -52,9 +52,9 @@ BETA = 1
 # from Lapotre DOI:10.1002/2016JE005133
 ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
                 'olivine (Fo80)': 1.67,
-                'augite': 1.7,
-                'labradorite': 1.7,
-                'pigeonite': 1.56,
+                'augite': 1.7,  # pyroxene
+                'labradorite': 1.7,  # plagioclase
+                'pigeonite': 1.56,  # pyroxene
                 'magnetite': 2.42,
                 "C1PO17": 1.66,  # Pure RELAB olivine
                 "C2PE12": 1.66,  # Pure RELAB enstatite
