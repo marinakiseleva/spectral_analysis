@@ -84,7 +84,7 @@ def get_likelihood(d, m, D):
     :param D: Dict from SID to grain size
     """
     r_e = get_USGS_r_mixed_hapke_estimate(m, D)
-    length = consts.REDUCED_WAVELENGTH_COUNT
+    length = len(d)
 
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))

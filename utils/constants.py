@@ -15,11 +15,6 @@ RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
 ENDMEMBERS_K = DATA_DIR + "lab_spectra/derived/"
 
-"""
-CRISM DATA
-"""
-CRISM_DATA_PATH = DATA_DIR + '20200420T120530535238/cartorder/'
-CRISM_IMG = CRISM_DATA_PATH + 'ato0002ec79_01_if169l_trr3_CAT.img'
 
 """
 For plotting
@@ -63,8 +58,6 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
                 "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
                 }
 
-# Number of wavelengths when RELAB, USGS, and CRISM are reduced to equal bands
-REDUCED_WAVELENGTH_COUNT = 184
 
 RELAB_WAVELENGTH_COUNT = 211
 
@@ -123,10 +116,6 @@ USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 # Min and max grain sizes for these endmembers
 USGS_GRAIN_SIZE_MIN = 45
 USGS_GRAIN_SIZE_MAX = 75
-
-# USGS_REDUCED_WAVELENGTHS = None
-# with open(MODULE_DIR + "/utils/FILE_CONSTANTS/USGS_REDUCED_WAVELENGTHS.pickle", "rb") as f:
-#     USGS_REDUCED_WAVELENGTHS = pickle.load(f)
 
 
 #########################################

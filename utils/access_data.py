@@ -1,5 +1,5 @@
 """
-Accesses RELAB and USGS data 
+Accesses RELAB and USGS data
 """
 import pickle
 import pandas as pd
@@ -17,7 +17,7 @@ def match_lists(target, source):
     Makes target list of wavelengths as similar to source as possible. For each target wavlength, finds closest source value.
     :param target: List of wavelengths
     :param source: List of wavelengths, longer than target
-    Reduce long list, long_w, to short. Each is a list of wavelengths, and we keep the wavelength in the long_w that is closest to the next value in the short list. 
+    Reduce long list, long_w, to short. Each is a list of wavelengths, and we keep the wavelength in the long_w that is closest to the next value in the short list.
     """
 
     # Finds first value in target that is greater than source - if necessary
@@ -59,17 +59,26 @@ def match_lists(target, source):
     return new_target, new_source
 
 
-def record_reduced_spectra():
+def record_reduced_spectra(CRISM_w_file):
     """
-    Saves the wavelengths that are found to be as equal as possible between RELAB (basaltic glass), USGS (olivine Fo80), and CRISM (random pixel from ATO0002EC79 image) spectra. The result is 184 wavelengths. The unique wavelengths are saved per data source because this is how their spectral values will be accessed. 
+    Saves the wavelengths that are found to be as equal as possible between RELAB (basaltic glass), USGS (olivine Fo80), and CRISM (random pixel from passed-in image) spectra.  The unique wavelengths are saved per data source because this is how their spectral values will be accessed.
+    :param CRISM_w_file: Path and .txt file name of CRISM z-profile for a single pixel, saved from CAT ENVI
     """
     # Get data
     ss = get_data()
     BASALTIC_wavelengths = get_RELAB_wavelengths(
-        spectrum_id='C1BE100', spectra_db=ss, cut=False)
+        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=False)
     USGS_data = get_USGS_data("olivine (Fo80)", CRISM_match=False)
     USGS_wavelengths = USGS_data['wavelength'].values.tolist()
-    CRISM_wavelengths = get_CRISM_wavelengths()
+    CRISM_wavelengths = get_CRISM_wavelengths(CRISM_w_file)
+
+    # Print current spec stats
+    print("RELAB min:" + str(min(BASALTIC_wavelengths)) + " max: " +
+          str(max(BASALTIC_wavelengths)) + " count: " + str(len(BASALTIC_wavelengths)))
+    print("USGS min:" + str(min(USGS_wavelengths)) + " max: " +
+          str(max(USGS_wavelengths)) + " count: " + str(len(USGS_wavelengths)))
+    print("CRISM min:" + str(min(CRISM_wavelengths)) + " max: " +
+          str(max(CRISM_wavelengths)) + " count: " + str(len(CRISM_wavelengths)))
 
     # 1. Reduce Olivine Fo51 (which is the same as all USGS endmembers) to basaltic glass
     # Reduce both source and target to match target as best as possible
@@ -78,6 +87,8 @@ def record_reduced_spectra():
                                      source=USGS_wavelengths)
     # 2. Match USGS to CRISM
     CRISM_reduced, USGS_reduced = match_lists(target=CRISM_wavelengths, source=usgs_rw)
+    print("CRISM_reduced min:" + str(min(CRISM_reduced)) + " max: " +
+          str(max(CRISM_reduced)) + " count: " + str(len(CRISM_reduced)))
 
     # 3. Find same indexed wavelengths for basaltic glass
     # Get indices of original USGS that were kept
@@ -105,43 +116,53 @@ CRISM data access
 """
 
 
-def get_CRISM_data():
+def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
     """
-    Gets CRISM data with spectra filtered to same range as endmembers
-    Currently taking one sample image and cutting it down to a narrow size to run efficiently. 
+    Gets CRISM data this directory & name.
+    :param image_file: Full dir and file name of iamge
+    :param wavelengths_file: Full dir and file name of wavelength values for image
+    :param CRISM_match: filter spectra to same range as endmembers
     """
-    image_name = CRISM_IMG
-    file_name = CRISM_IMG + '.hdr'
-    # Open TRDR image as SpyFile
-    img = envi.open(file=file_name, image=image_name)
 
-    # Only keep rows with reduced wavelengths
-    with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
-        RW_CRISM = pickle.load(handle)
+    with open(image_file, 'rb') as handle:
+        loaded_img = pickle.load(handle)
 
-    # Get indices of reduced wavelengths
-    wavelengths = get_CRISM_wavelengths()
-    RW_CRISM_indices = []
-    for index, wavelength in enumerate(wavelengths):
-        if wavelength in RW_CRISM:
-            RW_CRISM_indices.append(index)
+    if CRISM_match:
 
-    # Take inrange_indices of third dimension for img
-    # x and y are filtered down for faster testing
-    # Image size (178, 640, 184)
-    b = np.take(a=img[1:30, 1:30], indices=RW_CRISM_indices, axis=2)
+        with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
+            # CRISM reduced wavelengths to keep.
+            RW_CRISM = pickle.load(handle)
 
-    return b
+        with open(wavelengths_file, 'rb') as handle:
+            # CRISM wavelengths to keep.
+            wavelengths = pickle.load(handle)
+        keep_indices = []
+        for index, w in enumerate(wavelengths):
+            if w in RW_CRISM:
+                keep_indices.append(index)
+
+        newimg = np.zeros((loaded_img.shape[0], loaded_img.shape[1], len(RW_CRISM)))
+        for xindex, row in enumerate(loaded_img):
+            for yindex, val in enumerate(row):
+                # Only keep values with reduced wavelengths
+                newimg[xindex, yindex] = np.take(val, keep_indices)
+        return newimg
+
+    return loaded_img
 
 
-def get_CRISM_wavelengths():
+def get_CRISM_wavelengths(file):
     """
-    Get the wavelengths of CRISM data - taken from random pixel in ATO0002EC79 image.
+    Get the wavelengths of CRISM data from saved file.
+    :param file: Path and .pickle file name of CRISM wavelengths.
     """
-    CRISM_data = pd.read_csv(
-        CRISM_DATA_PATH + "../wavelengths/z.txt", sep="  ", header=0)
-    CRISM_data.columns = ["wavelength", "pixelval"]
-    return CRISM_data['wavelength'].values.tolist()
+    if file is None:
+        return ValueError("Must pass in file.")
+
+    with open(file, 'rb') as handle:
+        wavelengths = pickle.load(handle)
+
+    return wavelengths
 
 
 """

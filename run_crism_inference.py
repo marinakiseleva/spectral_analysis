@@ -50,25 +50,21 @@ def get_rmse(a, b):
     return math.sqrt(np.mean((a - b)**2))
 
 if __name__ == "__main__":
-    num_mixtures = 5
-    grid_res = 4
-    noise_scale = 0.01  # 0.001
-    res = 8
     mcmc_iterations = 1
-
-    # Print metadata
-    print("Generating data with: ")
-    print("\t" + str(num_mixtures) + " unique mixtures")
-    print("\t" + str(noise_scale) + " noise (sigma)")
-    print("\t" + str(grid_res) + " grid resolution")
-    print("\t" + str(res) + " pixel resolution")
 
     print("Conducting MCMC with: ")
     print("\t" + str(mcmc_iterations) + " iterations")
 
-    image = get_CRISM_data()
-    print("Image type " + str(type(image)))
-    print("Image size " + str(image.shape))
+    IMG_DIR = DATA_DIR + 'GALE_CRATER/cartOrder/cartorder/'
+    image_file = IMG_DIR + 'layered_img_section.pickle'
+    wavelengths_file = IMG_DIR + 'layered_wavelengths.pickle'
+
+    # Normalize spectra across RELAB, USGS, and CRISM per each CRISM image
+    # (since different CRISM images have different wavelengths)
+    record_reduced_spectra(wavelengths_file)
+
+    image = get_CRISM_data(image_file, wavelengths_file, CRISM_match=True)
+    print("CRISM image size " + str(image.shape))
 
     m_est, D_est = run_mrf(image, mcmc_iterations)
 
