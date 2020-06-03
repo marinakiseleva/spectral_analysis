@@ -175,7 +175,7 @@ def plot_highd_img(img_m):
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_img = img_m[:, :, index]
-        axp = ax.imshow(endmember_img)
+        axp = ax.imshow(endmember_img, vmin=0, vmax=1)
         cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
         fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".png")

@@ -202,6 +202,7 @@ def estimate_all_USGS_k():
                'labradorite']
 
     for endmember in members:
+        print("Estimating " + endmember)
         ks, RMSE = get_best_USGS_k(endmember)
         print("\n\n" + str(endmember) + " length: " + str(len(ks)))
         record_estimation(endmember, ks, RMSE)
@@ -245,7 +246,13 @@ def get_cosine(x):
 
 if __name__ == "__main__":
     estimate_all_USGS_k()
-    # spectra_db = get_data()
+
+    print("Estimating basaltic glass")
+    spectra_db = get_data()
+    k, err = get_best_RELAB_k(sid='C1BE100', spectra_db=spectra_db)
+    record_estimation('basaltic glass', k, err)
+
+    # print("Estimating olivine")
     # olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
     # print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
 

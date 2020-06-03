@@ -12,6 +12,7 @@ from model.inference import infer_mrf_image, convert_arr_to_dict
 from preprocessing.generate_USGS_data import generate_image
 from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 from utils.plotting import *
+from utils.access_data import *
 import utils.constants as consts
 
 
@@ -27,15 +28,17 @@ def run_mrf(image, mcmc_iterations):
     return m_est, D_est
 
 
-def estimate_image(m, D):
+def estimate_image_reflectance(m, D):
     """
     Convert m and D estimates to reflectance, to visualize estimated image
     """
+    num_wavelengths = len(get_USGS_wavelengths(CRISM_match=True))
+
     num_rows = m.shape[0]
     num_cols = m.shape[1]
-    r_image = np.ones((num_rows, num_cols, consts.REDUCED_WAVELENGTH_COUNT))
-    for row in range(num_rows):
-        for element in range(num_cols):
+    r_image = np.ones((num_rows, num_cols, num_wavelengths))
+    for xindex, row in enumerate(range(num_rows)):
+        for yindex, element in enumerate(range(num_cols)):
             cur_m = m[row, element]
             cur_D = D[row, element]
             m_dict = convert_arr_to_dict(cur_m)
@@ -72,7 +75,8 @@ if __name__ == "__main__":
 
     # Compare reflectances in certain bands.
     bands = [30, 80, 150]
-    est = estimate_image(m_est, D_est)
+
+    est = estimate_image_reflectance(m_est, D_est)
     estimated_img = np.take(a=est[:, :], indices=bands, axis=2)
 
     fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)

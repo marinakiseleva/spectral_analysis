@@ -10,8 +10,6 @@ from scipy.stats import multivariate_normal
 from collections import OrderedDict
 import numpy as np
 import math
-
-from utils.access_data import get_USGS_wavelengths
 from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 import utils.constants as consts
 
@@ -85,7 +83,6 @@ def get_likelihood(d, m, D):
     """
     r_e = get_USGS_r_mixed_hapke_estimate(m, D)
     length = len(d)
-
     covariance = np.zeros((length, length))
     np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))
 
