@@ -87,6 +87,7 @@ if __name__ == "__main__":
 
     # Also record section of image for testing
     with open(CRISM_path + IMG_DIR + 'layered_img_section.pickle', 'wb') as f:
+        # Save subsection as rows 10:50 and columns 100:140 (starting in top left corner)
         pickle.dump(new_img[10:50, 100:140, :], f)
 
     # For image frs00028346_01_if169
