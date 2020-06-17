@@ -7,9 +7,8 @@ import math
 import matplotlib.pyplot as plt
 from spectral import *
 
-
-from model.inference import infer_mrf_image, convert_arr_to_dict
-from preprocessing.generate_USGS_data import generate_image
+from model.segmentation import *
+from model.inference import *
 from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 from utils.plotting import *
 from utils.access_data import *
@@ -53,13 +52,17 @@ def get_rmse(a, b):
     return math.sqrt(np.mean((a - b)**2))
 
 if __name__ == "__main__":
-    mcmc_iterations = 1
+    # seg_iterations = 500000
+    # mcmc_iterations = 1000
+    seg_iterations = 20000000
+    mcmc_iterations = 2
 
-    print("Conducting MCMC with: ")
-    print("\t" + str(mcmc_iterations) + " iterations")
+    print("Conducting CRISM inference with: ")
+    print("\t" + str(mcmc_iterations) + " MCMC iterations")
+    print("\t" + str(seg_iterations) + " segmentation iterations")
 
     IMG_DIR = DATA_DIR + 'GALE_CRATER/cartOrder/cartorder/'
-    image_file = IMG_DIR + 'layered_img_section.pickle'
+    image_file = IMG_DIR + 'layered_img_sec_100_150.pickle'
     wavelengths_file = IMG_DIR + 'layered_wavelengths.pickle'
 
     # Normalize spectra across RELAB, USGS, and CRISM per each CRISM image
@@ -69,7 +72,37 @@ if __name__ == "__main__":
     image = get_CRISM_data(image_file, wavelengths_file, CRISM_match=True)
     print("CRISM image size " + str(image.shape))
 
-    m_est, D_est = run_mrf(image, mcmc_iterations)
+    # MRF
+    # m_est, D_est = run_mrf(image, mcmc_iterations)
+
+    # Segmentation
+    print("Segmenting...")
+    graphs = segment_image(iterations=seg_iterations,
+                           image=image
+                           )
+    superpixels = get_superpixels(graphs)
+    print("Number of superpixels: " + str(len(superpixels)))
+
+    print("Infering image...")
+    m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
+                                     superpixels=superpixels)
+
+    # Reconstruct image
+    num_rows = image.shape[0]
+    num_cols = image.shape[1]
+    # Mineral assemblage predictions
+    num_endmembers = USGS_NUM_ENDMEMBERS
+    m_est = np.ones((num_rows, num_cols, num_endmembers))
+    # Grain size predictions
+    D_est = np.ones((num_rows, num_cols, num_endmembers))
+    for index, pair in enumerate(m_and_Ds):
+        graph = graphs[index]
+        for v in graph.vertices:
+            # retrieve x, y coords
+            # [i, j] = index_coords[index]
+            m, D = pair
+            m_est[v.x, v.y] = m
+            D_est[v.x, v.y] = D
 
     p = plot_highd_img(m_est)
 
@@ -82,5 +115,6 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
     plot_as_rgb(estimated_img, bands, "Estimated", ax)
+    print("Number of clusters: " + str(len(superpixels)))
     fig.suptitle("Reflectance as RGB, using bands " + str(bands))
     fig.savefig(consts.MODULE_DIR + "/output/figures/rgb.png")

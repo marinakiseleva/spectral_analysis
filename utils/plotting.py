@@ -4,6 +4,7 @@ import pandas as pd
 from textwrap import wrap
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import matplotlib.patches as patches
 
 
 from utils.constants import *
@@ -244,3 +245,56 @@ def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=Fa
         fig.tight_layout(rect=[0, 0.03, 1, 1.2])
 
     return fig
+
+
+def plot_zoomed_sectioned_CRISM(loaded_img, coords):
+    """
+    Plots original passed in image of frt0002037a_07_if165 and its zoomed in selected region used for testing.
+    :param loaded_img: img 
+    :param coords: List of [X, Y, max_x, max_y] where these values are based on the subsection of image: img[X:max_x, Y:max_y, :]
+
+    """
+    PLOTTING_BAND = 340
+
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=140)
+    axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
+
+    # Rectangle params equal image section params as folows:
+    # new_img[X:max_x, Y:max_y, :] ->
+    # Rectangle((X, Y), max_x - X, max_y - Y, ... )
+    # Rectangle ((bottom coord, left coord), width, height)
+    if coords is None:
+        raise ValueError("Coords must be passed in, and length 4.")
+    else:
+        X = coords[0]
+        max_x = coords[1]
+        Y = coords[2]
+        max_y = coords[3]
+
+    rect = patches.Rectangle((X, Y), max_x - X, max_y - Y, linewidth=1,
+                             edgecolor='red', facecolor='none')
+    ax.add_patch(rect)
+
+    cb = plt.colorbar(mappable=axp, ax=ax)
+
+    # axins = ax.inset_axes([0.4, 0.4, 0.47, 0.47])
+    # axins.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
+    # # Top left and bottom right corners of box
+    # x1, x2, y1, y2 = Y, max_y, X, max_x
+    # axins.set_xlim(x1, x2)
+    # axins.set_ylim(y2, y1)
+    # axins.set_xticklabels('')
+    # axins.set_yticklabels('')
+
+    # bl_1 = [X, Y]  # Bottom left point on original
+    # bl_2 = [300, 250]  # Bottom left point on zoom
+    # tl_1 = [Y, Y + 200]  # Top left point on original
+    # tl_2 = [Y, max_y]  # Top left point on zoom
+    # plt.plot(bl_1, bl_2, tl_1, tl_2, color='red', linewidth=1)
+
+    # Can't use because it flips inner image
+    # ax.indicate_inset_zoom(axins, edgecolor='red')
+    plt.savefig("frt0002037a_07_if165_zoomed")
+
+    plt.title("frt0002037a_07_if165 CRISM Image")
+    plt.show()

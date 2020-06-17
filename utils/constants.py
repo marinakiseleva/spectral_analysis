@@ -101,6 +101,8 @@ USGS_mu_0 = 0.8660254037844386
 USGS_mu = 1
 
 
+# Misnomer, since basaltic glass is RELAB.
+# These endmembers are for CRISM testing.
 USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
                         'olivine (Fo80)',
                         'augite',
@@ -129,7 +131,7 @@ USGS_GRAIN_SIZE_MAX = 75
 #########################################
 
 # For endmember-specifics
-NUM_ENDMEMBERS = 3
+# NUM_ENDMEMBERS = 3
 
 # Min and max grain sizes for these endmembers
 GRAIN_SIZE_MIN = 45
