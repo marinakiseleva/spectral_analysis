@@ -32,11 +32,22 @@ def sample_multivariate(mean):
     Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
     """
+    # variance which affects sampling rate
+    SAMPLING_VARIANCE = 1000
+
     length = mean.shape[0]
     covariance = np.zeros((length, length))
-    np.fill_diagonal(covariance, .1)
+    np.fill_diagonal(covariance, SAMPLING_VARIANCE)
 
-    return np.random.multivariate_normal(mean, covariance)
+    sample = np.random.multivariate_normal(mean, covariance)
+
+    # Ensure all max are <= 800 and all min >= 50
+    for index, v in enumerate(sample):
+        if v > 800:
+            sample[index] = 800
+        elif v < 50:
+            sample[index] = 50
+    return sample
 
 
 def get_m_prob(M, A=None):
@@ -148,10 +159,10 @@ def infer_datapoint(iterations, d):
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
     """
-    # Initialize with 1/# endmembers each mineral and grain size 30 for each
+    # Initialize with 1/# endmembers each mineral
     cur_m = np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)]
                      * consts.USGS_NUM_ENDMEMBERS)
-    cur_D = np.array([30] * consts.USGS_NUM_ENDMEMBERS)
+    cur_D = np.array([consts.INITIAL_D] * consts.USGS_NUM_ENDMEMBERS)
 
     for i in range(iterations):
         # Determine whether or not to accept the new parameters, based on the
@@ -257,7 +268,8 @@ def init_gibbs(image):
 
             rand_m = sample_dirichlet(
                 np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)] * consts.USGS_NUM_ENDMEMBERS))
-            rand_D = sample_multivariate(np.array([30] * consts.USGS_NUM_ENDMEMBERS))
+            rand_D = sample_multivariate(
+                np.array([consts.INITIAL_D] * consts.USGS_NUM_ENDMEMBERS))
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D

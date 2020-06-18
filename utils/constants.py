@@ -39,6 +39,12 @@ DISTANCE_METRIC = 'SAD'
 BETA = 1
 
 
+# Min and max grain sizes for these endmembers
+INITIAL_D = 300
+GRAIN_SIZE_MIN = 50
+GRAIN_SIZE_MAX = 800
+
+
 #########################################
 # Below are constants shared between USGS and RELAB endmembers
 #########################################
@@ -116,8 +122,8 @@ USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 # Min and max grain sizes for these endmembers
-USGS_GRAIN_SIZE_MIN = 45
-USGS_GRAIN_SIZE_MAX = 75
+# USGS_GRAIN_SIZE_MIN = 45
+# USGS_GRAIN_SIZE_MAX = 75
 
 
 #########################################
@@ -132,10 +138,6 @@ USGS_GRAIN_SIZE_MAX = 75
 
 # For endmember-specifics
 # NUM_ENDMEMBERS = 3
-
-# Min and max grain sizes for these endmembers
-GRAIN_SIZE_MIN = 45
-GRAIN_SIZE_MAX = 75
 
 
 # Spectrum IDs

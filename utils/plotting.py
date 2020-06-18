@@ -254,10 +254,11 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
     :param coords: List of [X, Y, max_x, max_y] where these values are based on the subsection of image: img[X:max_x, Y:max_y, :]
 
     """
-    PLOTTING_BAND = 340
-
+    PLOTTING_BAND = 100  # 24
+    print("plotting band " + str(PLOTTING_BAND))
     fig, ax = plt.subplots(figsize=(5, 5), dpi=140)
-    axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
+    axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND],
+                    origin='upper', cmap='bone')
 
     # Rectangle params equal image section params as folows:
     # new_img[X:max_x, Y:max_y, :] ->
@@ -275,7 +276,7 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
                              edgecolor='red', facecolor='none')
     ax.add_patch(rect)
 
-    cb = plt.colorbar(mappable=axp, ax=ax)
+    # cb = plt.colorbar(mappable=axp, ax=ax)
 
     # axins = ax.inset_axes([0.4, 0.4, 0.47, 0.47])
     # axins.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
