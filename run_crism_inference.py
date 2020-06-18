@@ -1,7 +1,7 @@
 """
 Estimate m and D per pixel of CRISM image. Image specified in constants file.
 """
-
+import os
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -54,6 +54,9 @@ def get_rmse(a, b):
 if __name__ == "__main__":
     # seg_iterations = 500000
     # mcmc_iterations = 1000
+
+    os.system("taskset -p -c 1-3 %d" % os.getpid())
+
     seg_iterations = 20000000
     mcmc_iterations = 2
 
