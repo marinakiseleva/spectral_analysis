@@ -38,9 +38,12 @@ NUM_CPUS = 8
 DISTANCE_METRIC = 'SAD'
 BETA = 1
 
+# Number of iterations to stop after there is no update.
+EARLY_STOP = 100
+
 
 # Min and max grain sizes for these endmembers
-INITIAL_D = 300
+INITIAL_D = 100
 GRAIN_SIZE_MIN = 50
 GRAIN_SIZE_MAX = 800
 

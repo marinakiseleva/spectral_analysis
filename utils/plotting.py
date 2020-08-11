@@ -249,7 +249,7 @@ def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=Fa
 
 def plot_zoomed_sectioned_CRISM(loaded_img, coords):
     """
-    Plots original passed in image of frt0002037a_07_if165 and its zoomed in selected region used for testing.
+    Plots original passed in image of frt0002037a_07_if165 and its zoomed in selected region used for testing. The x,y of the subsection are in layer_CRISM_data.py
     :param loaded_img: img 
     :param coords: List of [X, Y, max_x, max_y] where these values are based on the subsection of image: img[X:max_x, Y:max_y, :]
 
@@ -276,8 +276,7 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
                              edgecolor='red', facecolor='none')
     ax.add_patch(rect)
 
-    # cb = plt.colorbar(mappable=axp, ax=ax)
-
+    # Callout code ; not working.
     # axins = ax.inset_axes([0.4, 0.4, 0.47, 0.47])
     # axins.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
     # # Top left and bottom right corners of box

@@ -119,7 +119,7 @@ CRISM data access
 def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
     """
     Gets CRISM data this directory & name.
-    :param image_file: Full dir and file name of iamge
+    :param image_file: Full dir and file name of Pickled image.
     :param wavelengths_file: Full dir and file name of wavelength values for image
     :param CRISM_match: filter spectra to same range as endmembers
     """

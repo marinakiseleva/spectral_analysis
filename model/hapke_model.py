@@ -6,8 +6,7 @@ from utils.access_data import get_USGS_endmember_k, get_USGS_wavelengths
 
 def get_USGS_r_mixed_hapke_estimate(m, D):
     """
-    Gets mixture of SSAs of endmembers as single SSA:
-    w_mix = sum_i^N (f_i * w_i)
+    Calculate reflectance of m and D using Hapke model; using spectral endmembers from USGS library
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
@@ -29,7 +28,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
         n = ENDMEMBERS_N[endmember]
         k = get_USGS_endmember_k(endmember)
         w = get_w_hapke_estimate(n, k, D_cur, wavelengths)
-
+        # Gets mixture of SSAs of endmembers as single SSA:
         w_mix = w_mix + (F[endmember] * w)
 
     r = get_derived_reflectance(w_mix, mu, mu_0)
@@ -38,8 +37,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
 
 def get_synthetic_r_mixed_hapke_estimate(m, D):
     """
-    Gets mixture of SSAs of endmembers as single SSA:
-    w_mix = sum_i^N (f_i * w_i)
+    Calculate reflectance of m and D using Hapke model; using spectral endmembers from RELAB library
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """

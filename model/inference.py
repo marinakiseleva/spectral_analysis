@@ -19,7 +19,7 @@ def sample_dirichlet(x):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
-    c = 100
+    c = 10
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
         if value < 0.001:
@@ -33,7 +33,7 @@ def sample_multivariate(mean):
     :param mean: vector of mean of Gaussian
     """
     # variance which affects sampling rate
-    SAMPLING_VARIANCE = 1000
+    SAMPLING_VARIANCE = 10
 
     length = mean.shape[0]
     covariance = np.zeros((length, length))
@@ -95,7 +95,7 @@ def get_likelihood(d, m, D):
     r_e = get_USGS_r_mixed_hapke_estimate(m, D)
     length = len(d)
     covariance = np.zeros((length, length))
-    np.fill_diagonal(covariance, 0.01)  # 5 * (10 ** (-4))
+    np.fill_diagonal(covariance,  0.01)  # 5 * (10 ** (-4)))
 
     y = multivariate_normal.pdf(x=d, mean=r_e, cov=covariance)
 
@@ -153,6 +153,19 @@ def get_log_posterior_estimate(d, m, D):
     return ll + m_prior + D_prior
 
 
+def get_posterior_estimate(d, m, D):
+    """
+    Get estimate of posterior
+    p(m,D|d) = p(d|m, D) p(m) p(D)
+    """
+    m_prior = get_m_prob(m)
+    D_prior = get_D_prob(D)
+    m_dict = convert_arr_to_dict(m)
+    D_dict = convert_arr_to_dict(D)
+    ll = get_likelihood(d, m_dict, D_dict)
+    return ll * m_prior * D_prior
+
+
 def infer_datapoint(iterations, d):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
@@ -164,20 +177,44 @@ def infer_datapoint(iterations, d):
                      * consts.USGS_NUM_ENDMEMBERS)
     cur_D = np.array([consts.INITIAL_D] * consts.USGS_NUM_ENDMEMBERS)
 
-    for i in range(iterations):
-        # Determine whether or not to accept the new parameters, based on the
-        # ratio of log (likelihood*priors)
-        new_m, new_D = transition_model(cur_m, cur_D)
+    unchanged_i = 0  # Number of iterations since last update
+    groups = int(iterations / 10)
+    hold_grain = True
+    for g in range(groups):
+        for i in range(iterations):
 
-        cur = get_posterior_estimate(d, cur_m, cur_D)
-        new = get_posterior_estimate(d, new_m, new_D)
+            # Determine whether or not to accept the new parameters, based on the
+            # ratio of (likelihood*priors)
+            new_m, new_D = transition_model(cur_m, cur_D)
 
-        ratio = new / cur
+            if hold_grain:
+                new_D = cur_D
+            else:
+                new_m = cur_m
 
-        u = np.random.uniform(0, 1)
-        if ratio > u:
-            cur_m = new_m
-            cur_D = new_D
+            cur_l = get_posterior_estimate(d, cur_m, cur_D)
+            new_l = get_posterior_estimate(d, new_m, new_D)
+
+            ratio = new_l / cur_l
+            u = np.random.uniform(0, 1)
+            # Always accept m, D with higher likelihood,
+            # and possibly accept if likelihood is less
+            if ratio > u:
+                print("\n")
+                print(new_m)
+                print(new_D)
+                unchanged_i = 0
+                cur_m = new_m
+                cur_D = new_D
+            else:
+                unchanged_i += 1
+
+            if unchanged_i > consts.EARLY_STOP:
+                print("\nEarly Stop at " + str(i + (i * g)))
+                break
+        # Switch from holding m to D, or vice versa
+        hold_grain = False if hold_grain == True else True
+
     print("Finished datapoint.")
     return [cur_m, cur_D]
 
@@ -287,19 +324,6 @@ def convert_arr_to_dict(values):
     return d
 
 
-def get_posterior_estimate(d, m, D):
-    """
-    Get estimate of posterior
-    p(m,D|d) = p(d|m, D) p(m) p(D)
-    """
-    m_prior = get_m_prob(m)
-    D_prior = get_D_prob(D)
-    m_dict = convert_arr_to_dict(m)
-    D_dict = convert_arr_to_dict(D)
-    ll = get_likelihood(d, m_dict, D_dict)
-    return ll * m_prior * D_prior
-
-
 def get_SAD(a, b):
     """
     Get spectral angle distance:
@@ -389,7 +413,7 @@ def get_mrf_energy(m_image, D_image, i, j, m, D, d):
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
-    Run metropolis algorithm (MCMC) to estimate m and D using posterior 
+    Run metropolis algorithm (MCMC) to estimate m and D using posterior
     Return m_image and D_image with updated values
     :param iterations: Number of iterations to run over
     :param m_image: 3D Numpy array, mineral assemblages for pixels
