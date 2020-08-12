@@ -75,38 +75,41 @@ if __name__ == "__main__":
     image = get_CRISM_data(image_file, wavelengths_file, CRISM_match=True)
     print("CRISM image size " + str(image.shape))
 
+    # Independent
+    m_est, D_est = infer_image(iterations=60, image=image)
+
     # MRF
     # m_est, D_est = run_mrf(image, mcmc_iterations)
 
-    # Segmentation
-    print("Segmenting...")
-    graphs = segment_image(iterations=seg_iterations,
-                           image=image
-                           )
-    superpixels = get_superpixels(graphs)
-    print("Number of superpixels: " + str(len(superpixels)))
+    # # Segmentation
+    # print("Segmenting...")
+    # graphs = segment_image(iterations=seg_iterations,
+    #                        image=image
+    #                        )
+    # superpixels = get_superpixels(graphs)
+    # print("Number of superpixels: " + str(len(superpixels)))
 
-    print("Infering image...")
-    m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
-                                     superpixels=superpixels)
+    # print("Infering image...")
+    # m_and_Ds = infer_segmented_image(iterations=mcmc_iterations,
+    #                                  superpixels=superpixels)
 
     # Reconstruct image
-    num_rows = image.shape[0]
-    num_cols = image.shape[1]
-    # Mineral assemblage predictions
-    num_endmembers = USGS_NUM_ENDMEMBERS
-    m_est = np.ones((num_rows, num_cols, num_endmembers))
-    # Grain size predictions
-    D_est = np.ones((num_rows, num_cols, num_endmembers))
-    for index, pair in enumerate(m_and_Ds):
-        graph = graphs[index]
-        for v in graph.vertices:
-            # retrieve x, y coords
-            # [i, j] = index_coords[index]
-            m, D = pair
-            m_est[v.x, v.y] = m
-            D_est[v.x, v.y] = D
-
+    # num_rows = test_image.shape[0]
+    # num_cols = test_image.shape[1]
+    # # Mineral assemblage predictions
+    # num_endmembers = USGS_NUM_ENDMEMBERS
+    # m_est = np.ones((num_rows, num_cols, num_endmembers))
+    # # Grain size predictions
+    # D_est = np.ones((num_rows, num_cols, num_endmembers))
+    # for index, pair in enumerate(m_and_Ds):
+    #     graph = graphs[index]
+    #     for v in graph.vertices:
+    #         # retrieve x, y coords
+    #         # [i, j] = index_coords[index]
+    #         m, D = pair
+    #         m_est[v.x, v.y] = m
+    #         D_est[v.x, v.y] = D
+    print(m_est)
     p = plot_highd_img(m_est)
 
     # Compare reflectances in certain bands.
@@ -117,7 +120,8 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
 
-    plot_as_rgb(estimated_img, bands, "Estimated", ax)
-    print("Number of clusters: " + str(len(superpixels)))
+    plot_as_rgb(estimated_img, "Estimated", ax)
+
+    # print("Number of clusters: " + str(len(superpixels)))
     fig.suptitle("Reflectance as RGB, using bands " + str(bands))
     fig.savefig(consts.MODULE_DIR + "/output/figures/rgb.png")
