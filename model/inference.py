@@ -402,7 +402,7 @@ def get_mrf_energy(m_image, D_image, i, j, m, D, d):
     """
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    e_spectral = get_log_posterior_estimate(d, m, D)
+    e_spectral = get_posterior_estimate(d, m, D)
     return -e_spectral + (e_spatial * consts.BETA)
 
 
@@ -448,7 +448,7 @@ def get_total_energy(image, m_image, D_image):
             m = m_image[x, y]
             D = D_image[x, y]
             e_spatial = get_spatial_energy(m_image, x, y, m)
-            e_spectral = get_log_posterior_estimate(d, m, D)
+            e_spectral = get_posterior_estimate(d, m, D)
             pixel_energy = -e_spectral + (e_spatial * consts.BETA)
             energy_sum += pixel_energy
 
