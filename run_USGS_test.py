@@ -1,18 +1,21 @@
 """
-Generate fake image with USGS data and then evaluate it.
+Generate fake image with USGS data and then evaluate it with MRF model
 """
-
+from datetime import datetime
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from spectral import *
 
 
-from model.inference import infer_mrf_image, convert_arr_to_dict
 from preprocessing.generate_USGS_data import generate_image
-from model.hapke_model import get_USGS_r_mixed_hapke_estimate
+
+from utils.access_data import get_USGS_wavelengths
 from utils.plotting import *
 import utils.constants as consts
+
+from model.hapke_model import get_USGS_r_mixed_hapke_estimate
+from model.inference import infer_mrf_image, convert_arr_to_dict
 
 
 def run_mrf(image, mcmc_iterations):
@@ -33,7 +36,8 @@ def estimate_image(m, D):
     """
     num_rows = m.shape[0]
     num_cols = m.shape[1]
-    r_image = np.ones((num_rows, num_cols, consts.REDUCED_WAVELENGTH_COUNT))
+    wavelengths = get_USGS_wavelengths(True)
+    r_image = np.ones((num_rows, num_cols, len(wavelengths)))
     for row in range(num_rows):
         for element in range(num_cols):
             cur_m = m[row, element]
@@ -50,11 +54,17 @@ def get_rmse(a, b):
     return math.sqrt(np.mean((a - b)**2))
 
 if __name__ == "__main__":
+
+    now = datetime.now()
+    dt_string = now.strftime("%d_%m_%Y %H_%M_%S")
+    os.mkdir(consts.MODULE_DIR + "/output/" + dt_string)
+    OUTPUT_DIR = consts.MODULE_DIR + "/output/" + dt_string + "/"
+
     num_mixtures = 5
     grid_res = 4
     noise_scale = 0.001  # 0.001
     res = 8
-    mcmc_iterations = 400
+    mcmc_iterations = 10
 
     # Print metadata
     print("Generating data with: ")
@@ -62,7 +72,6 @@ if __name__ == "__main__":
     print("\t" + str(noise_scale) + " noise (sigma)")
     print("\t" + str(grid_res) + " grid resolution")
     print("\t" + str(res) + " pixel resolution")
-
     print("Conducting MCMC with: ")
     print("\t" + str(mcmc_iterations) + " iterations")
 
@@ -82,21 +91,24 @@ if __name__ == "__main__":
     print("Overall D RMSE : " + str(D_rmse))
 
     # Save output
-    np.savetxt(consts.MODULE_DIR + "/output/data/m_actual.txt", m_actual.flatten())
-    np.savetxt(consts.MODULE_DIR + "/output/data/D_actual.txt", D_actual.flatten())
+    np.savetxt(OUTPUT_DIR + "m_actual.txt", m_actual.flatten())
+    np.savetxt(OUTPUT_DIR + "D_actual.txt", D_actual.flatten())
+    with open(OUTPUT_DIR + "metadata.txt", "w") as text_file:
+        text_file.write("MRF model with " + str(mcmc_iterations) +
+                        " iterations on USGS test data")
     p = plot_compare_highd_predictions(actual=m_actual,
-                                       pred=m_est)
+                                       pred=m_est,
+                                       output_dir=OUTPUT_DIR)
 
-    # Compare reflectances in certain bands.
-    bands = [30, 80, 150]
+    # Plot image in certain bands.
+    bands = [80, 150, 220]
     actual_img = np.take(a=image.r_image[:, :], indices=bands, axis=2)
     est = estimate_image(m_est, D_est)
     estimated_img = np.take(a=est[:, :], indices=bands, axis=2)
 
     fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-
-    plot_as_rgb(actual_img, bands, "Original", axes[0])
-    plot_as_rgb(estimated_img, bands, "Estimated", axes[1])
+    plot_as_rgb(actual_img, "Original", axes[0])
+    plot_as_rgb(estimated_img, "Estimated", axes[1])
     fig.suptitle("Reflectance as RGB, using bands " +
                  str(bands) + "\n(m RMSE: " + str(m_rmse) + ")")
-    fig.savefig(consts.MODULE_DIR + "/output/figures/rgb_compare.png")
+    fig.savefig(OUTPUT_DIR + "rgb_compare.png")
