@@ -97,7 +97,7 @@ def record_reduced_spectra(CRISM_w_file):
     # Find these indices in basaltic glass spectra
     BASALT_reduced = np.take(a=basalt_rw, indices=keep_indices, axis=0)
 
-    print("\n All reduced spectra should have same length ")
+    print("\nAll reduced spectra should have same length ")
     print("CRISM : " + str(len(CRISM_reduced)))
     print("USGS " + str(len(USGS_reduced)))
     print("BASALT " + str(len(BASALT_reduced)))
