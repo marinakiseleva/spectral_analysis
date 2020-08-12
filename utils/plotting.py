@@ -23,12 +23,13 @@ def prep_file_name(text):
     return text
 
 
-def plot_as_rgb(img, bands, title, ax):
+def plot_as_rgb(img, title, ax):
     """
     Plot 3d Numpy array as rgb image
     :param img: 3d numpy array
-    :param bands: The 3 wavelength bands being used to visualize the data
     """
+    ax.set_xticks([])
+    ax.set_yticks([])
     ax.set_title(title)
     ax.imshow(img)
 
