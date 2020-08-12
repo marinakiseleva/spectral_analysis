@@ -197,12 +197,7 @@ def infer_datapoint(iterations, d):
 
             ratio = new_l / cur_l
             u = np.random.uniform(0, 1)
-            # Always accept m, D with higher likelihood,
-            # and possibly accept if likelihood is less
             if ratio > u:
-                print("\n")
-                print(new_m)
-                print(new_D)
                 unchanged_i = 0
                 cur_m = new_m
                 cur_D = new_D
