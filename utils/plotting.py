@@ -185,7 +185,7 @@ def plot_highd_img(img_m):
     return fig
 
 
-def plot_compare_highd_predictions(actual, pred):
+def plot_compare_highd_predictions(actual, pred, output_dir=None):
     """
     Compare actual to different predictions, for high-dimensional data (over 3 dimensions)
     :param actual: Numpy 3D array with > 3 endmember proportions per pixel
@@ -206,8 +206,10 @@ def plot_compare_highd_predictions(actual, pred):
         axes[1].set_title(endmember + " prediction\n" + "RMSE: " + str(round(rmse, 3)))
 
         cb = plt.colorbar(mappable=axp, ax=axes, location='right')
-
-        fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
+        if output_dir is not None:
+            fig.savefig(output_dir + "m_compare_" + endmember + ".png")
+        else:
+            fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
 
     return fig
 
