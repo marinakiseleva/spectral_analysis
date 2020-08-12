@@ -56,7 +56,7 @@ def get_rmse(a, b):
 if __name__ == "__main__":
 
     now = datetime.now()
-    dt_string = now.strftime("%d_%m_%Y %H_%M_%S")
+    dt_string = now.strftime("%d_%m_%Y__%H_%M_%S")
     os.mkdir(consts.MODULE_DIR + "/output/" + dt_string)
     OUTPUT_DIR = consts.MODULE_DIR + "/output/" + dt_string + "/"
 
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001  # 0.001
     res = 8
-    mcmc_iterations = 10
+    mcmc_iterations = 1000
 
     # Print metadata
     print("Generating data with: ")
