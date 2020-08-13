@@ -64,7 +64,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001  # 0.001
     res = 8
-    mcmc_iterations = 1000
+    mcmc_iterations = 2000
 
     # Print metadata
     print("Generating data with: ")
