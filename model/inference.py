@@ -2,16 +2,16 @@
 Runs variational inference on the model to estimate the posterior p(m,D|d)
 """
 import sys
+from datetime import datetime
 from functools import partial
 import multiprocessing
-from datetime import datetime
-
-from scipy.stats import multivariate_normal
-from collections import OrderedDict
 import numpy as np
 import math
+from scipy.stats import multivariate_normal
+from collections import OrderedDict
+
 from model.hapke_model import get_USGS_r_mixed_hapke_estimate
-import utils.constants as consts
+from utils.constants import *
 
 
 def sample_dirichlet(x):
@@ -19,7 +19,7 @@ def sample_dirichlet(x):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
-    c = 10
+    c = 100
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
         if value < 0.001:
@@ -81,7 +81,7 @@ def get_D_prob(X):
     p(x) = 1 / (b-a)
     :param X: vector grain size
     """
-    return 1 / (consts.GRAIN_SIZE_MAX - consts.GRAIN_SIZE_MIN)
+    return 1 / (GRAIN_SIZE_MAX - GRAIN_SIZE_MIN)
 
 
 def get_likelihood(d, m, D):
@@ -136,7 +136,7 @@ def convert_USGS_arr_to_dict(values):
     """
     d = OrderedDict()
     for index, v in enumerate(values):
-        d[consts.USGS_PURE_ENDMEMBERS[index]] = v
+        d[USGS_PURE_ENDMEMBERS[index]] = v
     return d
 
 
@@ -173,42 +173,51 @@ def infer_datapoint(iterations, d):
     :param d: 1 spectral sample (1D Numpy vector)
     """
     # Initialize with 1/# endmembers each mineral
-    cur_m = np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)]
-                     * consts.USGS_NUM_ENDMEMBERS)
-    cur_D = np.array([consts.INITIAL_D] * consts.USGS_NUM_ENDMEMBERS)
+
+    # cur_m = np.array([float(1 / USGS_NUM_ENDMEMBERS)]
+    #                  * USGS_NUM_ENDMEMBERS)
+    # cur_D = np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS)
+
+    # Initialize randomly
+    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
+    cur_D = np.random.randint(GRAIN_SIZE_MIN,
+                              GRAIN_SIZE_MAX,
+                              USGS_NUM_ENDMEMBERS)
 
     unchanged_i = 0  # Number of iterations since last update
     groups = int(iterations / 10)
-    hold_grain = True
-    for g in range(groups):
-        for i in range(iterations):
+    # hold_grain = True
+    # for g in range(groups):
+    for i in range(iterations):
 
-            # Determine whether or not to accept the new parameters, based on the
-            # ratio of (likelihood*priors)
-            new_m, new_D = transition_model(cur_m, cur_D)
+        # Determine whether or not to accept the new parameters, based on the
+        # ratio of (likelihood*priors)
+        new_m, new_D = transition_model(cur_m, cur_D)
 
-            if hold_grain:
-                new_D = cur_D
-            else:
-                new_m = cur_m
+        # if hold_grain:
+        # new_D = cur_D
+        # else:
+        # new_m = cur_m
 
-            cur_l = get_posterior_estimate(d, cur_m, cur_D)
-            new_l = get_posterior_estimate(d, new_m, new_D)
+        cur_post = get_posterior_estimate(d, cur_m, cur_D)
+        new_post = get_posterior_estimate(d, new_m, new_D)
 
-            ratio = new_l / cur_l
-            u = np.random.uniform(0, 1)
-            if ratio > u:
-                unchanged_i = 0
-                cur_m = new_m
-                cur_D = new_D
-            else:
-                unchanged_i += 1
+        ratio = new_post / cur_post
+        phi = min(1, ratio)
+        u = np.random.uniform(0, 1)
 
-            if unchanged_i > consts.EARLY_STOP:
-                print("\nEarly Stop at " + str(i + (i * g)))
-                break
-        # Switch from holding m to D, or vice versa
-        hold_grain = False if hold_grain == True else True
+        if phi >= u:
+            unchanged_i = 0
+            cur_m = new_m
+            cur_D = new_D
+        else:
+            unchanged_i += 1
+
+        if unchanged_i > EARLY_STOP:
+            print("\nEarly Stop at " + str(i + (i * g)))
+            break
+    # # Switch from holding m to D, or vice versa
+    # hold_grain = False if hold_grain == True else True
 
     print("Finished datapoint.")
     return [cur_m, cur_D]
@@ -219,7 +228,7 @@ def infer_segmented_image(iterations, superpixels):
     Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)
     """
-    pool = multiprocessing.Pool(consts.NUM_CPUS)
+    pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_datapoint, iterations)
@@ -246,9 +255,9 @@ def infer_image(iterations, image):
     num_cols = image.shape[1]
 
     # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
     # Grain size predictions
-    D_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
 
     # For clarity: create map from numeric index to X,Y coords in image
     index = 0
@@ -261,7 +270,7 @@ def infer_image(iterations, image):
             index += 1
     print("Done indexing image. Starting processing...")
 
-    pool = multiprocessing.Pool(consts.NUM_CPUS)
+    pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_datapoint, iterations)
@@ -292,16 +301,16 @@ def init_gibbs(image):
     """
     num_rows = image.shape[0]
     num_cols = image.shape[1]
-    m_image = np.zeros((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
-    D_image = np.zeros((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.zeros((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
+    D_image = np.zeros((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
     for i in range(num_rows):
         for j in range(num_cols):
             reflectance = image[i, j]
 
             rand_m = sample_dirichlet(
-                np.array([float(1 / consts.USGS_NUM_ENDMEMBERS)] * consts.USGS_NUM_ENDMEMBERS))
+                np.array([float(1 / USGS_NUM_ENDMEMBERS)] * USGS_NUM_ENDMEMBERS))
             rand_D = sample_multivariate(
-                np.array([consts.INITIAL_D] * consts.USGS_NUM_ENDMEMBERS))
+                np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS))
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D
@@ -315,7 +324,7 @@ def convert_arr_to_dict(values):
     """
     d = OrderedDict()
     for index, v in enumerate(values):
-        d[consts.USGS_PURE_ENDMEMBERS[index]] = v
+        d[USGS_PURE_ENDMEMBERS[index]] = v
     return d
 
 
@@ -336,7 +345,7 @@ def get_distance(a,  b):
     Get distance between 2 mineral assemblage vectors
     """
 
-    if consts.DISTANCE_METRIC == 'SAD':
+    if DISTANCE_METRIC == 'SAD':
         # spectral angle distance, SAD
         return get_SAD(a, b)
     else:
@@ -403,7 +412,7 @@ def get_mrf_energy(m_image, D_image, i, j, m, D, d):
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
     e_spectral = get_log_posterior_estimate(d, m, D)
-    return -e_spectral + (e_spatial * consts.BETA)
+    return -e_spectral + (e_spatial * BETA)
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d):
@@ -424,10 +433,11 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     cur = get_mrf_energy(m_image, D_image, i, j, cur_m, cur_D, d)
     new = get_mrf_energy(m_image, D_image, i, j, new_m, new_D, d)
 
-    # ratio = new / cur
-    # u = np.random.uniform(0, 1)
+    ratio = new / cur
+    u = np.random.uniform(0, 1)
     # Accept if energy decreaes.
-    if new < cur:
+    # if new < cur:
+    if ratio < u:
         cur_m = new_m
         cur_D = new_D
     m_image[i, j] = cur_m
@@ -452,7 +462,7 @@ def get_total_energy(image, m_image, D_image):
             D = D_image[x, y]
             e_spatial = get_spatial_energy(m_image, x, y, m)
             e_spectral = get_log_posterior_estimate(d, m, D)
-            pixel_energy = -e_spectral + (e_spatial * consts.BETA)
+            pixel_energy = -e_spectral + (e_spatial * BETA)
             energy_sum += pixel_energy
 
     return energy_sum
@@ -471,9 +481,9 @@ def infer_mrf_image(iterations, image):
     num_rows = image.shape[0]
     num_cols = image.shape[1]
     # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
     # Grain size predictions
-    D_image = np.ones((num_rows, num_cols, consts.USGS_NUM_ENDMEMBERS))
+    D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
 
     print("Initialize pixels in image... ")
     image_reflectances = image
