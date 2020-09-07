@@ -33,7 +33,7 @@ def sample_multivariate(mean):
     :param mean: vector of mean of Gaussian
     """
     # variance which affects sampling rate
-    SAMPLING_VARIANCE = 10
+    SAMPLING_VARIANCE = 100
 
     length = mean.shape[0]
     covariance = np.zeros((length, length))
@@ -43,10 +43,12 @@ def sample_multivariate(mean):
 
     # Ensure all max are <= 800 and all min >= 50
     for index, v in enumerate(sample):
-        if v > 800:
-            sample[index] = 800
-        elif v < 50:
-            sample[index] = 50
+        if v > GRAIN_SIZE_MAX:
+            sample[index] = GRAIN_SIZE_MAX
+        elif v < GRAIN_SIZE_MIN:
+            sample[index] = GRAIN_SIZE_MIN
+        else:
+            sample[index] = int(v)
     return sample
 
 
@@ -172,12 +174,6 @@ def infer_datapoint(iterations, d):
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
     """
-    # Initialize with 1/# endmembers each mineral
-
-    # cur_m = np.array([float(1 / USGS_NUM_ENDMEMBERS)]
-    #                  * USGS_NUM_ENDMEMBERS)
-    # cur_D = np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS)
-
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
     cur_D = np.random.randint(GRAIN_SIZE_MIN,

@@ -44,8 +44,10 @@ EARLY_STOP = 100
 
 # Min and max grain sizes for these endmembers
 INITIAL_D = 100
-GRAIN_SIZE_MIN = 50
-GRAIN_SIZE_MAX = 800
+GRAIN_SIZE_MIN = 20
+GRAIN_SIZE_MAX = 350
+# GRAIN_SIZE_MIN = 50
+# GRAIN_SIZE_MAX = 800
 
 
 #########################################
