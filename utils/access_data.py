@@ -123,6 +123,8 @@ def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
     :param wavelengths_file: Full dir and file name of wavelength values for image
     :param CRISM_match: filter spectra to same range as endmembers
     """
+    if 'pickle' not in image_file:
+        return ValueError("get_CRISM_data only handles pickles.")
 
     with open(image_file, 'rb') as handle:
         loaded_img = pickle.load(handle)
@@ -153,15 +155,18 @@ def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
 
 def get_CRISM_wavelengths(file):
     """
-    Get the wavelengths of CRISM data from saved file.
-    :param file: Path and .pickle file name of CRISM wavelengths.
+    Get the wavelengths of CRISM data from saved file. Handles pickle and CSV.
+    :param file: Full file name of CRISM wavelengths (including path)
     """
     if file is None:
         return ValueError("Must pass in file.")
 
-    with open(file, 'rb') as handle:
-        wavelengths = pickle.load(handle)
-
+    if ".csv" in file:
+        data = pd.read_csv(file, header=None)
+        wavelengths = data[0]
+    elif '.pickle' in file:
+        with open(file, 'rb') as handle:
+            wavelengths = pickle.load(handle)
     return wavelengths
 
 
@@ -194,21 +199,23 @@ def get_USGS_endmember_k(endmember):
 
 def get_USGS_data(endmember, CRISM_match=False):
     """
-    Get USGS data as Pandas DataFrame 
+    Get USGS spectral reflectance data for this endmember, as Pandas DataFrame 
     """
-    file_name = USGS_DATA + endmember + '.txt'
+    # Normalize filename
+    file_name = USGS_DATA + endmember + ".csv"
     for r in ["(", ")", " "]:
-        file_name = file_name.replace(r, "")
-    data = pd.read_csv(file_name, sep='      ', skiprows=16, names=[
-        'wavelength', 'reflectance', 'standard deviation'], engine='python')
-    INVALID_VALUE = -1.23e34
-    data.loc[data['reflectance'] == INVALID_VALUE, 'reflectance'] = 0
+        file_name = file_name.replace(r, "").lower()
+
+    # Open data in Pandas DataFrame
+    data = pd.read_csv(file_name)
+
+    # Replace NULL values (which are -1.23e34) with 0
+    data.loc[data['reflectance'] < 0, 'reflectance'] = 0
 
     if CRISM_match:
         # Only keep rows with reduced wavelengths
         with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_USGS.pickle", 'rb') as handle:
             RW_USGS = pickle.load(handle)
-
         data = data[data['wavelength'].isin(RW_USGS)]
 
     return data
@@ -221,7 +228,7 @@ RELAB data access
 
 def get_data():
     """
-    Get RELAB data - Pull down and merge spectral data sources, return as pandas DataFrame
+    Get all RELAB data. Pull down and merge spectral data sources, return as Pandas DataFrame
     """
 
     file_name = CATALOGUE_PATH + "Minerals.xls"
