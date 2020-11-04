@@ -34,7 +34,7 @@ def plot_as_rgb(img, title, ax):
     ax.imshow(img)
 
 
-def plot_endmembers():
+def plot_endmembers(CRISM_match=True):
     """
     Plot wavelength vs reflectance for each endmember
     """
@@ -47,8 +47,7 @@ def plot_endmembers():
     fig, ax = plt.subplots(figsize=(4, 4), dpi=140)
 
     for index, endmember in enumerate(endmembers):
-
-        data = get_USGS_data(endmember, True)
+        data = get_USGS_data(endmember, CRISM_match=CRISM_match)
 
         ax.plot(data['wavelength'],
                 data['reflectance'],
@@ -58,15 +57,16 @@ def plot_endmembers():
     # Plot RELAB basaltic glass
     ss = get_data()
     wavelengths = get_RELAB_wavelengths(
-        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=True)
+        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
     reflectance = get_reflectance_spectra(
-        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=True)
+        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
     ax.plot(wavelengths,
             reflectance,
             color='purple',
             label='basaltic glass')
 
     ax.set_ylim((0, 1))
+    ax.set_xlim((0.75, max(wavelengths)))
     plt.legend()
 
 
