@@ -217,7 +217,7 @@ def plot_compare_highd_predictions(actual, pred, output_dir=None):
 def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=False):
     """
     Compare actual to different predictions
-    :param actual: Numpy 3D array with 2 dimensions as image and 3d dimension as array of values (for actual image)
+    :param actual: Numpy 3D array with 2 dimensions as image pixel locations and 3d dimension as array of values (for actual image)
     :param preds: List of predicted images (2d Numpy arrays)
     :param fig_title: Title of entire Figure
     :param subplot_titles: Titles of sub-figures, 1 for each preds
@@ -233,6 +233,7 @@ def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=Fa
     num_subplots = len(preds) + 1
 
     fig, axes = plt.subplots(1, num_subplots, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    print(actual)
     axes[0].imshow(actual)
     axes[0].set_title("Actual")
     for index, pred in enumerate(preds):

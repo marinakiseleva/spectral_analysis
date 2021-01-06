@@ -1,19 +1,52 @@
 """
 Main script to generate data and run inference on it.
+Uses all USGS endmembers and basaltic glass from RELAB.
 """
-
-
-from model.inference import infer_mrf_image, infer_segmented_image, infer_image
-from model.segmentation import segment_image, get_superpixels
-from preprocessing.generate_data import generate_image
-from utils.plotting import *
-from utils.constants import NUM_ENDMEMBERS
-
-from run_segmented_inference import run_segmented_inference
 import multiprocessing
 import numpy as np
 import math
 import matplotlib.pyplot as plt
+
+
+from model.inference import infer_mrf_image, infer_segmented_image, infer_image
+from model.segmentation import segment_image, get_superpixels
+from preprocessing.generate_USGS_data import generate_image
+from utils.plotting import *
+from utils.constants import *
+
+
+def run_segmented_inference(seg_iterations, iterations, image, num_endmembers, rec=None):
+    """
+    Run segmented inference on image
+    """
+    graphs = segment_image(iterations=seg_iterations,
+                           image=image.r_image
+                           )
+    superpixels = get_superpixels(graphs)
+    print("Number of superpixels: " + str(len(superpixels)))
+
+    m_and_Ds = infer_segmented_image(iterations=iterations,
+                                     superpixels=superpixels)
+
+    # Reconstruct image
+    num_rows = image.r_image.shape[0]
+    num_cols = image.r_image.shape[1]
+    # Mineral assemblage predictions
+    m_est = np.ones((num_rows, num_cols, num_endmembers))
+    # Grain size predictions
+    D_est = np.ones((num_rows, num_cols, num_endmembers))
+    for index, pair in enumerate(m_and_Ds):
+        graph = graphs[index]
+        for v in graph.vertices:
+            # retrieve x, y coords
+            # [i, j] = index_coords[index]
+            m, D = pair
+            m_est[v.x, v.y] = m
+            D_est[v.x, v.y] = D
+
+    if rec is not None:
+        rec['seg'] = [m_est, D_est]
+    return m_est, D_est
 
 
 def run_mrf_inference(iterations, image, rec=None):
@@ -113,7 +146,7 @@ if __name__ == "__main__":
     noise_scale = 0.001  # 0.001
     res = 8
     seg_iterations = 10000
-    mcmc_iterations = 20  # 10000
+    mcmc_iterations = 10  # 10000
 
     # Print metadata
     print("Generating data with: ")
@@ -139,11 +172,11 @@ if __name__ == "__main__":
                                  args=(mcmc_iterations, image, record))
     p1.start()
     p2 = multiprocessing.Process(target=run_segmented_inference,
-                                 args=(seg_iterations, mcmc_iterations, image, record))
+                                 args=(seg_iterations, 300, image, USGS_NUM_ENDMEMBERS, record))
     p2.start()
 
     p3 = multiprocessing.Process(target=run_independent_inference,
-                                 args=(mcmc_iterations, image, record))
+                                 args=(10, image, record))
     p3.start()
     p1.join()
     p2.join()
@@ -155,32 +188,20 @@ if __name__ == "__main__":
     C_rmse = get_rmse(m_est_C, m_actual)
     S_rmse = get_rmse(m_est_S, m_actual)
     I_rmse = get_rmse(m_est_I, m_actual)
+    print("Shape of m actual " + str(m_actual.shape))
+    print("Shape of m estimate for MRF " + str(m_est_C.shape))
+    print("Shape of m estimate for seg " + str(m_est_S.shape))
+    print("Shape of m estimate for ind " + str(m_est_I.shape))
 
     m_titles = ["MRF (RMSE: " + str(round(C_rmse, 2)) + ")",
                 "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
                 "Independent (RMSE: " + str(round(I_rmse, 2)) + ")"]
 
-    p = plot_compare_predictions(actual=m_actual,
-                                 preds=[m_est_C, m_est_S, m_est_I],
-                                 fig_title="Mineral assemblage predictions as RGB",
-                                 subplot_titles=m_titles)
+    plot_compare_highd_predictions(actual=m_actual, pred=m_est_C,
+                                   output_dir=MODULE_DIR + "/output/figures/mrf/")
 
-    p.savefig("output/figures/m_compare.png", bbox_inches='tight')
+    plot_compare_highd_predictions(actual=m_actual, pred=m_est_S,
+                                   output_dir=MODULE_DIR + "/output/figures/seg/")
 
-    m_titles = ["MRF (RMSE: " + str(round(C_rmse, 2)) + ")",
-                "Segmented (RMSE: " + str(round(S_rmse, 2)) + ")",
-                "Independent (RMSE:  " + str(round(I_rmse, 2)) + ")"]
-
-    # Grain sizes
-    C_rmse_D = get_rmse(D_est_C, D_actual)
-    S_rmse_D = get_rmse(D_est_S, D_actual)
-    I_rmse_D = get_rmse(D_est_I, D_actual)
-    m_titles = ["MRF (RMSE: " + str(round(C_rmse_D, 2)) + ")",
-                "Segmented (RMSE: " + str(round(S_rmse_D, 2)) + ")",
-                "Independent (RMSE: " + str(round(I_rmse_D, 2)) + ")"]
-    p = plot_compare_predictions(actual=D_actual,
-                                 preds=[D_est_C, D_est_S, D_est_I],
-                                 fig_title="Mineral assemblage predictions as RGB",
-                                 subplot_titles=m_titles,
-                                 interp=True)
-    p.savefig("output/figures/D_compare.png", bbox_inches='tight')
+    plot_compare_highd_predictions(actual=m_actual, pred=m_est_I,
+                                   output_dir=MODULE_DIR + "/output/figures/ind/")

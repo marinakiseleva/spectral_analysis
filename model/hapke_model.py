@@ -1,7 +1,7 @@
 import numpy as np
 import math
 from utils.constants import *
-from utils.access_data import get_USGS_endmember_k, get_USGS_wavelengths
+from utils.access_data import get_USGS_endmember_k, get_endmember_wavelengths
 
 
 def get_USGS_r_mixed_hapke_estimate(m, D):
@@ -10,7 +10,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
-    wavelengths = get_USGS_wavelengths(True)
+    wavelengths = get_endmember_wavelengths(CRISM_match=True)
     sigmas = {}
     for endmember in m.keys():
         m_cur = m[endmember]

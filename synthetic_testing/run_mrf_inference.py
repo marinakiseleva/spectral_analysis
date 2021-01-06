@@ -1,5 +1,5 @@
 """
-Main script to generate data and run inference on it.
+Run inference across image by minimizing MRF energy.
 """
 
 from model.segmentation import segment_image, get_superpixels

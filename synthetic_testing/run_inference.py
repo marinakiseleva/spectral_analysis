@@ -1,5 +1,5 @@
 """
-Main script to generate data and run inference on it. 
+Run inference on each pixel independently.
 """
 
 

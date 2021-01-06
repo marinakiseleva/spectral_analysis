@@ -181,7 +181,7 @@ def infer_datapoint(iterations, d):
                               USGS_NUM_ENDMEMBERS)
 
     unchanged_i = 0  # Number of iterations since last update
-    groups = int(iterations / 10)
+    # groups = int(iterations / 10)
     # hold_grain = True
     # for g in range(groups):
     for i in range(iterations):

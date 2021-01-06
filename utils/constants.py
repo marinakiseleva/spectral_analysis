@@ -71,7 +71,7 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
 RELAB_WAVELENGTH_COUNT = 211
 
 #########################################
-# Below are constants for the USGS Endmembers
+# USGS Endmembers
 #########################################
 
 
@@ -126,18 +126,13 @@ USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 
 #########################################
-# Below are constants for the 3 pure endmembers, for RELAB data and for
-# synthetic data testing
+# RELAB endmembers
 
 # olivine
 # enstatite
 # anorthite
 # Other minerals, even mixtures of these 3, may have different constants.
 #########################################
-
-# For endmember-specifics
-# NUM_ENDMEMBERS = 3
-
 
 # Spectrum IDs
 pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
