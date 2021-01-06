@@ -44,10 +44,8 @@ EARLY_STOP = 100
 
 # Min and max grain sizes for these endmembers
 INITIAL_D = 100
-GRAIN_SIZE_MIN = 20
-GRAIN_SIZE_MAX = 350
-# GRAIN_SIZE_MIN = 50
-# GRAIN_SIZE_MAX = 800
+GRAIN_SIZE_MIN = 20  # 50
+GRAIN_SIZE_MAX = 350  # 800
 
 
 #########################################
@@ -112,8 +110,8 @@ USGS_mu_0 = 0.8660254037844386
 USGS_mu = 1
 
 
-# Misnomer, since basaltic glass is RELAB.
-# These endmembers are for CRISM testing.
+# USGS endmembers for CRISM testing
+# **Exception: basaltic glass is RELAB
 USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
                         'olivine (Fo80)',
                         'augite',
@@ -125,10 +123,6 @@ USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
 
 # For endmember-specifics
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
-
-# Min and max grain sizes for these endmembers
-# USGS_GRAIN_SIZE_MIN = 45
-# USGS_GRAIN_SIZE_MAX = 75
 
 
 #########################################
@@ -167,10 +161,10 @@ sids_densities = {pure_olivine_sid: 3.32,
                   pure_anorthite_sid: 2.73}
 
 
-# cosine of source_angle
+# cosine of incidence angle (30 deg)
 mu_0 = 0.8660254037844386
 
-# cosine of detect angle
+# cosine of emission angle (0 deg)
 mu = 1
 
 
