@@ -104,7 +104,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001
     res = 4
-    iterations = 1000
+    iterations = 500
     seg_iterations = 3000
 
     # Print metadata
@@ -125,6 +125,6 @@ if __name__ == "__main__":
 
     # infer_ind_model(iterations, image.r_image, m_actual, D_actual)
 
-    # infer_seg_model(seg_iterations, iterations, image.r_image, m_actual, D_actual)
+    infer_seg_model(seg_iterations, iterations, image.r_image, m_actual, D_actual)
 
-    infer_mrf_model(iterations, image.r_image, m_actual, D_actual)
+    # infer_mrf_model(iterations, image.r_image, m_actual, D_actual)
