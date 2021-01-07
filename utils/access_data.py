@@ -14,16 +14,12 @@ Helper functions to normalize the different wavelengths from the different data 
 
 def get_endmember_wavelengths(CRISM_match=True):
     """
-    Get wavelengths for this endmember, for either USGS or RELAB
-    Use olivine wavelengths as default for all USGS and basaltic glass wavelengths.
+    Get matched wavelengths (USGS/RELAB/CRISM-matched) ; originally from RW_USGS
     """
+
     if CRISM_match == False:
         return ValueError("Only hanlde CRISM matching.")
-
-    with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_USGS.pickle", 'rb') as handle:
-        wavelengths = pickle.load(handle)
-
-    return wavelengths
+    return N_WAVELENGTHS
 
 
 def match_lists(target, source):

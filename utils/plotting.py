@@ -187,7 +187,7 @@ def plot_highd_img(img_m):
 
 def plot_compare_highd_predictions(actual, pred, output_dir=None):
     """
-    Compare actual to different predictions, for high-dimensional data (over 3 dimensions)
+    Compare actual to different predictions, for each endmember separately 
     :param actual: Numpy 3D array with > 3 endmember proportions per pixel
     :param pred: Predicted image 
     """
