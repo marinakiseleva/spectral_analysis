@@ -19,7 +19,7 @@ def sample_dirichlet(x):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
-    c = 100
+    c = 1000
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
         if value < 0.001:
@@ -127,8 +127,10 @@ def transition_model(cur_m, cur_D):
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
+
     new_m = sample_dirichlet(cur_m)
     new_D = sample_multivariate(cur_D)
+    # print("Old m " + str(cur_m) + " vs new m " + str(new_m))
     return new_m, new_D
 
 
@@ -195,11 +197,15 @@ def infer_datapoint(iterations, d):
         # else:
         # new_m = cur_m
 
-        cur_post = get_posterior_estimate(d, cur_m, cur_D)
         new_post = get_posterior_estimate(d, new_m, new_D)
+        cur_post = get_posterior_estimate(d, cur_m, cur_D)
 
         ratio = new_post / cur_post
-        phi = min(1, ratio)
+
+        log_ratio = get_log_posterior_estimate(
+            d, new_m, new_D) / get_log_posterior_estimate(d, cur_m, cur_D)
+
+        phi = min(1, log_ratio)
         u = np.random.uniform(0, 1)
 
         if phi >= u:

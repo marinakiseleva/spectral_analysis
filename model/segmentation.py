@@ -27,7 +27,7 @@ MAX_SAD is the initial threshold by which to merge pixels when both segments do 
 for noise sigma = 0.001, MAX_SAD = 0.005
 for noise sigma = 0.01, MAX_SAD = 0.03
 """
-MAX_SAD = 0.0075
+MAX_SAD = 0.009  # 75
 
 
 class Graph:
