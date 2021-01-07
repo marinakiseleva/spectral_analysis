@@ -20,7 +20,6 @@ def sample_dirichlet(x, C=10):
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
     # Threshold x values so that they are always valid.
-    print(C)
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
@@ -167,7 +166,7 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, d, C=10, V=5):
+def infer_datapoint(iterations, d, C=1, V=2):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
