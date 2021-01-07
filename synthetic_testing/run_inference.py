@@ -104,7 +104,7 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001
     res = 4
-    iterations = 500
+    iterations = 10000
     seg_iterations = 3000
 
     # Print metadata
