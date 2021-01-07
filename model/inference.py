@@ -214,11 +214,7 @@ def infer_datapoint(iterations, d, V=10):
         cur_post = get_posterior_estimate(d, cur_m, cur_D)
 
         ratio = new_post / cur_post
-
-        log_ratio = get_log_posterior_estimate(
-            d, new_m, new_D) / get_log_posterior_estimate(d, cur_m, cur_D)
-
-        phi = min(1, log_ratio)
+        phi = min(1, ratio)
         u = np.random.uniform(0, 1)
 
         if phi >= u:
@@ -312,6 +308,9 @@ def init_gibbs(image):
     Set random mineral & grain  assemblage for each pixel and return 3D Numpy array with 3rd dimension as assemblage
     :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
     """
+    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(covariance, 10)
+
     num_rows = image.shape[0]
     num_cols = image.shape[1]
     m_image = np.zeros((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
@@ -322,8 +321,9 @@ def init_gibbs(image):
 
             rand_m = sample_dirichlet(
                 np.array([float(1 / USGS_NUM_ENDMEMBERS)] * USGS_NUM_ENDMEMBERS))
-            rand_D = sample_multivariate(
-                np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS))
+            rand_D = D_transition(
+                np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS),
+                covariance)
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D
@@ -418,17 +418,20 @@ def get_spatial_energy(m_image, i, j, m):
     return e_spatial
 
 
-def get_mrf_energy(m_image, D_image, i, j, m, D, d):
+def get_mrf_prob(m_image, D_image, i, j, m, D, d):
     """
-    Get energy at this pixel i,j in image
+    Get joint probability of this pixel i,j in image
     """
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    e_spectral = get_log_posterior_estimate(d, m, D)
-    return -e_spectral + (e_spatial * BETA)
+    # e_spectral = -get_log_posterior_estimate(d, m, D)
+    # return -(e_spectral + (e_spatial * BETA))
+
+    # joint prob is likelihood - spatial energy
+    return get_log_posterior_estimate(d, m, D) - (e_spatial * BETA)
 
 
-def infer_mrf_datapoint(m_image, D_image, i, j, d):
+def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance):
     """
     Run metropolis algorithm (MCMC) to estimate m and D using posterior
     Return m_image and D_image with updated values
@@ -441,16 +444,15 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d):
     """
     cur_m = m_image[i, j]
     cur_D = D_image[i, j]
-    new_m, new_D = transition_model(cur_m, cur_D)
+    new_m, new_D = transition_model(cur_m, cur_D, covariance)
 
-    cur = get_mrf_energy(m_image, D_image, i, j, cur_m, cur_D, d)
-    new = get_mrf_energy(m_image, D_image, i, j, new_m, new_D, d)
+    cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d)
+    new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d)
 
     ratio = new / cur
+    phi = min(1, ratio)
     u = np.random.uniform(0, 1)
-    # Accept if energy decreaes.
-    # if new < cur:
-    if ratio < u:
+    if phi >= u:
         cur_m = new_m
         cur_D = new_D
     m_image[i, j] = cur_m
@@ -474,9 +476,9 @@ def get_total_energy(image, m_image, D_image):
             m = m_image[x, y]
             D = D_image[x, y]
             e_spatial = get_spatial_energy(m_image, x, y, m)
-            e_spectral = get_log_posterior_estimate(d, m, D)
-            pixel_energy = -e_spectral + (e_spatial * BETA)
-            energy_sum += pixel_energy
+            e_spectral = -get_log_posterior_estimate(d, m, D)
+            pixel_energy = e_spectral + (e_spatial * BETA)
+            energy_sum += (pixel_energy)
 
     return energy_sum
 
@@ -502,6 +504,10 @@ def infer_mrf_image(iterations, image):
     image_reflectances = image
     m_image, D_image = init_gibbs(image)
 
+    # Covariance diagonal for grain size sampling
+    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(covariance, 10)
+
     rows = np.arange(0, num_rows)
     cols = np.arange(0, num_cols)
 
@@ -515,7 +521,8 @@ def infer_mrf_image(iterations, image):
         for i in rows:
             for j in cols:
                 d = image[i, j]
-                m_image, D_image = infer_mrf_datapoint(m_image, D_image, i, j, d)
+                m_image, D_image = infer_mrf_datapoint(
+                    m_image, D_image, i, j, d, covariance)
 
         # Print out iteration performance
         now = datetime.now()
