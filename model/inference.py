@@ -20,7 +20,6 @@ def sample_dirichlet(x, C=10):
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
     # Threshold x values so that they are always valid.
-    print(C)
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
