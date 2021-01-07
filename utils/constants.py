@@ -42,11 +42,11 @@ BETA = 1
 EARLY_STOP = 100
 
 # Constant used in Dirichlet mineral assemblage sampling
-SAMPLING_C = 10.0
+# SAMPLING_C = 10.0
 
 # Min and max grain sizes for these endmembers
 INITIAL_D = 80
-SAMPLING_VARIANCE = 5
+# SAMPLING_VARIANCE = 5
 GRAIN_SIZE_MIN = 50
 GRAIN_SIZE_MAX = 150
 # GRAIN_SIZE_MIN = 20  # 50

@@ -9,7 +9,7 @@ from functools import partial
 from model.inference import *
 from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 from utils.access_data import *
-from utils.constants import *
+import utils.constants as consts
 
 
 def get_rmse(a, b):
@@ -29,13 +29,14 @@ def infer_point(r_actual, iterations, pair):
     Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
     """
     C, V = pair
-    est_m, est_D = infer_datapoint(iterations=iterations, d=r_actual)
+
+    est_m, est_D = infer_datapoint(iterations, r_actual, C, V)
 
     wavelengths = N_WAVELENGTHS
     r_est = get_USGS_r_mixed_hapke_estimate(convert_arr_to_dict(est_m),
                                             convert_arr_to_dict(est_D))
     fig, ax = plt.subplots(1, 1, constrained_layout=True,
-                           figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+                           figsize=(consts.FIG_WIDTH, consts.FIG_HEIGHT), dpi=DPI)
     ax.plot(wavelengths, r_est, label="Estimated")
     ax.plot(wavelengths, r_actual, label="Actual")
 
@@ -45,8 +46,7 @@ def infer_point(r_actual, iterations, pair):
 
     plt.ylim((0, 1))
 
-    rmse = get_rmse(r_actual, r_est)
-    print("C: " + str(C) + ", V: " + str(V) + " RMSE : " + str(rmse))
+    print("C: " + str(C) + ", V: " + str(V) + " RMSE : " + str(get_rmse(r_actual, r_est)))
 
     plt.savefig("../output/figures/opt/C_" + str(C) + "_V_" + str(V) + ".png")
 
@@ -62,16 +62,16 @@ if __name__ == "__main__":
     true_D = convert_arr_to_dict(D_random)
     r_actual = get_USGS_r_mixed_hapke_estimate(m=true_m, D=true_D)
 
-    iterations = 800
+    iterations = 20
     sample_Cs = [1, 2, 5, 10, 20, 30, 50, 100]
-    sample_Vs = [1, 2, 5, 10]
+    sample_Vs = [1, 2, 5]
 
     pairs = []
     for c in sample_Cs:
         for v in sample_Vs:
             pairs.append([c, v])
 
-    pool = multiprocessing.Pool(NUM_CPUS)
+    pool = multiprocessing.Pool(consts.NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     func = partial(infer_point, r_actual, iterations)

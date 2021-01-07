@@ -14,16 +14,17 @@ from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 from utils.constants import *
 
 
-def sample_dirichlet(x):
+def sample_dirichlet(x, C=10):
     """
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
     # Threshold x values so that they are always valid.
+    print(C)
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
-    sampled_x = np.random.dirichlet(alpha=x * SAMPLING_C)
+    sampled_x = np.random.dirichlet(alpha=x * C)
     return sampled_x
 
 
@@ -115,13 +116,13 @@ def get_log_likelihood(d, m, D):
     return math.log(get_likelihood(d, m, D))
 
 
-def transition_model(cur_m, cur_D, covariance):
+def transition_model(cur_m, cur_D, covariance, C):
     """
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
-    new_m = sample_dirichlet(cur_m)
+    new_m = sample_dirichlet(cur_m, C)
     new_D = sample_multivariate(cur_D, covariance)
     return new_m, new_D
 
@@ -166,12 +167,15 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, d):
+def infer_datapoint(iterations, d, C=10, V=5):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector)
+    :param C: value to scale sample for dirichlet, for mineral assemblage
+    :param V: value in covariance diagonal for sampling grain size
     """
+
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
@@ -182,14 +186,14 @@ def infer_datapoint(iterations, d):
 
     # Covariance diagonal for grain size sampling
     covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(covariance, SAMPLING_VARIANCE)
+    np.fill_diagonal(covariance, V)
 
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
 
         # Determine whether or not to accept the new parameters, based on the
         # ratio of (likelihood*priors)
-        new_m, new_D = transition_model(cur_m, cur_D, covariance)
+        new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
 
         # if hold_grain:
         # new_D = cur_D
