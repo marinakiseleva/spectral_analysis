@@ -19,15 +19,40 @@ def sample_dirichlet(x, C=10):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
+    # Dirichlet sampling
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
-    sampled_x = np.random.dirichlet(alpha=x * C)
-    return sampled_x
+    new_x = np.random.dirichlet(alpha=x * C)
+    return new_x
 
 
-def sample_multivariate(mean, covariance):
+def m_transition(x):
+    """
+    Sample from 0-mean multivariate, add this to m assemblage vector. Then ensure they all sum to 1.
+    :param x: Vector of mineral assemblage
+    """
+    # Add sample from multivariate normal
+    z_mean = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=0)
+    z_cov = np.zeros(shape=(USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(z_cov, 0.0005)
+    z = np.random.multivariate_normal(z_mean, z_cov)
+
+    new_x = x + z
+    for index, v in enumerate(new_x):
+        if v < 0:
+            new_x[index] = 0
+
+    total = sum(new_x)
+    for index, v in enumerate(new_x):
+        if v != 0:
+            new_x[index] = v / total
+
+    return new_x
+
+
+def D_transition(mean, covariance):
     """
     Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
@@ -115,14 +140,14 @@ def get_log_likelihood(d, m, D):
     return math.log(get_likelihood(d, m, D))
 
 
-def transition_model(cur_m, cur_D, covariance, C):
+def transition_model(cur_m, cur_D, covariance):
     """
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
-    new_m = sample_dirichlet(cur_m, C)
-    new_D = sample_multivariate(cur_D, covariance)
+    new_m = m_transition(cur_m)
+    new_D = D_transition(cur_D, covariance)
     return new_m, new_D
 
 
@@ -166,22 +191,16 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, d, C=1, V=2):
+def infer_datapoint(iterations, d, V=10):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
-    :param d: 1 spectral sample (1D Numpy vector)
-    :param C: value to scale sample for dirichlet, for mineral assemblage
+    :param d: 1 spectral sample (1D Numpy vector) 
     :param V: value in covariance diagonal for sampling grain size
     """
-
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
-
-    # groups = int(iterations / 10)
-    # hold_grain = True
-    # for g in range(groups):
 
     # Covariance diagonal for grain size sampling
     covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
@@ -189,15 +208,7 @@ def infer_datapoint(iterations, d, C=1, V=2):
 
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
-
-        # Determine whether or not to accept the new parameters, based on the
-        # ratio of (likelihood*priors)
-        new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
-
-        # if hold_grain:
-        # new_D = cur_D
-        # else:
-        # new_m = cur_m
+        new_m, new_D = transition_model(cur_m, cur_D, covariance)
 
         new_post = get_posterior_estimate(d, new_m, new_D)
         cur_post = get_posterior_estimate(d, cur_m, cur_D)
@@ -220,9 +231,6 @@ def infer_datapoint(iterations, d, C=1, V=2):
         if unchanged_i > EARLY_STOP:
             print("\nEarly Stop at " + str(i + (i * g)))
             break
-
-        # # Switch from holding m to D, or vice versa
-        # hold_grain = False if hold_grain == True else True
 
     print("Finished datapoint.")
     return [cur_m, cur_D]
