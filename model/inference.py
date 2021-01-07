@@ -19,25 +19,19 @@ def sample_dirichlet(x):
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
     """
-    c = 1000
     # Threshold x values so that they are always valid.
     for index, value in enumerate(x):
-        if value < 0.001:
-            x[index] = 0.01
-    return np.random.dirichlet(alpha=x * c)
+        if value < 0.0001:
+            x[index] = 0.001
+    sampled_x = np.random.dirichlet(alpha=x * SAMPLING_C)
+    return sampled_x
 
 
-def sample_multivariate(mean):
+def sample_multivariate(mean, covariance):
     """
     Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
     """
-    # variance which affects sampling rate
-    SAMPLING_VARIANCE = 100
-
-    length = mean.shape[0]
-    covariance = np.zeros((length, length))
-    np.fill_diagonal(covariance, SAMPLING_VARIANCE)
 
     sample = np.random.multivariate_normal(mean, covariance)
 
@@ -121,16 +115,14 @@ def get_log_likelihood(d, m, D):
     return math.log(get_likelihood(d, m, D))
 
 
-def transition_model(cur_m, cur_D):
+def transition_model(cur_m, cur_D, covariance):
     """
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
-
     new_m = sample_dirichlet(cur_m)
-    new_D = sample_multivariate(cur_D)
-    # print("Old m " + str(cur_m) + " vs new m " + str(new_m))
+    new_D = sample_multivariate(cur_D, covariance)
     return new_m, new_D
 
 
@@ -148,26 +140,30 @@ def get_log_posterior_estimate(d, m, D):
     """
     Get estimate of posterior in log : log p(m, D|d)
     log p(d|m, D) + log p(m) + log p(D)
+
+    Omit priors because they are uniform
     """
-    m_prior = math.log(get_m_prob(m))
-    D_prior = math.log(get_D_prob(D))
+    # m_prior = math.log(get_m_prob(m))
+    # D_prior = math.log(get_D_prob(D))
     m_dict = convert_USGS_arr_to_dict(m)
     D_dict = convert_USGS_arr_to_dict(D)
     ll = get_log_likelihood(d, m_dict, D_dict)
-    return ll + m_prior + D_prior
+    return ll  # + m_prior + D_prior
 
 
 def get_posterior_estimate(d, m, D):
     """
     Get estimate of posterior
     p(m,D|d) = p(d|m, D) p(m) p(D)
+
+    Omit priors because they are uniform
     """
-    m_prior = get_m_prob(m)
-    D_prior = get_D_prob(D)
+    # m_prior = get_m_prob(m)
+    # D_prior = get_D_prob(D)
     m_dict = convert_arr_to_dict(m)
     D_dict = convert_arr_to_dict(D)
     ll = get_likelihood(d, m_dict, D_dict)
-    return ll * m_prior * D_prior
+    return ll  # * m_prior * D_prior
 
 
 def infer_datapoint(iterations, d):
@@ -178,19 +174,22 @@ def infer_datapoint(iterations, d):
     """
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
-    cur_D = np.random.randint(GRAIN_SIZE_MIN,
-                              GRAIN_SIZE_MAX,
-                              USGS_NUM_ENDMEMBERS)
+    cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
 
-    unchanged_i = 0  # Number of iterations since last update
     # groups = int(iterations / 10)
     # hold_grain = True
     # for g in range(groups):
+
+    # Covariance diagonal for grain size sampling
+    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(covariance, SAMPLING_VARIANCE)
+
+    unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
 
         # Determine whether or not to accept the new parameters, based on the
         # ratio of (likelihood*priors)
-        new_m, new_D = transition_model(cur_m, cur_D)
+        new_m, new_D = transition_model(cur_m, cur_D, covariance)
 
         # if hold_grain:
         # new_D = cur_D
@@ -218,8 +217,9 @@ def infer_datapoint(iterations, d):
         if unchanged_i > EARLY_STOP:
             print("\nEarly Stop at " + str(i + (i * g)))
             break
-    # # Switch from holding m to D, or vice versa
-    # hold_grain = False if hold_grain == True else True
+
+        # # Switch from holding m to D, or vice versa
+        # hold_grain = False if hold_grain == True else True
 
     print("Finished datapoint.")
     return [cur_m, cur_D]
