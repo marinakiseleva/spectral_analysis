@@ -206,6 +206,10 @@ def infer_datapoint(iterations, d, V=10):
     covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
     np.fill_diagonal(covariance, V)
 
+    max_prob = 0
+    max_m = None
+    max_D = None
+
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, covariance)
@@ -217,10 +221,16 @@ def infer_datapoint(iterations, d, V=10):
         phi = min(1, ratio)
         u = np.random.uniform(0, 1)
 
+        if new_post > max_prob:
+            max_prob = new_post
+            max_m = new_m
+            max_D = new_D
+
         if phi >= u:
             unchanged_i = 0
             cur_m = new_m
             cur_D = new_D
+
         else:
             unchanged_i += 1
 
@@ -228,6 +238,10 @@ def infer_datapoint(iterations, d, V=10):
             print("\nEarly Stop at " + str(i + (i * g)))
             break
 
+    # print("\nCurrent m and D\n m: " + str(cur_m) + "\n D: " + str(cur_D) +
+    #       " with prob " + str(get_posterior_estimate(d, cur_m, cur_D)))
+    # print("\nMax prob m and D\n m: " + str(max_m) + "\n D: " +
+    #       str(max_D) + " with prob " + str(max_prob))
     print("Finished datapoint.")
     return [cur_m, cur_D]
 
@@ -537,6 +551,7 @@ def infer_mrf_image(iterations, image):
               str(iteration + 1) + "/" + str(iterations))
         print("Energy change: " + str(round(energy_diff, 4)))
         print("Total MRF Energy: " + str(round(energy, 4)))
+        sys.stdout.flush()
 
         # ENERGY_CUTOFF = 5  # cutoff used for early stopping
         # if len(energy_diffs) > 25 and all(abs(i) <= ENERGY_CUTOFF

@@ -36,7 +36,7 @@ Model parameters
 """
 NUM_CPUS = 8
 DISTANCE_METRIC = 'SAD'
-BETA = 1
+BETA = 500
 
 # Number of iterations to stop after there is no update.
 EARLY_STOP = 100
@@ -47,8 +47,8 @@ EARLY_STOP = 100
 # Min and max grain sizes for these endmembers
 INITIAL_D = 80
 # SAMPLING_VARIANCE = 5
-GRAIN_SIZE_MIN = 50
-GRAIN_SIZE_MAX = 150
+GRAIN_SIZE_MIN = 45
+GRAIN_SIZE_MAX = 100
 # GRAIN_SIZE_MIN = 20  # 50
 # GRAIN_SIZE_MAX = 350  # 800
 
@@ -69,15 +69,17 @@ ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
                 "C2PE12": 1.66,  # Pure RELAB enstatite
                 "C1PA12": 1.57,  # Pure RELAB anorthite
                 "C1BE100": 2.78,  # RELAB Basaltic glass
-                "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
+                # "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
                 }
 
-
-RELAB_WAVELENGTH_COUNT = 211
 
 #########################################
 # USGS Endmembers
 #########################################
+# USGS cosine of incidence angle (deg)
+USGS_COS_INCIDENCE_ANGLE = 1
+# USGS cosine of emission angle (deg)
+USGS_COS_EMISSION_ANGLE = 0.86602540378
 
 
 # Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
@@ -87,7 +89,7 @@ USGS_AUGITE_GS = 35
 USGS_PIGEONITE_GS = 162
 USGS_LABRADORITE_GS = 162
 USGS_MAGNETITE_GS = 162
-USGS_BASALTIC_GLASS_GS = 60
+# USGS_BASALTIC_GLASS_GS = 60
 
 # Name to type dict
 USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
@@ -95,8 +97,8 @@ USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
                     'augite': USGS_AUGITE_GS,
                     'labradorite': USGS_LABRADORITE_GS,
                     'pigeonite': USGS_PIGEONITE_GS,
-                    'magnetite': USGS_MAGNETITE_GS,
-                    'basaltic glass': USGS_BASALTIC_GLASS_GS}
+                    'magnetite': USGS_MAGNETITE_GS}
+# 'basaltic glass': USGS_BASALTIC_GLASS_GS}
 
 
 # Densities from http://webmineral.com/ and Lapotre DOI:10.1002/2016JE005133
@@ -105,14 +107,8 @@ USGS_densities = {'olivine (Fo51)': 3.32,
                   'augite': 3.4,
                   'labradorite': 2.69,
                   'pigeonite': 3.38,
-                  'magnetite': 5.15,
-                  'basaltic glass': 2.78}
-
-
-# Cosine of incidence angle (30 deg)
-USGS_mu_0 = 0.8660254037844386
-# Cosine of emission angle (0 deg)
-USGS_mu = 1
+                  'magnetite': 5.15}
+# 'basaltic glass': 2.78}
 
 
 # USGS endmembers for CRISM testing
@@ -122,11 +118,8 @@ USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
                         'augite',
                         'labradorite',
                         'pigeonite',
-                        'magnetite',
-                        'basaltic glass']
-
-
-# For endmember-specifics
+                        'magnetite']
+# 'basaltic glass']
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 
@@ -138,6 +131,11 @@ USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 # anorthite
 # Other minerals, even mixtures of these 3, may have different constants.
 #########################################
+RELAB_WAVELENGTH_COUNT = 211
+# USGS incidence angle (deg)
+RELAB_INCIDENCE_ANGLE = 30
+# USGS emission angle (deg)
+RELAB_EMISSION_ANGLE = 0
 
 # Spectrum IDs
 pure_olivine_sid = "C1PO17"  # Does not exist in ModalMineralogy
@@ -160,12 +158,6 @@ sids_densities = {pure_olivine_sid: 3.32,
                   pure_enstatite_sid: 3.2,
                   pure_anorthite_sid: 2.73}
 
-
-# cosine of incidence angle (30 deg)
-mu_0 = 0.8660254037844386
-
-# cosine of emission angle (0 deg)
-mu = 1
 
 """
 N_WAVELENGTHS

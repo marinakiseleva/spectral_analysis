@@ -4,6 +4,22 @@ from utils.constants import *
 from utils.access_data import get_USGS_endmember_k, get_endmember_wavelengths
 
 
+def get_mu_0():
+    """
+    Get mu_0, cosine of incidence angle for observed data. 
+    In case of synthetic data - use lab values.
+    """
+    return USGS_COS_INCIDENCE_ANGLE
+
+
+def get_mu():
+    """
+    Get mu, cosine of emergence/emission angle for observed data. 
+    In case of synthetic data - use lab values.
+    """
+    return USGS_COS_EMISSION_ANGLE
+
+
 def get_USGS_r_mixed_hapke_estimate(m, D):
     """
     Calculate reflectance of m and D using Hapke model; using spectral endmembers from USGS library
@@ -31,7 +47,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
         # Gets mixture of SSAs of endmembers as single SSA:
         w_mix = w_mix + (F[endmember] * w)
 
-    r = get_derived_reflectance(w_mix, mu, mu_0)
+    r = get_derived_reflectance(w_mix)
     return r
 
 
@@ -61,32 +77,34 @@ def get_synthetic_r_mixed_hapke_estimate(m, D):
 
         w_mix = w_mix + (F[endmember] * w)
 
-    r = get_derived_reflectance(w_mix, mu, mu_0)
+    r = get_derived_reflectance(w_mix)
     return r
 
 
-def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
-    """
-    Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
-    :param mu: cosine of detect angle
-    :param mu_0: cosine of source angle 
-    :param n: real index of refraction (sclar)
-    :param k: imaginary index of refraction (scalar)
-    :param D: grain size (scalar)
-    :param wavelengths: lambdas/wavelengths of data (Numpy array)
-    :return reflectance: as Numpy array
-    """
-    w = get_w_hapke_estimate(n, k, D, wavelengths)
-    return get_derived_reflectance(w, mu, mu_0)
+# def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
+#     """
+#     Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
+#     :param mu: cosine of detect angle
+#     :param mu_0: cosine of source angle
+#     :param n: real index of refraction (sclar)
+#     :param k: imaginary index of refraction (scalar)
+#     :param D: grain size (scalar)
+#     :param wavelengths: lambdas/wavelengths of data (Numpy array)
+#     :return reflectance: as Numpy array
+#     """
+#     w = get_w_hapke_estimate(n, k, D, wavelengths)
+#     return get_derived_reflectance(w, mu, mu_0)
 
 
-def get_derived_reflectance(w, mu, mu_0):
+def get_derived_reflectance(w):
     """
     Get reflectance from SSA
     :param w: SSA (Numpy array)
     :param mu: cosine of detect angle
     :param mu_0: cosine of source angle
     """
+    mu = get_mu()
+    mu_0 = get_mu_0()
     d = 4 * (mu + mu_0)
     return (w / d) * get_H(mu, w) * get_H(mu_0, w)
 
