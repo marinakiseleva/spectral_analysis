@@ -63,8 +63,8 @@ def create_mixture():
     """
     m_random = np.random.dirichlet(np.ones(consts.USGS_NUM_ENDMEMBERS),
                                    size=1)[0]
-    D_random = np.random.randint(low=45,
-                                 high=76,
+    D_random = np.random.randint(low=GRAIN_SIZE_MIN,
+                                 high=GRAIN_SIZE_MAX,
                                  size=consts.USGS_NUM_ENDMEMBERS)
 
     m_map = {}

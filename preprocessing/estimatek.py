@@ -37,10 +37,8 @@ def get_reflectance_error(wavelength, r, n, k, D):
     :param k: optical constnat k, scalar (for this wavelength)
     :param D: grain size, scalar
     """
-
     # Calculated estimated reflectance
-    r_e = get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelength)
-
+    r_e = get_reflectance_hapke_estimate(n, k, D, wavelength)
     return get_rmse(r, r_e)
 
 
@@ -122,8 +120,6 @@ def get_best_endmember_k(data, grainsize, wavelength, index, n, k):
     :param k: k value to evaluate
     """
     r_e = get_reflectance_hapke_estimate(
-        mu=USGS_mu,
-        mu_0=USGS_mu_0,
         n=n,
         k=k,
         D=grainsize,
@@ -247,10 +243,10 @@ def get_cosine(x):
 if __name__ == "__main__":
     estimate_all_USGS_k()
 
-    print("Estimating basaltic glass")
-    spectra_db = get_data()
-    k, err = get_best_RELAB_k(sid='C1BE100', spectra_db=spectra_db)
-    record_estimation('basaltic glass', k, err)
+    # print("Estimating basaltic glass")
+    # spectra_db = get_data()
+    # k, err = get_best_RELAB_k(sid='C1BE100', spectra_db=spectra_db)
+    # record_estimation('basaltic glass', k, err)
 
     # print("Estimating olivine")
     # olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
