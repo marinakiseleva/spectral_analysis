@@ -1,5 +1,5 @@
 """
-Run inference on each pixel independently.
+Run inference on synthetic data.
 """
 import numpy as np
 import math
@@ -100,11 +100,11 @@ def infer_mrf_model(iterations, image, m_actual, D_actual):
 
 
 if __name__ == "__main__":
-    num_mixtures = 5
+    num_mixtures = 4
     grid_res = 4
-    noise_scale = 0.001
+    noise_scale = 0.0001
     res = 4
-    iterations = 10000
+    iterations = 700
     seg_iterations = 3000
 
     # Print metadata
