@@ -162,9 +162,11 @@ def get_USGS_data(endmember, CRISM_match=False):
     Get USGS spectral reflectance data for this endmember, as Pandas DataFrame 
     """
     # Normalize filename
+    endmember = endmember.lower()
     file_name = USGS_DATA + endmember + ".csv"
+    
     for r in ["(", ")", " "]:
-        file_name = file_name.replace(r, "").lower()
+        file_name = file_name.replace(r, "")
 
     # Open data in Pandas DataFrame
     data = pd.read_csv(file_name)
