@@ -35,7 +35,15 @@ PURPLE = "#8c1aff"
 Model parameters
 """
 NUM_CPUS = 8
+
+# Segmentation params
 DISTANCE_METRIC = 'SAD'
+SEG_BURN_IN = 10000
+SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
+MAX_SAD = 0.1  # 75
+# MAX_SAD = 0.01
+
+# MRF Locality Weight
 BETA = 500
 
 # Number of iterations to stop after there is no update.
