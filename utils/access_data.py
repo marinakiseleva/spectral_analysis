@@ -16,109 +16,58 @@ def get_endmember_wavelengths(CRISM_match=True):
     """
     Get matched wavelengths (USGS/RELAB/CRISM-matched) ; originally from RW_USGS
     """
-
     if CRISM_match == False:
         return ValueError("Only hanlde CRISM matching.")
     return N_WAVELENGTHS
 
 
-def match_lists(target, source):
+def match_lists(CRISM_wavelengths, USGS_wavelengths):
     """
-    Makes target list of wavelengths as similar to source as possible. For each target wavlength, finds closest source value.
-    :param target: List of wavelengths
-    :param source: List of wavelengths, longer than target
-    Reduce long list, long_w, to short. Each is a list of wavelengths, and we keep the wavelength in the long_w that is closest to the next value in the short list.
+    Keeps wavelengths that are same in 2 lists. Tested on wavelength vectors which contains same subset of values.   
     """
-
-    # Finds first value in target that is greater than source - if necessary
-    t_index = 0  # Starting index for target - where it reaches min value of source
-    t_start = target[0]
-    if min(target) < min(source):
-        while t_start <= source[0]:
-            t_index += 1
-            t_start = target[t_index]
-    if t_index > 0:
-        print("T start reset to: " + str(t_start))
-    # Reset target so next part works.
-    target = target[t_index:]
-
-    # Assumes there are more values in source than target - iterates over
-    # source, keeping each value that is >= to next target value
-    source_index = 0
-    target_index = 0
-    new_target = []
-    new_source = []
-
-    while source_index <= len(source) - 1:
-        source_val = source[source_index]
-        if target_index >= len(target):
+    new_CRISM = []
+    new_USGS = []
+    U_index = 0
+    for index, C_val in enumerate(CRISM_wavelengths):
+        if U_index == len(USGS_wavelengths):
             break
-        targ_val = target[target_index]
-        increment_source = True
-        if source_val >= targ_val:
-            if target_index == len(target) - 1:
-                print("not adding " + str(source_val))
-            elif source_val <= target[target_index + 1]:
-                new_target.append(targ_val)
-                new_source.append(source_val)
-            else:
-                increment_source = False
-            target_index += 1
-        if increment_source:
-            source_index += 1
-    return new_target, new_source
+
+        U_val = USGS_wavelengths[U_index]
+
+        if C_val >= U_val:
+            U_index += 1
+            new_CRISM.append(C_val)
+            new_USGS.append(U_val)
+
+    return new_CRISM, new_USGS
 
 
 def record_reduced_spectra(CRISM_w_file):
     """
-    Saves the wavelengths that are found to be as equal as possible between RELAB (basaltic glass), USGS (olivine Fo80), and CRISM (random pixel from passed-in image) spectra.  The unique wavelengths are saved per data source because this is how their spectral values will be accessed.
+    Saves the wavelengths that are found to be as equal as possible between USGS (olivine Fo80)  and CRISM (random pixel from passed-in image) spectra.  The unique wavelengths are saved per data source because this is how their spectral values will be accessed.
     :param CRISM_w_file: Path and .txt file name of CRISM z-profile for a single pixel, saved from CAT ENVI
     """
     # Get data
     ss = get_data()
-    BASALTIC_wavelengths = get_RELAB_wavelengths(
-        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=False)
     USGS_data = get_USGS_data("olivine (Fo80)", CRISM_match=False)
     USGS_wavelengths = USGS_data['wavelength'].values.tolist()
     CRISM_wavelengths = get_CRISM_wavelengths(CRISM_w_file)
 
-    # Print current spec stats
-    print("RELAB min:" + str(min(BASALTIC_wavelengths)) + " max: " +
-          str(max(BASALTIC_wavelengths)) + " count: " + str(len(BASALTIC_wavelengths)))
-    print("USGS min:" + str(min(USGS_wavelengths)) + " max: " +
-          str(max(USGS_wavelengths)) + " count: " + str(len(USGS_wavelengths)))
-    print("CRISM min:" + str(min(CRISM_wavelengths)) + " max: " +
-          str(max(CRISM_wavelengths)) + " count: " + str(len(CRISM_wavelengths)))
-
-    # 1. Reduce Olivine Fo51 (which is the same as all USGS endmembers) to basaltic glass
-    # Reduce both source and target to match target as best as possible
-    # (target has less values)
-    basalt_rw, usgs_rw = match_lists(target=BASALTIC_wavelengths,
-                                     source=USGS_wavelengths)
-    # 2. Match USGS to CRISM
-    CRISM_reduced, USGS_reduced = match_lists(target=CRISM_wavelengths, source=usgs_rw)
-    print("CRISM_reduced min:" + str(min(CRISM_reduced)) + " max: " +
-          str(max(CRISM_reduced)) + " count: " + str(len(CRISM_reduced)))
-
-    # 3. Find same indexed wavelengths for basaltic glass
-    # Get indices of original USGS that were kept
-    keep_indices = [usgs_rw.index(i) for i in USGS_reduced]
-
-    # Find these indices in basaltic glass spectra
-    BASALT_reduced = np.take(a=basalt_rw, indices=keep_indices, axis=0)
-
-    print("\nAll reduced spectra should have same length ")
-    print("CRISM : " + str(len(CRISM_reduced)))
-    print("USGS " + str(len(USGS_reduced)))
-    print("BASALT " + str(len(BASALT_reduced)))
+    # Match USGS to CRISM
+    CRISM_reduced, USGS_reduced = match_lists(CRISM_wavelengths, USGS_wavelengths)
 
     path = MODULE_DIR + "/utils/FILE_CONSTANTS/"
-    with open(path + 'RW_BASALT.pickle', 'wb') as f:
-        pickle.dump(BASALT_reduced, f)
     with open(path + 'RW_USGS.pickle', 'wb') as f:
         pickle.dump(USGS_reduced, f)
     with open(path + 'RW_CRISM.pickle', 'wb') as f:
         pickle.dump(CRISM_reduced, f)
+
+    rmse = np.sqrt(np.mean((np.array(CRISM_reduced) - np.array(USGS_reduced))**2))
+    print("CRISM reduced from " + str(len(CRISM_wavelengths)) +
+          " to " + str(len(CRISM_reduced)))
+    print("USGS reduced from " + str(len(USGS_wavelengths)) +
+          " to " + str(len(USGS_reduced)))
+    print("RMSE between normalized wavelength vectors: " + str(rmse))
 
 
 """
@@ -129,6 +78,7 @@ CRISM data access
 def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
     """
     Gets CRISM data this directory & name.
+    If matching to CRISM - make sure that record_reduced_spectra was called before this so that we know what wavelengths to match to.
     :param image_file: Full dir and file name of Pickled image.
     :param wavelengths_file: Full dir and file name of wavelength values for image
     :param CRISM_match: filter spectra to same range as endmembers
@@ -140,8 +90,8 @@ def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
         loaded_img = pickle.load(handle)
 
     if CRISM_match:
-
-        with open(MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
+        crism_w = MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle"
+        with open(crism_w, 'rb') as handle:
             # CRISM reduced wavelengths to keep.
             RW_CRISM = pickle.load(handle)
 
