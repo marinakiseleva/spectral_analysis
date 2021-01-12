@@ -20,6 +20,21 @@ def get_mu():
     return USGS_COS_EMISSION_ANGLE
 
 
+def get_reflectance_hapke_estimate(n, k, D, wavelengths):
+    """
+    Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
+    :param mu: cosine of detect angle
+    :param mu_0: cosine of source angle 
+    :param n: real index of refraction (sclar)
+    :param k: imaginary index of refraction (scalar)
+    :param D: grain size (scalar)
+    :param wavelengths: lambdas/wavelengths of data (Numpy array)
+    :return reflectance: as Numpy array
+    """
+    w = get_w_hapke_estimate(n, k, D, wavelengths)
+    return get_derived_reflectance(w)
+
+
 def get_USGS_r_mixed_hapke_estimate(m, D):
     """
     Calculate reflectance of m and D using Hapke model; using spectral endmembers from USGS library
@@ -79,21 +94,6 @@ def get_synthetic_r_mixed_hapke_estimate(m, D):
 
     r = get_derived_reflectance(w_mix)
     return r
-
-
-# def get_reflectance_hapke_estimate(mu, mu_0, n, k, D, wavelengths):
-#     """
-#     Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
-#     :param mu: cosine of detect angle
-#     :param mu_0: cosine of source angle
-#     :param n: real index of refraction (sclar)
-#     :param k: imaginary index of refraction (scalar)
-#     :param D: grain size (scalar)
-#     :param wavelengths: lambdas/wavelengths of data (Numpy array)
-#     :return reflectance: as Numpy array
-#     """
-#     w = get_w_hapke_estimate(n, k, D, wavelengths)
-#     return get_derived_reflectance(w, mu, mu_0)
 
 
 def get_derived_reflectance(w):

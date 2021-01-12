@@ -263,7 +263,10 @@ def infer_segmented_image(iterations, superpixels):
     pool.close()
     pool.join()
     print("Done processing...")
+    # m_and_Ds = []
+    # for d in superpixels:
 
+    #     m_and_Ds.append(infer_datapoint(iterations, d))
     return m_and_Ds
 
 
