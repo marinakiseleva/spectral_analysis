@@ -20,6 +20,7 @@ where GMW is the maximum edge weight in that minimum spanning tree, and |.| repr
 """
 import numpy as np
 from functools import reduce
+from utils.constants import *
 
 
 """
@@ -27,7 +28,6 @@ MAX_SAD is the initial threshold by which to merge pixels when both segments do 
 for noise sigma = 0.001, MAX_SAD = 0.005
 for noise sigma = 0.01, MAX_SAD = 0.03
 """
-MAX_SAD = 0.009  # 75
 
 
 class Graph:
@@ -104,6 +104,7 @@ def segment_image(iterations, image):
 
     """
     graphs = init_graphs(image)
+    prev_clusters = []
     for i in range(iterations):
         if len(graphs) == 0:
             raise Error("Graph has been reduced to 1 cluster.")
@@ -117,8 +118,14 @@ def segment_image(iterations, image):
             graphs.remove(g2)
             graphs.append(g3)
 
-    num_clusters = len(graphs)
-    print(str(num_clusters) + " clusters total.")
+        num_clusters = len(graphs)
+        if len(prev_clusters) >= SEG_EARLY_STOP:
+            prev_clusters.pop(0)
+        prev_clusters.append(num_clusters)
+
+        if i > SEG_BURN_IN and len(prev_clusters) == SEG_EARLY_STOP and prev_clusters.count(num_clusters) == len(prev_clusters):
+            print("\nEarly Stopping in Segmentation, iter " + str(i))
+            break
     return graphs
 
 
