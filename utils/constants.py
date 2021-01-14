@@ -40,8 +40,8 @@ NUM_CPUS = 8
 DISTANCE_METRIC = 'SAD'
 SEG_BURN_IN = 10000
 SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
-MAX_SAD = 0.1  # 75
-# MAX_SAD = 0.01
+# MAX_SAD = 0.1
+MAX_SAD = 0.01
 
 # MRF Locality Weight
 BETA = 500

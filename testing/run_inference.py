@@ -102,9 +102,9 @@ def infer_mrf_model(iterations, image, m_actual, D_actual):
 if __name__ == "__main__":
     num_mixtures = 4
     grid_res = 4
-    noise_scale = 0.0001
+    noise_scale = 0.001
     res = 4
-    iterations = 700
+    iterations = 20000
     seg_iterations = 3000
 
     # Print metadata
