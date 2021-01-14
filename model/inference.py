@@ -121,8 +121,6 @@ def get_likelihood(d, m, D):
     y = multivariate_normal.pdf(x=d, mean=r_e, cov=covariance)
 
     # Threshold min values to not overflow
-    # if y < 10**-310:
-    #     y = 10**-310
     if y < 10**-10:
         y = 10**-10
 
@@ -238,10 +236,6 @@ def infer_datapoint(iterations, d, V=10):
             print("\nEarly Stop at " + str(i + (i * g)))
             break
 
-    # print("\nCurrent m and D\n m: " + str(cur_m) + "\n D: " + str(cur_D) +
-    #       " with prob " + str(get_posterior_estimate(d, cur_m, cur_D)))
-    # print("\nMax prob m and D\n m: " + str(max_m) + "\n D: " +
-    #       str(max_D) + " with prob " + str(max_prob))
     print("Finished datapoint.")
     return [cur_m, cur_D]
 
@@ -265,7 +259,6 @@ def infer_segmented_image(iterations, superpixels):
     print("Done processing...")
     # m_and_Ds = []
     # for d in superpixels:
-
     #     m_and_Ds.append(infer_datapoint(iterations, d))
     return m_and_Ds
 
@@ -441,11 +434,11 @@ def get_mrf_prob(m_image, D_image, i, j, m, D, d):
     """
     # get energy of neighbors
     e_spatial = get_spatial_energy(m_image, i, j, m)
-    # e_spectral = -get_log_posterior_estimate(d, m, D)
-    # return -(e_spectral + (e_spatial * BETA))
-
+    # Do not use log - posterior; for some reason that results in never
+    # rejecting candidates.
+    p = get_posterior_estimate(d, m, D)
     # joint prob is likelihood - spatial energy
-    return get_log_posterior_estimate(d, m, D) - (e_spatial * BETA)
+    return p - (e_spatial * BETA)
 
 
 def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance):
@@ -472,6 +465,8 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance):
     if phi >= u:
         cur_m = new_m
         cur_D = new_D
+    else:
+        print("Reject")
     m_image[i, j] = cur_m
     D_image[i, j] = cur_D
     return m_image, D_image
@@ -552,7 +547,7 @@ def infer_mrf_image(iterations, image):
 
         print("\n\n" + str(dt_string) + "  iteration " +
               str(iteration + 1) + "/" + str(iterations))
-        print("Energy change: " + str(round(energy_diff, 4)))
+        print("Energy change (want negative): " + str(round(energy_diff, 4)))
         print("Total MRF Energy: " + str(round(energy, 4)))
         sys.stdout.flush()
 
