@@ -27,6 +27,9 @@ def infer_seg_model(seg_iterations, iterations, image, m_actual, D_actual):
     """
     Use segmentation model to infer mineral assemblages and grain sizes of pixels in image
     """
+
+    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/seg/")
+
     graphs = segment_image(iterations=seg_iterations,
                            image=image)
     superpixels = get_superpixels(graphs)
@@ -57,6 +60,7 @@ def infer_seg_model(seg_iterations, iterations, image, m_actual, D_actual):
     np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
     print("Seg model error:")
     print_error(m_actual, D_actual, m_est, D_est)
+
     plot_compare_highd_predictions(
         actual=m_actual, pred=m_est, output_dir=MODULE_DIR + "/output/figures/seg/")
     return m_est, D_est
@@ -76,6 +80,7 @@ def infer_ind_model(iterations, image, m_actual, D_actual):
     np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
     print("Independent model error:")
     print_error(m_actual, D_actual, m_est, D_est)
+
     plot_compare_highd_predictions(
         actual=m_actual, pred=m_est, output_dir=MODULE_DIR + "/output/figures/ind/")
     return m_est, D_est
@@ -94,18 +99,20 @@ def infer_mrf_model(iterations, image, m_actual, D_actual):
     np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
     print("MRF model error:")
     print_error(m_actual, D_actual, m_est, D_est)
+
+    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/mrf/")
     plot_compare_highd_predictions(
         actual=m_actual, pred=m_est, output_dir=MODULE_DIR + "/output/figures/mrf/")
     return m_est, D_est
 
 
 if __name__ == "__main__":
-    num_mixtures = 4
+    num_mixtures = 3
     grid_res = 4
     noise_scale = 0.001
-    res = 4
-    iterations = 20000
-    seg_iterations = 3000
+    res = 8
+    iterations = 10000
+    seg_iterations = 20000
 
     # Print metadata
     print("Generating data with: ")
