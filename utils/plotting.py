@@ -185,6 +185,26 @@ def plot_highd_img(img_m):
     return fig
 
 
+def plot_actual_m(actual, output_dir=None):
+    """
+    Plot actual for each endmember separately 
+    :param actual: Numpy 3D array with > 3 endmember proportions per pixel
+    """
+    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
+        fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+        endmember_actual = actual[:, :, index]
+
+        axp = ax.imshow(endmember_actual, vmin=0, vmax=1)
+        ax.set_title("Actual")
+
+        cb = plt.colorbar(mappable=axp, ax=ax)
+        if output_dir is not None:
+            fig.savefig(output_dir + "m_actual_" + endmember + ".png")
+        else:
+            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" + endmember + ".png")
+    return fig
+
+
 def plot_compare_highd_predictions(actual, pred, output_dir=None):
     """
     Compare actual to different predictions, for each endmember separately 
