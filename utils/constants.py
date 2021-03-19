@@ -43,15 +43,12 @@ SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
 MAX_SAD = 0.01
 
 # MRF Locality Weight
-BETA = 10
+BETA = 100
 MRF_BURN_IN = 100
 MRF_EARLY_STOP = 1
 
 # Number of iterations to stop after there is no update.
 EARLY_STOP = 100
-
-# Constant used in Dirichlet mineral assemblage sampling
-# SAMPLING_C = 10.0
 
 # Min and max grain sizes for these endmembers
 INITIAL_D = 80
