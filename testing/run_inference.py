@@ -124,12 +124,12 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__":
-    num_mixtures = 3
+    num_mixtures = 5
     grid_res = 4
     noise_scale = 0.001
-    res = 8
-    iterations = 20
-    seg_iterations = 1000
+    res = 20
+    iterations = 2500
+    seg_iterations = 30000
 
     # Print metadata
     print("Generating data with: ")
@@ -144,6 +144,7 @@ if __name__ == "__main__":
                            res=res)
     m_actual = image.m_image
     D_actual = image.D_image
+    # plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
     np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
     np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
 
@@ -151,6 +152,4 @@ if __name__ == "__main__":
 
     infer_seg_model(seg_iterations, iterations, image.r_image, m_actual, D_actual)
 
-    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
-
-    # infer_mrf_model(iterations, image.r_image, m_actual, D_actual)
+    infer_mrf_model(iterations, image.r_image, m_actual, D_actual)
