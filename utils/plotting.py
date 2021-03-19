@@ -38,36 +38,40 @@ def plot_endmembers(CRISM_match=True):
     """
     Plot wavelength vs reflectance for each endmember
     """
-    names = ['olivine (Fo80)', 'olivine (Fo51)', 'augite',
+    names = ['olivine (Fo51)', 'augite',
              'labradorite', 'pigeonite', 'magnetite']
-    endmembers = ['olivinefo80', 'olivinefo51', 'augite',
+    endmembers = ['olivinefo51', 'augite',
                   'labradorite', 'pigeonite', 'magnetite']
     colors = [LIGHT_GREEN, DARK_GREEN, LIGHT_BLUE, PINK, DARK_BLUE, RED]
 
-    fig, ax = plt.subplots(figsize=(4, 4), dpi=140)
+    fig, ax = plt.subplots(figsize=(4, 4), dpi=200)
 
     for index, endmember in enumerate(endmembers):
         data = get_USGS_data(endmember, CRISM_match=CRISM_match)
+        wavelengths = data['wavelength']
 
         ax.plot(data['wavelength'],
                 data['reflectance'],
                 color=colors[index],
                 label=names[index])
 
-    # Plot RELAB basaltic glass
-    ss = get_data()
-    wavelengths = get_RELAB_wavelengths(
-        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
-    reflectance = get_reflectance_spectra(
-        spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
-    ax.plot(wavelengths,
-            reflectance,
-            color='purple',
-            label='basaltic glass')
-
+    # # Plot RELAB basaltic glass
+    # ss = get_data()
+    # wavelengths = get_RELAB_wavelengths(
+    #     spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
+    # reflectance = get_reflectance_spectra(
+    #     spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
+    # ax.plot(wavelengths,
+    #         reflectance,
+    #         color='purple',
+    #         label='basaltic glass')
+    # wavelengths = get_endmember_wavelengths(CRISM_match=True)
+    ax.set_ylabel("Reflectance")
+    ax.set_xlabel("Wavelength(\u03BCm)")
     ax.set_ylim((0, 1))
-    ax.set_xlim((0.75, max(wavelengths)))
+    ax.set_xlim((min(wavelengths), 3))
     plt.legend()
+    fig.savefig(MODULE_DIR + "/output/figures/endmembers.pdf")
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
@@ -216,8 +220,9 @@ def plot_compare_highd_predictions(actual, pred, output_dir=None):
         fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_actual = actual[:, :, index]
         endmember_pred = pred[:, :, index]
-
-        axes[0].imshow(endmember_actual)
+        print("\n tracking m_actual ------ 3 ------ \n")
+        print(actual[0])
+        axes[0].imshow(endmember_actual, vmin=0, vmax=1)
         axes[0].set_title("Actual")
         axp = axes[1].imshow(endmember_pred, vmin=0, vmax=1)
 
@@ -227,9 +232,9 @@ def plot_compare_highd_predictions(actual, pred, output_dir=None):
 
         cb = plt.colorbar(mappable=axp, ax=axes, location='right')
         if output_dir is not None:
-            fig.savefig(output_dir + "m_compare_" + endmember + ".png")
+            fig.savefig(output_dir + "m_compare_" + endmember + ".pdf")
         else:
-            fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".png")
+            fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".pdf")
 
     return fig
 
