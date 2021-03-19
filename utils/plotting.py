@@ -220,8 +220,7 @@ def plot_compare_highd_predictions(actual, pred, output_dir=None):
         fig, axes = plt.subplots(1, 2, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_actual = actual[:, :, index]
         endmember_pred = pred[:, :, index]
-        print("\n tracking m_actual ------ 3 ------ \n")
-        print(actual[0])
+
         axes[0].imshow(endmember_actual, vmin=0, vmax=1)
         axes[0].set_title("Actual")
         axp = axes[1].imshow(endmember_pred, vmin=0, vmax=1)

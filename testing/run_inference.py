@@ -29,8 +29,6 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir):
     np.savetxt("../output/data/" + save_dir + "D_estimated.txt", D_est.flatten())
 
     print_error(m_actual, D_actual, m_est, D_est)
-    print("\n tracking m_actual ------ 2 ------ \n")
-    print(m_actual[0])
     plot_compare_highd_predictions(
         actual=m_actual,
         pred=m_est,
@@ -152,8 +150,6 @@ if __name__ == "__main__":
     # infer_ind_model(iterations, image.r_image, m_actual, D_actual)
 
     infer_seg_model(seg_iterations, iterations, image.r_image, m_actual, D_actual)
-    print("\n tracking m_actual ------ 1 ------ \n")
-    print(m_actual[0])
 
     plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
 
