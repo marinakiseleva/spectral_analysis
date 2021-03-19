@@ -119,6 +119,10 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
         mixtures_r[i + 1] = mix.r
         mixtures_m[i + 1] = mix.m
         mixtures_D[i + 1] = mix.D
+        print("\n Mixture " + str(i + 1))
+        round_m = [round(l, 2) for l in mix.m]
+        print("mineral assemblage: " + str(round_m))
+        print("grain sizes: " + str(mix.D))
 
     for i in range(res):
         for j in range(res):
