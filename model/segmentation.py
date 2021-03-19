@@ -25,8 +25,7 @@ from utils.constants import *
 
 """
 MAX_SAD is the initial threshold by which to merge pixels when both segments do not have edges to compare. If their SAD is <MAX_SAD we merge them. Comes from manually examining pure data spectra vs. derived Hapke model spectra where dominant mineral is 80%. 
-for noise sigma = 0.001, MAX_SAD = 0.005
-for noise sigma = 0.01, MAX_SAD = 0.03
+
 """
 
 
