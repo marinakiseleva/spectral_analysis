@@ -30,7 +30,7 @@ def infer_point(r_actual, iterations, pair):
     """
     C, V = pair
 
-    est_m, est_D = infer_datapoint(iterations, r_actual, C, V)
+    est_m, est_D = infer_datapoint(iterations,  C, V, r_actual)
 
     wavelengths = N_WAVELENGTHS
     r_est = get_USGS_r_mixed_hapke_estimate(convert_arr_to_dict(est_m),
@@ -45,10 +45,12 @@ def infer_point(r_actual, iterations, pair):
     ax.legend()
 
     plt.ylim((0, 1))
+    cur_rmse = get_rmse(r_actual, r_est)
 
-    print("C: " + str(C) + ", V: " + str(V) + " RMSE : " + str(get_rmse(r_actual, r_est)))
-
+    print("C: " + str(C) + ", V: " + str(V) + " RMSE : " + str(cur_rmse))
     plt.savefig("../output/figures/opt/C_" + str(C) + "_V_" + str(V) + ".png")
+
+    return cur_rmse
 
 
 if __name__ == "__main__":
@@ -56,15 +58,17 @@ if __name__ == "__main__":
     Find best constants for this sample point
     """
 
-    m_random = np.array([0, 1.0, 0, 0, 0, 0, 0])
-    D_random = np.array([80, 80, 60, 60, 60, 60, 60])
+    m_random = np.array([0, 0.6, 0, 0.2, 0.2])
+    D_random = np.array([80, 200, 60, 60, 60])
     true_m = convert_arr_to_dict(m_random)
     true_D = convert_arr_to_dict(D_random)
     r_actual = get_USGS_r_mixed_hapke_estimate(m=true_m, D=true_D)
 
+    print("R actual length  " + str(len(r_actual)))
+
     iterations = 20
-    sample_Cs = [1, 2, 5, 10, 20, 30, 50, 100]
-    sample_Vs = [1, 2, 5]
+    sample_Cs = [10]  # 1, 2, 5, , 20, 30, 50, 100]
+    sample_Vs = [0.01]  # , 0.1, 1, 2, 5]
 
     pairs = []
     for c in sample_Cs:
@@ -72,12 +76,14 @@ if __name__ == "__main__":
             pairs.append([c, v])
 
     pool = multiprocessing.Pool(consts.NUM_CPUS)
-
-    # Pass in parameters that don't change for parallel processes (# of iterations)
+    rmses = []
     func = partial(infer_point, r_actual, iterations)
-
-    pool.map(func, pairs)
-
+    rmses = pool.map(func, pairs)
     pool.close()
     pool.join()
     print("Done processing...")
+
+    min_index = rmses.index(min(rmses))
+    min_C_V = pairs[min_index]
+    print("Min RMSE achieved by C = " +
+          str(min_C_V[0]) + ", V = " + str(min_C_V[1]) + " with RMSE = " + str(min(rmses)))
