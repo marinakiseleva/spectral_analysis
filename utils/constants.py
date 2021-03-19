@@ -40,11 +40,12 @@ NUM_CPUS = 8
 DISTANCE_METRIC = 'SAD'
 SEG_BURN_IN = 10000
 SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
-# MAX_SAD = 0.1
 MAX_SAD = 0.01
 
 # MRF Locality Weight
-BETA = 500
+BETA = 10
+MRF_BURN_IN = 100
+MRF_EARLY_STOP = 1
 
 # Number of iterations to stop after there is no update.
 EARLY_STOP = 100
