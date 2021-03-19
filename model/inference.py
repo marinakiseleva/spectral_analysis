@@ -28,26 +28,27 @@ def sample_dirichlet(x, C=10):
     return new_x
 
 
-def m_transition(x):
+def m_transition(x, C):
     """
     Sample from 0-mean multivariate, add this to m assemblage vector. Then ensure they all sum to 1.
     :param x: Vector of mineral assemblage
     """
+    new_x = sample_dirichlet(x, C)
     # Add sample from multivariate normal
-    z_mean = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=0)
-    z_cov = np.zeros(shape=(USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(z_cov, 0.0005)
-    z = np.random.multivariate_normal(z_mean, z_cov)
+    # z_mean = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=0)
+    # z_cov = np.zeros(shape=(USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    # np.fill_diagonal(z_cov, 0.0005)
+    # z = np.random.multivariate_normal(z_mean, z_cov)
 
-    new_x = x + z
-    for index, v in enumerate(new_x):
-        if v < 0:
-            new_x[index] = 0
+    # new_x = x + z
+    # for index, v in enumerate(new_x):
+    #     if v < 0:
+    #         new_x[index] = 0
 
-    total = sum(new_x)
-    for index, v in enumerate(new_x):
-        if v != 0:
-            new_x[index] = v / total
+    # total = sum(new_x)
+    # for index, v in enumerate(new_x):
+    #     if v != 0:
+    #         new_x[index] = v / total
 
     return new_x
 
@@ -138,13 +139,13 @@ def get_log_likelihood(d, m, D):
     return math.log(get_likelihood(d, m, D))
 
 
-def transition_model(cur_m, cur_D, covariance):
+def transition_model(cur_m, cur_D, covariance, C):
     """
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
-    new_m = m_transition(cur_m)
+    new_m = m_transition(cur_m, C)
     new_D = D_transition(cur_D, covariance)
     return new_m, new_D
 
@@ -189,15 +190,16 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, d, V=10):
+def infer_datapoint(iterations, C, V,  d):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector) 
+    :param C: scaling factor for sampling m from Dirichlet; transition m
     :param V: value in covariance diagonal for sampling grain size
     """
     # Initialize randomly
-    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS))
+    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
 
     # Covariance diagonal for grain size sampling
@@ -210,7 +212,7 @@ def infer_datapoint(iterations, d, V=10):
 
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
-        new_m, new_D = transition_model(cur_m, cur_D, covariance)
+        new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
 
         new_post = get_posterior_estimate(d, new_m, new_D)
         cur_post = get_posterior_estimate(d, cur_m, cur_D)
@@ -248,7 +250,9 @@ def infer_segmented_image(iterations, superpixels):
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
-    func = partial(infer_datapoint, iterations)
+    C = 10
+    V = 0.001
+    func = partial(infer_datapoint, iterations, C, V)
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
@@ -292,7 +296,9 @@ def infer_image(iterations, image):
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
-    func = partial(infer_datapoint, iterations)
+    C = 10
+    V = 0.001
+    func = partial(infer_datapoint, iterations, C, V)
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
@@ -441,7 +447,7 @@ def get_mrf_prob(m_image, D_image, i, j, m, D, d):
     return p - (e_spatial * BETA)
 
 
-def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance):
+def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance, C=10):
     """
     Run metropolis algorithm (MCMC) to estimate m and D using posterior
     Return m_image and D_image with updated values
@@ -454,7 +460,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance):
     """
     cur_m = m_image[i, j]
     cur_D = D_image[i, j]
-    new_m, new_D = transition_model(cur_m, cur_D, covariance)
+    new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
 
     cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d)
     new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d)
