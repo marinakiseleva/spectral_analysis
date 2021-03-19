@@ -184,7 +184,7 @@ def plot_highd_img(img_m):
         axp = ax.imshow(endmember_img, vmin=0, vmax=1)
         cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
-        fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".png")
+        fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".pdf")
 
     return fig
 
@@ -203,9 +203,9 @@ def plot_actual_m(actual, output_dir=None):
 
         cb = plt.colorbar(mappable=axp, ax=ax)
         if output_dir is not None:
-            fig.savefig(output_dir + "m_actual_" + endmember + ".png")
+            fig.savefig(output_dir + "m_actual_" + endmember + ".pdf")
         else:
-            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" + endmember + ".png")
+            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" + endmember + ".pdf")
     return fig
 
 
