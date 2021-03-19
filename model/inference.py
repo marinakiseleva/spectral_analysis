@@ -557,7 +557,7 @@ def infer_mrf_image(iterations, image):
         print("Total MRF Energy: " + str(round(energy, 4)))
         sys.stdout.flush()
 
-        # If all energy changes last 100 runs was less than X, stop
+        # If all energy changes last 100 runs was less than MRF_EARLY_STOP, stop
         if len(energy_diffs) > MRF_BURN_IN and np.average(energy_diffs[-MRF_BURN_IN:] < MRF_EARLY_STOP):
             print("\nMRF Early Stop at iteration " + str(iteration))
             break
