@@ -471,8 +471,6 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance, C=10):
     if phi >= u:
         cur_m = new_m
         cur_D = new_D
-    else:
-        print("Reject")
     m_image[i, j] = cur_m
     D_image[i, j] = cur_D
     return m_image, D_image
@@ -529,7 +527,8 @@ def infer_mrf_image(iterations, image):
     rows = np.arange(0, num_rows)
     cols = np.arange(0, num_cols)
 
-    prev_energies = [0]
+    prev_energy = 0
+    prev_imgs = []  # save last MRF_PREV_STEPS imgs incase of early stopping
     energy_diffs = []
     for iteration in range(iterations):
         # Randomize order of rows and columns each iteration
@@ -547,19 +546,26 @@ def infer_mrf_image(iterations, image):
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
 
         energy = get_total_energy(image, m_image, D_image)
-        energy_diff = energy - prev_energies[-1]
-        prev_energies.append(energy)
+        energy_diff = energy - prev_energy
         energy_diffs.append(energy_diff)
+        prev_energy = energy  # reset prev energy
 
-        print("\n\n" + str(dt_string) + "  iteration " +
+        prev_imgs.append([m_image, D_image])
+
+        print("\n\n" + str(dt_string) + "  Iteration " +
               str(iteration + 1) + "/" + str(iterations))
         print("Energy change (want negative): " + str(round(energy_diff, 4)))
         print("Total MRF Energy: " + str(round(energy, 4)))
         sys.stdout.flush()
 
-        # If all energy changes last 100 runs was less than MRF_EARLY_STOP, stop
-        if len(energy_diffs) > MRF_BURN_IN and np.average(energy_diffs[-MRF_BURN_IN:] < MRF_EARLY_STOP):
-            print("\nMRF Early Stop at iteration " + str(iteration))
-            break
+        # If average energy change last MRF_PREV_STEPS runs was less than
+        # MRF_EARLY_STOP, stop
+        if len(energy_diffs) > MRF_BURN_IN:
+            a_e = np.average(energy_diffs[-MRF_PREV_STEPS:])
+            if a_e > MRF_EARLY_STOP:
+                print("\nMRF Early Stop at iteration " +
+                      str(iteration) + " with average energy " + str(a_e))
+                m_image, D_image = prev_imgs[-MRF_PREV_STEPS]
+                break
 
     return m_image, D_image

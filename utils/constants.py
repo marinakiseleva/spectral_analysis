@@ -42,10 +42,18 @@ SEG_BURN_IN = 10000
 SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
 MAX_SAD = 0.01
 
-# MRF Locality Weight
-BETA = 100
-MRF_BURN_IN = 100
-MRF_EARLY_STOP = 1
+
+""" 
+MRF Params
+
+BETA: locality weight
+
+MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop. Remember, average energy change should be negative.
+"""
+BETA = 10
+MRF_BURN_IN = 100  # 200
+MRF_PREV_STEPS = 30  # 50
+MRF_EARLY_STOP = 20  # 30
 
 # Number of iterations to stop after there is no update.
 EARLY_STOP = 100
