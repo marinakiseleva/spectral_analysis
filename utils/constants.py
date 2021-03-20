@@ -33,14 +33,25 @@ PURPLE = "#8c1aff"
 
 """
 Model parameters
+
+INF_BURN_IN and INF_EARLY_STOP are for pixel-independent models (pixel-independent and segmentation model.)
 """
 NUM_CPUS = 8
 
-# Segmentation params
+INF_BURN_IN = 100
+INF_EARLY_STOP = 400
+
+
+""" 
+Segmentation model parameters
+
+MAX_SAD = 0.01; initial sad to allow merging of clusters
+SEG_BURN_IN, SEG_EARLY_STOP - for segmentation
+"""
 DISTANCE_METRIC = 'SAD'
-SEG_BURN_IN = 10000
-SEG_EARLY_STOP = 400  # stop if it hasnt changed in this number of iters
 MAX_SAD = 0.01
+SEG_BURN_IN = 10000
+SEG_EARLY_STOP = 400
 
 
 """ 
@@ -52,24 +63,35 @@ MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs i
 """
 BETA = 10
 MRF_BURN_IN = 100  # 200
-MRF_PREV_STEPS = 30  # 50
+MRF_PREV_STEPS = 400  # 50
 MRF_EARLY_STOP = 20  # 30
 
-# Number of iterations to stop after there is no update.
-EARLY_STOP = 100
+
+#########################################
+# Endmember constants/variables
+#########################################
+
+
+INITIAL_D = 80
 
 # Min and max grain sizes for these endmembers
-INITIAL_D = 80
-# SAMPLING_VARIANCE = 5
+# Used to generate synthetic data and in inference (D prior)
 GRAIN_SIZE_MIN = 45
 GRAIN_SIZE_MAX = 100
 # GRAIN_SIZE_MIN = 20  # 50
 # GRAIN_SIZE_MAX = 350  # 800
 
+# USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
+# **Exception: basaltic glass is RELAB; removed.
+USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
+                        # 'olivine (Fo80)',
+                        'augite',
+                        'labradorite',
+                        'pigeonite',
+                        'magnetite']
+# 'basaltic glass']
+USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
-#########################################
-# Below are constants shared between USGS and RELAB endmembers
-#########################################
 
 # Optical constant n per endmember
 # from Lapotre DOI:10.1002/2016JE005133
@@ -123,18 +145,6 @@ USGS_densities = {'olivine (Fo51)': 3.32,
                   'pigeonite': 3.38,
                   'magnetite': 5.15}
 # 'basaltic glass': 2.78}
-
-
-# USGS endmembers for CRISM testing
-# **Exception: basaltic glass is RELAB
-USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
-                        # 'olivine (Fo80)',
-                        'augite',
-                        'labradorite',
-                        'pigeonite',
-                        'magnetite']
-# 'basaltic glass']
-USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 
 #########################################

@@ -234,8 +234,8 @@ def infer_datapoint(iterations, C, V,  d):
         else:
             unchanged_i += 1
 
-        if unchanged_i > EARLY_STOP:
-            print("\nEarly Stop at " + str(i + (i * g)))
+        if i > INF_BURN_IN and unchanged_i > INF_EARLY_STOP:
+            print("\nEarly Stop at iter: " + str(i))
             break
 
     print("Finished datapoint.")
