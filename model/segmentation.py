@@ -94,6 +94,7 @@ def get_superpixels(graphs):
 
         avg_reflectance = np.average(reflectances, axis=0)
         superpixels.append(avg_reflectance)
+
     return superpixels
 
 
@@ -125,7 +126,32 @@ def segment_image(iterations, image):
         if i > SEG_BURN_IN and len(prev_clusters) == SEG_EARLY_STOP and prev_clusters.count(num_clusters) == len(prev_clusters):
             print("\nEarly Stopping in Segmentation, iter " + str(i))
             break
-    return graphs
+
+    """
+     Merge any like superpixels/graphs
+    Note: this is necessary because two separate clusters may be unconnected but may be of the same superpixel type.
+    """
+    print("Original number of superpixels: " + str(len(graphs)))
+    superpixels = get_superpixels(graphs)
+    skip_indices = []
+    new_graphs = []
+    for index, cur_superpixel in enumerate(superpixels):
+        if index in skip_indices:
+            continue
+        cur_graph = graphs[index]
+        for index2, compare_superpixel in enumerate(superpixels):
+            compare_graph = graphs[index2]
+            if index == index2:
+                continue
+            # merge superpixels if the SAD of their average reflectances < MAX_SAD
+            sad = get_SAD(cur_superpixel, compare_superpixel)
+            if sad < MAX_SAD:
+                cur_graph = merge(cur_graph, compare_graph)
+                skip_indices.append(index)
+                skip_indices.append(index2)
+        new_graphs.append(cur_graph)
+    print("# of merged superpixels: " + str(len(new_graphs)))
+    return new_graphs
 
 
 def visualize_clusters(graphs, image):
