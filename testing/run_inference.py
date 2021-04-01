@@ -28,6 +28,7 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir):
     np.savetxt("../output/data/" + save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt("../output/data/" + save_dir + "D_estimated.txt", D_est.flatten())
 
+    plot_highd_imgs(m_est, "../output/figures/" + save_dir)
     print_error(m_actual, D_actual, m_est, D_est)
     plot_compare_highd_predictions(
         actual=m_actual,
@@ -124,11 +125,11 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__":
-    num_mixtures = 5
-    grid_res = 4
+    num_mixtures = 6
+    grid_res = 6
     noise_scale = 0.001
-    res = 20
-    iterations = 2500
+    res = 36
+    iterations = 3000
     seg_iterations = 30000
 
     # Print metadata
@@ -144,7 +145,7 @@ if __name__ == "__main__":
                            res=res)
     m_actual = image.m_image
     D_actual = image.D_image
-    # plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
+    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
     np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
     np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
 
