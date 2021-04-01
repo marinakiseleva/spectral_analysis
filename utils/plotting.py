@@ -173,7 +173,7 @@ def interpolate_image(img):
     return np.interp(img, (img.min(), img.max()), (0, 1))
 
 
-def plot_highd_img(img_m):
+def plot_highd_imgs(img_m, output_dir):
     """
     Plots each endmember on different heatmap plot
     :param img_m: Numpy 3D array with > 3 endmember proportions per pixel
@@ -182,9 +182,9 @@ def plot_highd_img(img_m):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_img = img_m[:, :, index]
         axp = ax.imshow(endmember_img, vmin=0, vmax=1)
-        cb = plt.colorbar(mappable=axp, ax=ax)
+        # cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
-        fig.savefig(MODULE_DIR + "/output/figures/m_" + endmember + ".pdf")
+        fig.savefig(output_dir + "m_" + endmember + ".pdf")
 
     return fig
 
@@ -201,7 +201,7 @@ def plot_actual_m(actual, output_dir=None):
         axp = ax.imshow(endmember_actual, vmin=0, vmax=1)
         ax.set_title("Actual")
 
-        cb = plt.colorbar(mappable=axp, ax=ax)
+        # cb = plt.colorbar(mappable=axp, ax=ax)
         if output_dir is not None:
             fig.savefig(output_dir + "m_actual_" + endmember + ".pdf")
         else:
