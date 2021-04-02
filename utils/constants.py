@@ -49,7 +49,8 @@ MAX_SAD = 0.01; initial sad to allow merging of clusters
 SEG_BURN_IN, SEG_EARLY_STOP - for segmentation
 """
 DISTANCE_METRIC = 'SAD'
-MAX_SAD = 0.05  # 0.01
+MAX_SAD = 0.1  # 0.01
+MAX_MERGE_SAD = 0.05
 SEG_BURN_IN = 10000
 SEG_EARLY_STOP = 1000
 

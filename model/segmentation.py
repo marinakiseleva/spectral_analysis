@@ -143,9 +143,9 @@ def segment_image(iterations, image):
             compare_graph = graphs[index2]
             if index == index2:
                 continue
-            # merge superpixels if the SAD of their average reflectances < MAX_SAD
+            # merge superpixels if the SAD of their average reflectances < MAX_MERGE_SAD
             sad = get_SAD(cur_superpixel, compare_superpixel)
-            if sad < MAX_SAD:
+            if sad < MAX_MERGE_SAD:
                 cur_graph = merge(cur_graph, compare_graph)
                 skip_indices.append(index)
                 skip_indices.append(index2)
