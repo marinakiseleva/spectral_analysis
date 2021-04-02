@@ -321,7 +321,7 @@ def get_connecting_edges(g1, g2):
     return edges
 
 
-def get_min_max_weight(g1, g2, k):
+def get_min_max_weight(g1, g2, k=0.001):
     """
     Gets the maximum edge weight in each graph, and returns the minimum between them.
         min(GMW(A) + k/|A|, GMW(B) + k/|B|)

@@ -242,7 +242,7 @@ def infer_datapoint(iterations, C, V,  d):
     return [cur_m, cur_D]
 
 
-def infer_segmented_image(iterations, superpixels):
+def infer_superpixels(iterations, superpixels):
     """
     Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)

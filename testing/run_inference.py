@@ -4,9 +4,8 @@ Run inference on synthetic data for any or all of the three methods.
 """
 import numpy as np
 import math
-from model.inference import *
+from model.models import *
 from preprocessing.generate_USGS_data import generate_image
-from model.segmentation import segment_image, get_superpixels
 from utils.plotting import *
 from utils.constants import *
 
@@ -48,63 +47,6 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir):
     #              str(bands) + "\n(m RMSE: " + str(m_rmse) + ")")
 
 
-def infer_seg_model(seg_iterations, iterations, image, m_actual, D_actual):
-    """
-    Use segmentation model to infer mineral assemblages and grain sizes of pixels in image
-    """
-
-    graphs = segment_image(iterations=seg_iterations,
-                           image=image)
-    superpixels = get_superpixels(graphs)
-    print("Number of superpixels: " + str(len(superpixels)))
-
-    m_and_Ds = infer_segmented_image(iterations=iterations,
-                                     superpixels=superpixels)
-
-    # Reconstruct image
-    num_rows = image.shape[0]
-    num_cols = image.shape[1]
-    # Mineral assemblage predictions
-    m_est = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-    # Grain size predictions
-    D_est = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-    for index, pair in enumerate(m_and_Ds):
-        graph = graphs[index]
-        for v in graph.vertices:
-            # retrieve x, y coords
-            # [i, j] = index_coords[index]
-            m, D = pair
-            m_est[v.x, v.y] = m
-            D_est[v.x, v.y] = D
-
-    record_output(m_actual, D_actual, m_est, D_est, "seg/")
-
-
-def infer_ind_model(iterations, image, m_actual, D_actual):
-    """
-    Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
-    """
-
-    m_est, D_est = infer_image(iterations=iterations,
-                               image=image.r_image)
-    print("Independent model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "ind/")
-
-
-def infer_mrf_model(iterations, image, m_actual, D_actual):
-    """
-    Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
-    """
-    m_est, D_est = infer_mrf_image(iterations=iterations,
-                                   image=image)
-
-    # Save output
-    print("MRF model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "mrf/")
-
-    return m_est, D_est
-
-
 def estimate_image(m, D):
     """
     Convert m and D estimates to reflectance, to visualize estimated image
@@ -129,7 +71,7 @@ if __name__ == "__main__":
     grid_res = 6
     noise_scale = 0.001
     res = 36
-    iterations = 3000
+    iterations = 200
     seg_iterations = 30000
 
     # Print metadata
@@ -149,8 +91,15 @@ if __name__ == "__main__":
     np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
     np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
 
-    # infer_ind_model(iterations, image.r_image, m_actual, D_actual)
+    m_est, D_est = ind_model(iterations=iterations,
+                             image=image.r_image)
+    print("Independent model error:")
+    record_output(m_actual, D_actual, m_est, D_est, "ind/")
 
-    infer_seg_model(seg_iterations, iterations, image.r_image, m_actual, D_actual)
+    m_est, D_est = seg_model(seg_iterations, iterations, image.r_image)
+    record_output(m_actual, D_actual, m_est, D_est, "seg/")
 
-    infer_mrf_model(iterations, image.r_image, m_actual, D_actual)
+    m_est, D_est = mrf_model(iterations=iterations,
+                             image=image)
+    print("MRF model error:")
+    record_output(m_actual, D_actual, m_est, D_est, "mrf/")

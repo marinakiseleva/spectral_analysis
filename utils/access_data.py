@@ -75,7 +75,30 @@ CRISM data access
 """
 
 
-def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
+def get_CRISM_img_wavelengths(wavelengths_file):
+    """
+    Get wavelengths that we are using in the CRISM image 
+    """
+    with open(wavelengths_file, 'rb') as handle:
+        img_wavelengths = pickle.load(handle)
+
+    crism_w = MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle"
+    with open(crism_w, 'rb') as handle:
+        # CRISM reduced wavelengths to keep.
+        RW_CRISM = pickle.load(handle)
+
+    keep_indices = []  # indices of spectra to keep.
+    for index, w in enumerate(img_wavelengths):
+        if w in RW_CRISM:
+            keep_indices.append(index)
+
+    if len(keep_indices) != len(RW_CRISM):
+        raise ValueError("Issue normalizing wavelengths of CRISM img. ")
+
+    return [img_wavelengths[i] for i in keep_indices]
+
+
+def get_CRISM_data(image_file, wavelengths_file, CRISM_match=True):
     """
     Gets CRISM data this directory & name.
     If matching to CRISM - make sure that record_reduced_spectra was called before this so that we know what wavelengths to match to.
@@ -90,24 +113,32 @@ def get_CRISM_data(image_file, wavelengths_file, CRISM_match):
         loaded_img = pickle.load(handle)
 
     if CRISM_match:
+        """
+        Keep all wavelengths in image that are in RW_CRISM
+        """
+        with open(wavelengths_file, 'rb') as handle:
+            img_wavelengths = pickle.load(handle)
+
         crism_w = MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle"
         with open(crism_w, 'rb') as handle:
             # CRISM reduced wavelengths to keep.
             RW_CRISM = pickle.load(handle)
 
-        with open(wavelengths_file, 'rb') as handle:
-            # CRISM wavelengths to keep.
-            wavelengths = pickle.load(handle)
-        keep_indices = []
-        for index, w in enumerate(wavelengths):
+        keep_indices = []  # indices of spectra to keep.
+        for index, w in enumerate(img_wavelengths):
             if w in RW_CRISM:
                 keep_indices.append(index)
 
+        if len(keep_indices) != len(RW_CRISM):
+            raise ValueError("Issue normalizing wavelengths of CRISM img. ")
+
+        # Create new image with only these wavelengths
         newimg = np.zeros((loaded_img.shape[0], loaded_img.shape[1], len(RW_CRISM)))
         for xindex, row in enumerate(loaded_img):
             for yindex, val in enumerate(row):
                 # Only keep values with reduced wavelengths
                 newimg[xindex, yindex] = np.take(val, keep_indices)
+
         return newimg
 
     return loaded_img
@@ -159,12 +190,13 @@ def get_USGS_endmember_k(endmember):
 
 def get_USGS_data(endmember, CRISM_match=False):
     """
-    Get USGS spectral reflectance data for this endmember, as Pandas DataFrame 
+    Get USGS spectral reflectance data for this endmember, as Pandas DataFrame
+    If CRISM_match = True, then keep only reflectance values for wavelengths that we determined to keep; those in RW_USGS.  
     """
     # Normalize filename
     endmember = endmember.lower()
     file_name = USGS_DATA + endmember + ".csv"
-    
+
     for r in ["(", ")", " "]:
         file_name = file_name.replace(r, "")
 

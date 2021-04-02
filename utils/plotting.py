@@ -2,6 +2,7 @@ import math
 import numpy as np
 import pandas as pd
 from textwrap import wrap
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import matplotlib.patches as patches
@@ -23,15 +24,15 @@ def prep_file_name(text):
     return text
 
 
-def plot_as_rgb(img, title, ax):
-    """
-    Plot 3d Numpy array as rgb image
-    :param img: 3d numpy array
-    """
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_title(title)
-    ax.imshow(img)
+# def plot_as_rgb(img, title, ax):
+#     """
+#     Plot 3d Numpy array as rgb image
+#     :param img: 3d numpy array
+#     """
+#     ax.set_xticks([])
+#     ax.set_yticks([])
+#     ax.set_title(title)
+#     ax.imshow(img)
 
 
 def plot_endmembers(CRISM_match=True):
@@ -163,7 +164,7 @@ def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
 
     fig.suptitle(title, fontsize=14)
 
-    fig.savefig(MODULE_DIR + "/output/data/" + prep_file_name(title))
+    fig.savefig(MODULE_DIR + "/output/data/" + prep_file_name(title) + ".pdf")
 
 
 def interpolate_image(img):
@@ -284,7 +285,7 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
     """
     PLOTTING_BAND = 100  # 24
     print("plotting band " + str(PLOTTING_BAND))
-    fig, ax = plt.subplots(figsize=(5, 5), dpi=140)
+    fig, ax = plt.subplots(figsize=(5, 5), dpi=300)
     axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND],
                     origin='upper', cmap='bone')
 
@@ -322,7 +323,26 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
 
     # Can't use because it flips inner image
     # ax.indicate_inset_zoom(axins, edgecolor='red')
-    plt.savefig("frt0002037a_07_if165_zoomed")
-
+    plt.savefig("../output/figures/actual/frt0002037a_07_if165_zoomed.pdf")
     plt.title("frt0002037a_07_if165 CRISM Image")
     plt.show()
+
+
+def plot_colorbar():
+    """
+    Plot colorbar on its own to use in reporting.
+    """
+    fig = plt.figure(figsize=(8, 1), dpi=200)
+    ax1 = fig.add_axes([0.05, 0.80, 0.9, 0.15])
+
+    cmap = mpl.cm.viridis
+    norm = mpl.colors.Normalize(vmin=0, vmax=1)
+
+    cb1 = mpl.colorbar.ColorbarBase(ax1, cmap=cmap,
+                                    norm=norm,
+                                    orientation='horizontal',
+                                    )
+    cb1.ax.tick_params(labelsize=16)
+
+    cb1.set_label('Mineral Concentration', fontsize=16)
+    plt.savefig("../output/figures/colorbar.pdf")

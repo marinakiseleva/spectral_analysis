@@ -35,13 +35,14 @@ def get_reflectance_hapke_estimate(n, k, D, wavelengths):
     return get_derived_reflectance(w)
 
 
-def get_USGS_r_mixed_hapke_estimate(m, D):
+def get_USGS_r_mixed_hapke_estimate(m, D, wavelengths=None):
     """
     Calculate reflectance of m and D using Hapke model; using spectral endmembers from USGS library
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
-    wavelengths = get_endmember_wavelengths(CRISM_match=True)
+    if wavelengths is None:
+        wavelengths = get_endmember_wavelengths(CRISM_match=True)
     sigmas = {}
     for endmember in m.keys():
         m_cur = m[endmember]
