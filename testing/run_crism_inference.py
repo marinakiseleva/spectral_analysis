@@ -41,11 +41,12 @@ def run_mrf(image, mcmc_iterations):
 def save_data_and_figs(m_est, D_est, model_type, wavelengths_file):
     print("\nCompleted " + str(model_type) + " model.")
     # Save output
-    save_dir = "../output/data/" + model_type + "/"
-    np.savetxt(save_dir + "m_estimated.txt", m_est.flatten())
-    np.savetxt(save_dir + "D_estimated.txt", D_est.flatten())
 
-    plot_highd_imgs(m_est, "../output/figures/" + model_type + "/")
+    data_save_dir = "../output/data/crism/" + model_type + "/"
+    np.savetxt(data_save_dir + "m_estimated.txt", m_est.flatten())
+    np.savetxt(data_save_dir + "D_estimated.txt", D_est.flatten())
+
+    plot_highd_imgs(m_est, "../output/figures/crism/" + model_type + "/")
 
     # Compare reflectances in certain bands.
 
@@ -57,9 +58,7 @@ def save_data_and_figs(m_est, D_est, model_type, wavelengths_file):
     plt.axis("off")
     plt.title("Bands: 120, 71, 18")
     plt.imshow(estimated_img, cmap='bone')
-    plt.savefig("../output/figures/" + model_type + "/est.pdf")
-
-    # save_rgb(filename, data, bands=None, **kwargs)
+    plt.savefig("../output/figures/crism/" + model_type + "/est.pdf")
 
     return m_est, D_est
 
@@ -85,7 +84,7 @@ def estimate_image_reflectance(m, D, wavelengths):
 
 
 if __name__ == "__main__":
-    iterations = 200  # 200
+    iterations = 200
     seg_iterations = 30000
 
     # os.system("taskset -p -c 1-3 %d" % os.getpid())
@@ -100,7 +99,9 @@ if __name__ == "__main__":
 
     image = get_CRISM_data(image_file, wavelengths_file, True)
 
+    # plot_zoomed_sectioned_CRISM(image,  [100, 200, 100, 200])
     image = image[100:200, 100:200, :]
+
     # image = image[10:50, 10:50, :]
 
     print("CRISM image size " + str(image.shape))
@@ -108,9 +109,10 @@ if __name__ == "__main__":
     # Independent
     # m_est, D_est = infer_image(iterations=60, image=image)
 
-    # MRF
-    # m_est, D_est = run_mrf(image, iterations)
-
     m_est, D_est = seg_model(seg_iterations, iterations, image)
     save_data_and_figs(m_est, D_est, "seg", wavelengths_file)
+
+    m_est, D_est = mrf_model(iterations, image)
+    save_data_and_figs(m_est, D_est, "mrf", wavelengths_file)
+
     plot_colorbar()
