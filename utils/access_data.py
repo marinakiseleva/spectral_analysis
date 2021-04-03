@@ -52,19 +52,17 @@ def get_CRISM_data(image_file):
     Gets CRISM data this directory & name.
     :param image_file: File name of Pickled image.
     """
-
     if 'pickle' not in image_file:
         return ValueError("get_CRISM_data only handles pickles.")
-    path = DATA_DIR + "PREPROCESSED_DATA/"
-    with open(path + image_file, 'rb') as handle:
+
+    with open(image_file, 'rb') as handle:
         loaded_img = pickle.load(handle)
 
+    path = DATA_DIR + "PREPROCESSED_DATA/"
     with open(path + "CRISM_wavelengths.pickle", 'rb') as handle:
         img_wavelengths = pickle.load(handle)
 
-    with open(path + "FILE_CONSTANTS/RW_CRISM.pickle", 'rb') as handle:
-        # CRISM reduced wavelengths to keep.
-        RW_CRISM = pickle.load(handle)
+    RW_CRISM = get_CRISM_RWs()
 
     keep_indices = []  # indices of spectra to keep.
     for index, w in enumerate(img_wavelengths):
