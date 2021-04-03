@@ -13,7 +13,7 @@ DATA_DIR = ROOT_DIR + "/../data/"
 CATALOGUE_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/catalogues/"
 RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
-ENDMEMBERS_K = DATA_DIR + "lab_spectra/derived/"
+ENDMEMBERS_K = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
 
 
 """
