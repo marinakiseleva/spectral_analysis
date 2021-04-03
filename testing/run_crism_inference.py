@@ -46,7 +46,9 @@ def save_data_and_figs(m_est, D_est, model_type):
     np.savetxt(data_save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt(data_save_dir + "D_estimated.txt", D_est.flatten())
 
-    plot_highd_imgs(m_est, "../output/figures/crism/" + model_type + "/")
+    plot_highd_imgs(m_est, "../output/figures/crism/m_" + model_type + "/")
+
+    plot_highd_imgs(D_est, "../output/figures/crism/D_" + model_type + "/")
 
     # Compare reflectances in certain bands.
 

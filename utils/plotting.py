@@ -174,19 +174,19 @@ def interpolate_image(img):
     return np.interp(img, (img.min(), img.max()), (0, 1))
 
 
-def plot_highd_imgs(img_m, output_dir):
+def plot_highd_imgs(img, output_dir):
     """
     Plots each endmember on different heatmap plot
-    :param img_m: Numpy 3D array with > 3 endmember proportions per pixel
+    :param img: Numpy 3D array with > 3 endmember proportions per pixel
     """
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-        endmember_img = img_m[:, :, index]
+        endmember_img = img[:, :, index]
         axp = ax.imshow(endmember_img, vmin=0, vmax=1)
         # cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
         plt.axis("off")
-        fig.savefig(output_dir + "m_" + endmember + ".pdf")
+        fig.savefig(output_dir + endmember + ".pdf")
 
     return fig
 
