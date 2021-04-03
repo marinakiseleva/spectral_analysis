@@ -185,6 +185,7 @@ def plot_highd_imgs(img_m, output_dir):
         axp = ax.imshow(endmember_img, vmin=0, vmax=1)
         # cb = plt.colorbar(mappable=axp, ax=ax)
         ax.set_title(endmember)
+        plt.axis("off")
         fig.savefig(output_dir + "m_" + endmember + ".pdf")
 
     return fig
@@ -276,7 +277,7 @@ def plot_compare_predictions(actual, preds, fig_title, subplot_titles, interp=Fa
     return fig
 
 
-def plot_zoomed_sectioned_CRISM(loaded_img, coords):
+def plot_zoomed_sectioned_CRISM(loaded_img, coords, save_name):
     """
     Plots original passed in image of frt0002037a_07_if165 and its zoomed in selected region used for testing. The x,y of the subsection are in layer_CRISM_data.py
     :param loaded_img: img 
@@ -284,7 +285,6 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
 
     """
     PLOTTING_BAND = 100  # 24
-    print("plotting band " + str(PLOTTING_BAND))
     fig, ax = plt.subplots(figsize=(5, 5), dpi=300)
     axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND],
                     origin='upper', cmap='bone')
@@ -304,7 +304,13 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
     rect = patches.Rectangle((X, Y), max_x - X, max_y - Y, linewidth=1,
                              edgecolor='red', facecolor='none')
     ax.add_patch(rect)
-
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    plt.tick_params(axis='both',
+                    which='both',
+                    bottom=False,
+                    left=False,
+                    labelbottom=False)
     # Callout code ; not working.
     # axins = ax.inset_axes([0.4, 0.4, 0.47, 0.47])
     # axins.imshow(loaded_img[:, :, PLOTTING_BAND], vmin=0, vmax=.35, origin='upper')
@@ -323,8 +329,7 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords):
 
     # Can't use because it flips inner image
     # ax.indicate_inset_zoom(axins, edgecolor='red')
-    plt.savefig("../output/figures/actual/frt0002037a_07_if165_zoomed.pdf")
-    plt.title("frt0002037a_07_if165 CRISM Image")
+    plt.savefig(DATA_DIR + 'PREPROCESSED_DATA/' + save_name + ".pdf")
     plt.show()
 
 
