@@ -41,33 +41,10 @@ def get_CRISM_RWs():
     """
     Get reduced wavelengths of CRISM; those matched to lab spectra
     """
-    crism_w = MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle"
+    crism_w = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/RW_CRISM.pickle"
     with open(crism_w, 'rb') as handle:
         RW_CRISM = pickle.load(handle)
     return RW_CRISM
-
-
-# def get_CRISM_img_wavelengths(wavelengths_file):
-#     """
-#     Get wavelengths that we are using in the CRISM image
-#     """
-#     with open(wavelengths_file, 'rb') as handle:
-#         img_wavelengths = pickle.load(handle)
-
-#     crism_w = MODULE_DIR + "/utils/FILE_CONSTANTS/RW_CRISM.pickle"
-#     with open(crism_w, 'rb') as handle:
-#         # CRISM reduced wavelengths to keep.
-#         RW_CRISM = pickle.load(handle)
-
-#     keep_indices = []  # indices of spectra to keep.
-#     for index, w in enumerate(img_wavelengths):
-#         if w in RW_CRISM:
-#             keep_indices.append(index)
-
-#     if len(keep_indices) != len(RW_CRISM):
-#         raise ValueError("Issue normalizing wavelengths of CRISM img. ")
-
-#     return [img_wavelengths[i] for i in keep_indices]
 
 
 def get_CRISM_data(image_file):
@@ -152,12 +129,15 @@ def get_USGS_data(endmember, CRISM_match=False):
     # Replace NULL values (which are -1.23e34) with 0
     data.loc[data['reflectance'] < 0, 'reflectance'] = 0
 
+    data = data.round(decimals=5)
+
     if CRISM_match:
         path = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
         # Only keep rows with reduced wavelengths
         with open(path + "RW_USGS.pickle", 'rb') as handle:
             RW_USGS = pickle.load(handle)
-        data = data[data['wavelength'].isin(RW_USGS)]
+        rounded_RW_USGS = np.around(RW_USGS, decimals=5)
+        data = data[data['wavelength'].isin(rounded_RW_USGS)]
 
     return data
 
