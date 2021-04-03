@@ -1,6 +1,5 @@
 import numpy as np
 from model.inference import *
-from preprocessing.generate_USGS_data import generate_image
 from model.segmentation import segment_image, get_superpixels
 from utils.plotting import *
 from utils.constants import *
