@@ -38,7 +38,7 @@ def run_mrf(image, mcmc_iterations):
     return m_est, D_est
 
 
-def save_data_and_figs(m_est, D_est, model_type, wavelengths_file):
+def save_data_and_figs(m_est, D_est, model_type):
     print("\nCompleted " + str(model_type) + " model.")
     # Save output
 
@@ -50,7 +50,7 @@ def save_data_and_figs(m_est, D_est, model_type, wavelengths_file):
 
     # Compare reflectances in certain bands.
 
-    wavelengths = get_CRISM_wavelengths()
+    wavelengths = get_CRISM_RWs()
     est = estimate_image_reflectance(m_est, D_est, wavelengths)
     # bands = [30, 80, 150]
     bands = [120, 71, 18]
@@ -84,7 +84,7 @@ def estimate_image_reflectance(m, D, wavelengths):
 
 
 if __name__ == "__main__":
-    iterations = 200
+    iterations = 2000
     seg_iterations = 30000
 
     # os.system("taskset -p -c 1-3 %d" % os.getpid())
@@ -93,16 +93,10 @@ if __name__ == "__main__":
     print("\t" + str(iterations) + " MCMC iterations")
     print("\t" + str(seg_iterations) + " segmentation iterations")
 
-    IMG_DIR = DATA_DIR + 'GALE_CRATER/cartOrder/cartorder/'
-    image_file = IMG_DIR + 'layered_img.pickle'
-    wavelengths_file = IMG_DIR + 'layered_wavelengths.pickle'
+    PREPROCESSED_IMG_DIR = DATA_DIR + 'PREPROCESSED_DATA/'
+    image_file = PREPROCESSED_IMG_DIR + 'gobabeb.pickle'
 
     image = get_CRISM_data(image_file)
-
-    # plot_zoomed_sectioned_CRISM(image,  [100, 200, 100, 200])
-    image = image[100:200, 100:200, :]
-
-    # image = image[10:50, 10:50, :]
 
     print("CRISM image size " + str(image.shape))
 
@@ -110,9 +104,9 @@ if __name__ == "__main__":
     # m_est, D_est = infer_image(iterations=60, image=image)
 
     m_est, D_est = seg_model(seg_iterations, iterations, image)
-    save_data_and_figs(m_est, D_est, "seg", wavelengths_file)
+    save_data_and_figs(m_est, D_est, "seg")
 
     m_est, D_est = mrf_model(iterations, image)
-    save_data_and_figs(m_est, D_est, "mrf", wavelengths_file)
+    save_data_and_figs(m_est, D_est, "mrf")
 
     plot_colorbar()
