@@ -50,7 +50,7 @@ def save_data_and_figs(m_est, D_est, model_type, wavelengths_file):
 
     # Compare reflectances in certain bands.
 
-    wavelengths = get_CRISM_img_wavelengths(wavelengths_file)
+    wavelengths = get_CRISM_wavelengths()
     est = estimate_image_reflectance(m_est, D_est, wavelengths)
     # bands = [30, 80, 150]
     bands = [120, 71, 18]
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     image_file = IMG_DIR + 'layered_img.pickle'
     wavelengths_file = IMG_DIR + 'layered_wavelengths.pickle'
 
-    image = get_CRISM_data(image_file, wavelengths_file, True)
+    image = get_CRISM_data(image_file)
 
     # plot_zoomed_sectioned_CRISM(image,  [100, 200, 100, 200])
     image = image[100:200, 100:200, :]
