@@ -178,10 +178,10 @@ def record_estimation(endmember, ks, RMSE):
     """
     Pickle k and RMSE is designated place
     """
-    endmember_file = ENDMEMBERS_K + endmember
-    with open(endmember_file + '_k.pickle', 'wb') as f:
+    ef = ENDMEMBERS_K + endmember
+    with open(ef + '_k.pickle', 'wb') as f:
         pickle.dump(ks, f)
-    with open(endmember_file + '_k_RMSE.pickle', 'wb') as f:
+    with open(ef + '_k_RMSE.pickle', 'wb') as f:
         pickle.dump(RMSE, f)
 
 
@@ -189,7 +189,6 @@ def estimate_all_USGS_k():
     """
     Estimate k for all endmembers from USGS
     """
-    # members = USGS_GRAIN_SIZES.keys()
     members = ['olivine (Fo51)',
                'olivine (Fo80)',
                'augite',
