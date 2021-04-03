@@ -46,9 +46,9 @@ def save_data_and_figs(m_est, D_est, model_type):
     np.savetxt(data_save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt(data_save_dir + "D_estimated.txt", D_est.flatten())
 
-    plot_highd_imgs(m_est, "../output/figures/crism/" + model_type + "/m_")
+    plot_highd_imgs(m_est, "../output/figures/crism/" + model_type + "/m_", True)
 
-    plot_highd_imgs(D_est, "../output/figures/crism/" + model_type + "/D_")
+    plot_highd_imgs(D_est, "../output/figures/crism/" + model_type + "/D_", False)
 
     # Compare reflectances in certain bands.
 
@@ -86,7 +86,7 @@ def estimate_image_reflectance(m, D, wavelengths):
 
 
 if __name__ == "__main__":
-    iterations = 2000
+    iterations = 3
     seg_iterations = 30000
 
     # os.system("taskset -p -c 1-3 %d" % os.getpid())
