@@ -102,7 +102,7 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
     labeled_image = create_labeled_grid(grid_res=grid_res,
                                         num_mixtures=num_mixtures,
                                         pixel_res=res)
-    wavelengths = get_endmember_wavelengths(CRISM_match=True)
+    wavelengths = get_USGS_wavelengths(CRISM_match=False)
     print("Wavelengths length " + str(len(wavelengths)))
     # Reflectance image
     r_image = np.ones((res, res, len(wavelengths)))
