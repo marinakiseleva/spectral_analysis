@@ -27,8 +27,10 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir):
     np.savetxt("../output/data/" + save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt("../output/data/" + save_dir + "D_estimated.txt", D_est.flatten())
 
-    plot_highd_imgs(m_est, "../output/figures/" + save_dir)
+    plot_highd_imgs(m_est, "../output/figures/" + save_dir, True, m_actual)
+    plot_highd_imgs(D_est, "../output/figures/" + save_dir, False, D_actual)
     print_error(m_actual, D_actual, m_est, D_est)
+
     plot_compare_highd_predictions(
         actual=m_actual,
         pred=m_est,
@@ -67,11 +69,11 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__":
-    num_mixtures = 6
-    grid_res = 6
+    num_mixtures = 5
+    grid_res = 4
     noise_scale = 0.001
-    res = 36
-    iterations = 200
+    res = 20
+    iterations = 2500
     seg_iterations = 30000
 
     # Print metadata
@@ -100,6 +102,6 @@ if __name__ == "__main__":
     record_output(m_actual, D_actual, m_est, D_est, "seg/")
 
     m_est, D_est = mrf_model(iterations=iterations,
-                             image=image)
+                             image=image.r_image)
     print("MRF model error:")
     record_output(m_actual, D_actual, m_est, D_est, "mrf/")
