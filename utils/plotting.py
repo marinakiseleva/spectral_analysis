@@ -66,7 +66,6 @@ def plot_endmembers(CRISM_match=True):
     #         reflectance,
     #         color='purple',
     #         label='basaltic glass')
-    # wavelengths = get_endmember_wavelengths(CRISM_match=True)
     ax.set_ylabel("Reflectance")
     ax.set_xlabel("Wavelength(\u03BCm)")
     ax.set_ylim((0, 1))
@@ -174,7 +173,7 @@ def interpolate_image(img):
     return np.interp(img, (img.min(), img.max()), (0, 1))
 
 
-def plot_highd_imgs(img, output_dir, m):
+def plot_highd_imgs(img, output_dir, m, actual=None):
     """
     Plots each endmember on different heatmap plot
     :param img: Numpy 3D array with > 3 endmember proportions per pixel
@@ -182,14 +181,21 @@ def plot_highd_imgs(img, output_dir, m):
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_img = img[:, :, index]
+        plt.axis("off")
+        if actual is not None:
+            e_actual = actual[:, :, index]
+            rmse = math.sqrt(np.mean((e_actual - endmember_img)**2))
+            ax.set_title(endmember + ", RMSE: " + str(round(rmse, 3)))
+        else:
+            ax.set_title(endmember)
         if m:
             axp = ax.imshow(endmember_img, vmin=0, vmax=1)
+            fig.savefig(output_dir + endmember + "_m.pdf")
+
         else:
             axp = ax.imshow(endmember_img, vmin=GRAIN_SIZE_MIN, vmax=GRAIN_SIZE_MAX)
+            fig.savefig(output_dir + endmember + "_D.pdf")
         # cb = plt.colorbar(mappable=axp, ax=ax)
-        ax.set_title(endmember)
-        plt.axis("off")
-        fig.savefig(output_dir + endmember + ".pdf")
 
     return fig
 
