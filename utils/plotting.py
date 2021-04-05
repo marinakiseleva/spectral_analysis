@@ -190,11 +190,11 @@ def plot_highd_imgs(img, output_dir, m, actual=None):
             ax.set_title(endmember)
         if m:
             axp = ax.imshow(endmember_img, vmin=0, vmax=1)
-            fig.savefig(output_dir + endmember + "_m.pdf")
+            fig.savefig(output_dir + endmember + "_m.pdf", bbox_inches='tight')
 
         else:
             axp = ax.imshow(endmember_img, vmin=GRAIN_SIZE_MIN, vmax=GRAIN_SIZE_MAX)
-            fig.savefig(output_dir + endmember + "_D.pdf")
+            fig.savefig(output_dir + endmember + "_D.pdf", bbox_inches='tight')
         # cb = plt.colorbar(mappable=axp, ax=ax)
 
     return fig
@@ -214,9 +214,11 @@ def plot_actual_m(actual, output_dir=None):
 
         # cb = plt.colorbar(mappable=axp, ax=ax)
         if output_dir is not None:
-            fig.savefig(output_dir + "m_actual_" + endmember + ".pdf")
+            fig.savefig(output_dir + "m_actual_" +
+                        endmember + ".pdf", bbox_inches='tight')
         else:
-            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" + endmember + ".pdf")
+            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" +
+                        endmember + ".pdf", bbox_inches='tight')
     return fig
 
 
@@ -242,9 +244,11 @@ def plot_compare_highd_predictions(actual, pred, output_dir=None):
 
         cb = plt.colorbar(mappable=axp, ax=axes, location='right')
         if output_dir is not None:
-            fig.savefig(output_dir + "m_compare_" + endmember + ".pdf")
+            fig.savefig(output_dir + "m_compare_" +
+                        endmember + ".pdf", bbox_inches='tight')
         else:
-            fig.savefig(MODULE_DIR + "/output/figures/m_compare_" + endmember + ".pdf")
+            fig.savefig(MODULE_DIR + "/output/figures/m_compare_" +
+                        endmember + ".pdf", bbox_inches='tight')
 
     return fig
 
