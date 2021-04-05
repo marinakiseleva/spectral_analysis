@@ -24,7 +24,7 @@ def sample_dirichlet(x, C=10):
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
-    new_x = np.random.dirichlet(alpha=x * C)
+    new_x = np.random.dirichlet(alpha=x * M_PRIOR_SCALE)
     return new_x
 
 
@@ -34,21 +34,6 @@ def m_transition(x, C):
     :param x: Vector of mineral assemblage
     """
     new_x = sample_dirichlet(x, C)
-    # Add sample from multivariate normal
-    # z_mean = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=0)
-    # z_cov = np.zeros(shape=(USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    # np.fill_diagonal(z_cov, 0.0005)
-    # z = np.random.multivariate_normal(z_mean, z_cov)
-
-    # new_x = x + z
-    # for index, v in enumerate(new_x):
-    #     if v < 0:
-    #         new_x[index] = 0
-
-    # total = sum(new_x)
-    # for index, v in enumerate(new_x):
-    #     if v != 0:
-    #         new_x[index] = v / total
 
     return new_x
 
@@ -58,6 +43,8 @@ def D_transition(mean, covariance):
     Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
     """
+    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(covariance, D_PRIOR_COVARIANCE)
 
     sample = np.random.multivariate_normal(mean, covariance)
 

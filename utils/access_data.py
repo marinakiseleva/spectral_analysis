@@ -7,19 +7,6 @@ import numpy as np
 import spectral.io.envi as envi
 from utils.constants import *
 
-"""
-Helper functions to normalize the different wavelengths from the different data sources
-"""
-
-
-def get_endmember_wavelengths(CRISM_match=True):
-    """
-    Get matched wavelengths (USGS/RELAB/CRISM-matched) ; originally from RW_USGS
-    """
-    if CRISM_match == False:
-        return ValueError("Only hanlde CRISM matching.")
-    return N_WAVELENGTHS
-
 
 """
 CRISM data access
