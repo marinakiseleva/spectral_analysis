@@ -6,7 +6,7 @@ Generates data by the following steps:
 3. Generate image by assigning mixtures to defined regions
 
 """
-
+import pickle
 import numpy as np
 import math
 from utils.access_data import get_USGS_wavelengths
@@ -138,12 +138,15 @@ def generate_image(num_mixtures, grid_res, noise_scale=0.001, res=200):
             D_image[i, j] = mixtures_D[mix_i]
 
     image = HSImage(m_image, D_image, r_image, labeled_image)
+    save_data_path = "../output/data/USGS_data.pickle"
+    pickle.dump(image, open(save_data_path, "wb"))
     return image
 
 import matplotlib
 if __name__ == "__main__":
 
     image = generate_image(5, 5, noise_scale=0.001, res=10)
+
     rgb_image = image.r_image[:, :, 1:4]
     plt.imshow(rgb_image, interpolation='nearest')
     plt.title("RGB of spectral data")
