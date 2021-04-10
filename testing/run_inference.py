@@ -102,9 +102,9 @@ if __name__ == "__main__":
                            noise_scale=noise_scale,
                            res=res)
 
-    with open("../output/figures/exps/6/USGS_data.pickle", 'rb') as handle:
-        print("\n Using loaded data.\n ")
-        image = pickle.load(handle)
+    # with open("../output/figures/exps/6/USGS_data.pickle", 'rb') as handle:
+    #     print("\n Using loaded data.\n ")
+    #     image = pickle.load(handle)
 
     m_actual = image.m_image
     D_actual = image.D_image
