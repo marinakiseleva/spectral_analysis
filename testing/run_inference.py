@@ -4,6 +4,7 @@ Run inference on synthetic data for any or all of the three methods.
 """
 import numpy as np
 import math
+import os
 from model.models import *
 from preprocessing.generate_USGS_data import generate_image
 from utils.plotting import *
@@ -22,19 +23,27 @@ def print_error(m_actual, D_actual, m_est, D_est):
     print("RMSE for D: " + D_rmse)
 
 
-def record_output(m_actual, D_actual, m_est, D_est, save_dir):
+def record_output(m_actual, D_actual, m_est, D_est, save_dir, exp_name):
     # Save output
-    np.savetxt("../output/data/" + save_dir + "m_estimated.txt", m_est.flatten())
-    np.savetxt("../output/data/" + save_dir + "D_estimated.txt", D_est.flatten())
+    new_output_dir = "../output/" + exp_name + "/"
+    if not os.path.exists(new_output_dir + "data/" + save_dir):
+        os.makedirs(new_output_dir + "data/" + save_dir)
+    if not os.path.exists(new_output_dir + "figures/" + save_dir):
+        os.makedirs(new_output_dir + "figures/" + save_dir)
 
-    plot_highd_imgs(m_est, "../output/figures/" + save_dir, True, m_actual)
-    plot_highd_imgs(D_est, "../output/figures/" + save_dir, False, D_actual)
+    np.savetxt(new_output_dir + "data/" +
+               save_dir + "m_estimated.txt", m_est.flatten())
+    np.savetxt(new_output_dir + "data/" +
+               save_dir + "D_estimated.txt", D_est.flatten())
+
+    plot_highd_imgs(m_est, new_output_dir + "figures/" + save_dir, True, m_actual)
+    plot_highd_imgs(D_est, new_output_dir + "figures/" + save_dir, False, D_actual)
     print_error(m_actual, D_actual, m_est, D_est)
 
     plot_compare_highd_predictions(
         actual=m_actual,
         pred=m_est,
-        output_dir=MODULE_DIR + "/output/figures/" + save_dir)
+        output_dir=new_output_dir + "figures/" + save_dir)
 
     # # Plot image in certain bands.
     # bands = [80, 150, 220]
@@ -73,8 +82,13 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001
     res = 20
-    iterations = 2500
+    iterations = 10
     seg_iterations = 30000
+
+    EXP_NAME = "TEST_NAME"
+
+    if not os.path.exists('../output/' + EXP_NAME):
+        os.makedirs('../output/' + EXP_NAME)
 
     # Print metadata
     print("Generating data with: ")
@@ -87,6 +101,11 @@ if __name__ == "__main__":
                            grid_res=grid_res,
                            noise_scale=noise_scale,
                            res=res)
+
+    with open("../output/figures/exps/6/USGS_data.pickle", 'rb') as handle:
+        print("\n Using loaded data.\n ")
+        image = pickle.load(handle)
+
     m_actual = image.m_image
     D_actual = image.D_image
     plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
@@ -96,12 +115,13 @@ if __name__ == "__main__":
     m_est, D_est = ind_model(iterations=iterations,
                              image=image.r_image)
     print("Independent model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "ind/")
+    record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
     m_est, D_est = seg_model(seg_iterations, iterations, image.r_image)
-    record_output(m_actual, D_actual, m_est, D_est, "seg/")
+    print("Seg model error:")
+    record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
 
     m_est, D_est = mrf_model(iterations=iterations,
                              image=image.r_image)
     print("MRF model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "mrf/")
+    record_output(m_actual, D_actual, m_est, D_est, "mrf/", EXP_NAME)
