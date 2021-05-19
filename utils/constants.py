@@ -79,8 +79,8 @@ INITIAL_D = 100
 
 # Min and max grain sizes for these endmembers
 # Used to generate synthetic data and in inference (D prior)
-GRAIN_SIZE_MIN = 50
-GRAIN_SIZE_MAX = 600
+GRAIN_SIZE_MIN = 40
+GRAIN_SIZE_MAX = 120
 # GRAIN_SIZE_MIN = 20  # 50
 # GRAIN_SIZE_MAX = 350  # 800
 
