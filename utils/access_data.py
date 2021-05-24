@@ -76,7 +76,7 @@ def clean_name(E):
     Clean endmember name (to handle names like Olivine (Fo51))
     """
     for r in ["(", ")", " "]:
-        E = E.replace(r, "").lower()
+        E = E.replace(r, "")
     return E
 
 def get_USGS_endmember_k(endmember):
