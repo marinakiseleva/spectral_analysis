@@ -71,21 +71,21 @@ def get_CRISM_data(image_file):
 """
 USGS data access
 """
-def clean_fname(F):
+def clean_name(E):
     """
-    Clean file name (to handle names like Olivine (Fo51))
+    Clean endmember name (to handle names like Olivine (Fo51))
     """
     for r in ["(", ")", " "]:
-        F = F.replace(r, "").lower()
-    return F
+        E = E.replace(r, "").lower()
+    return E
 
 def get_USGS_endmember_k(endmember):
     """
     Get k as numpy vector for endmember
     These were estimated using entire USGS spectra.
     """
-    F = K_DIR + endmember + '.pickle'
-    with open(clean_fname(F), 'rb') as handle:
+    F = K_DIR + clean_name(endmember) + '.pickle'
+    with open(F, 'rb') as handle:
         return np.array(pickle.load(handle)) 
 
 def save_USGS_endmember_k(endmember, data):
@@ -93,8 +93,8 @@ def save_USGS_endmember_k(endmember, data):
     Get k as numpy vector for endmember
     These were estimated using entire USGS spectra.
     """
-    F = K_DIR + endmember  + '.pickle' 
-    with open(clean_fname(F), 'wb') as handle:
+    F = K_DIR + clean_name(endmember)  + '.pickle' 
+    with open(F, 'wb') as handle:
         pickle.dump(data, handle)
 
 def get_USGS_wavelengths(CRISM_match=False):
@@ -112,8 +112,8 @@ def get_USGS_preprocessed_data(endmember, CRISM_match=False):
     if CRISM_match:
         raise ValueError("Do not handle CRISM-wavelength-matching for USGS yet.")
 
-    F = R_DIR + endmember + "_reflectance.pickle" 
-    with open(clean_fname(F), 'rb') as handle:
+    F = R_DIR + clean_name(endmember) + "_reflectance.pickle" 
+    with open(F, 'rb') as handle:
         return pickle.load(handle) 
 
 
