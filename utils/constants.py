@@ -13,7 +13,11 @@ DATA_DIR = ROOT_DIR + "/../data/"
 CATALOGUE_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/catalogues/"
 RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
-ENDMEMBERS_K = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
+PREPROCESSED_DATA = DATA_DIR + "PREPROCESSED_DATA/"
+R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
+K_DIR = PREPROCESSED_DATA + "K/"
+
+# ENDMEMBERS_K = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
 
 
 """
@@ -98,22 +102,33 @@ USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 # Optical constant n per endmember
 # from Lapotre DOI:10.1002/2016JE005133
-ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
-                'olivine (Fo80)': 1.67,
-                'augite': 1.7,  # pyroxene
-                'labradorite': 1.7,  # plagioclase
-                'pigeonite': 1.56,  # pyroxene
-                'magnetite': 2.42,
-                "C1PO17": 1.66,  # Pure RELAB olivine
-                "C2PE12": 1.66,  # Pure RELAB enstatite
-                "C1PA12": 1.57,  # Pure RELAB anorthite
-                "C1BE100": 2.78,  # RELAB Basaltic glass
-                # "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
-                }
-
+# ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
+#                 'olivine (Fo80)': 1.67,
+#                 'augite': 1.7,  # pyroxene
+#                 'labradorite': 1.7,  # plagioclase
+#                 'pigeonite': 1.56,  # pyroxene
+#                 'magnetite': 2.42,
+#                 "C1PO17": 1.66,  # Pure RELAB olivine
+#                 "C2PE12": 1.66,  # Pure RELAB enstatite
+#                 "C1PA12": 1.57,  # Pure RELAB anorthite
+#                 "C1BE100": 2.78,  # RELAB Basaltic glass
+#                 # "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
+#                 }
+# Calculated using Dale-Gladstone relationship
+ENDMEMBERS_N = {'diopside':1.72,
+                'augite': 1.68,   
+                'pigeonite': 1.71,
+                'hypersthene' : 1.69,
+                'enstatite': 1.66,
+                'andesine':1.47,
+                'labradorite': 1.53, 
+                'olivine (Fo51)': 1.66,
+                'magnetite': 2.40} 
 
 #########################################
-# USGS Endmembers
+# USGS 
+# USGS incidence angle : 0  (deg)
+# USGS emission angle: 30 (deg)
 #########################################
 # USGS cosine of incidence angle (deg)
 USGS_COS_INCIDENCE_ANGLE = 1
@@ -121,22 +136,33 @@ USGS_COS_INCIDENCE_ANGLE = 1
 USGS_COS_EMISSION_ANGLE = 0.86602540378
 
 
-# Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
-USGS_OLIVINE_Fo51_GS = 25
-USGS_OLIVINE_Fo80_GS = 300
-USGS_AUGITE_GS = 35
-USGS_PIGEONITE_GS = 162
-USGS_LABRADORITE_GS = 162
-USGS_MAGNETITE_GS = 162
-# USGS_BASALTIC_GLASS_GS = 60
+
 
 # Name to type dict
-USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
-                    'olivine (Fo80)': USGS_OLIVINE_Fo80_GS,
-                    'augite': USGS_AUGITE_GS,
-                    'labradorite': USGS_LABRADORITE_GS,
-                    'pigeonite': USGS_PIGEONITE_GS,
-                    'magnetite': USGS_MAGNETITE_GS}
+USGS_GRAIN_SIZES = {"diopside": 295,
+                    "augite": 400,
+                    "pigeonite":162,
+                    "hypersthene":200, 
+                    "enstatite":36,
+                    "andesine":290,
+                    "labradorite":162, 
+                    "olivine (Fo51)":60, 
+                    "magnetite":162}
+# Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
+# USGS_OLIVINE_Fo51_GS = 25
+# USGS_OLIVINE_Fo80_GS = 300
+# USGS_AUGITE_GS = 35
+# USGS_PIGEONITE_GS = 162
+# USGS_LABRADORITE_GS = 162
+# USGS_MAGNETITE_GS = 162
+# # USGS_BASALTIC_GLASS_GS = 60
+# USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
+#                     'olivine (Fo80)': USGS_OLIVINE_Fo80_GS,
+#                     'augite': USGS_AUGITE_GS,
+#                     'labradorite': USGS_LABRADORITE_GS,
+#                     'pigeonite': USGS_PIGEONITE_GS,
+#                     'magnetite': USGS_MAGNETITE_GS}
+
 # 'basaltic glass': USGS_BASALTIC_GLASS_GS}
 
 

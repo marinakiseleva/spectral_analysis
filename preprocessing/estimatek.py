@@ -112,10 +112,10 @@ def get_best_RELAB_k(sid, spectra_db):
 # USGS data estimation
 ######################################################
 
-def get_best_endmember_k(data, grainsize, wavelength, index, n, k):
+def get_endmember_k_RMSE(data, grainsize, wavelength, index, n, k):
     """ 
-    Gets average reflectance error over range of grain sizes for RELAB spectral sample
-    :param data: DataFrame of endmember wavelength, reflectance, standard deviation
+    Get reflectance error between given refletance and derived reflectance using Hapke
+    :param data: reflectance (length of wavelengths)
     :param n: Optical constant n
     :param k: k value to evaluate
     """
@@ -123,22 +123,20 @@ def get_best_endmember_k(data, grainsize, wavelength, index, n, k):
         n=n,
         k=k,
         D=grainsize,
-        wavelengths=wavelength)
-    r = data['reflectance'].values
-    return get_rmse(r[index], r_e)
+        wavelengths=wavelength) 
+    return get_rmse(data[index], r_e)
 
 
-def get_best_USGS_k(endmember):
+def get_best_USGS_k(endmember, CRISM_match=False):
     """
     Estimate best imaginary optical constant k for the reflectance of this endmember
     :param endmember: Endmember name 
     """
-
-    endmember_data = get_USGS_data(endmember, CRISM_match=True)
+    # get endmember reflectance
+    reflectance = get_USGS_preprocessed_data(endmember, CRISM_match)
+    wavelengths=get_USGS_wavelengths(CRISM_match)
     grainsize = USGS_GRAIN_SIZES[endmember]
     n = ENDMEMBERS_N[endmember]
-
-    wavelengths = endmember_data['wavelength'].values
 
     ks = []  # k per wavelength
     error = 0  # overall RMSE
@@ -152,8 +150,8 @@ def get_best_USGS_k(endmember):
         pool = multiprocessing.Pool(NUM_CPUS)
 
         rmses = []
-        func = partial(get_best_endmember_k,
-                       endmember_data,
+        func = partial(get_endmember_k_RMSE,
+                       reflectance,
                        grainsize,
                        wavelength,
                        index,
@@ -169,60 +167,35 @@ def get_best_USGS_k(endmember):
         error += rmses[min_index]
 
     RMSE = error / len(wavelengths)
-    print("Found with error " + str(RMSE))
-
     return ks, RMSE
 
 
-def record_estimation(endmember, ks, RMSE):
-    """
-    Pickle k and RMSE is designated place
-    """
-    ef = ENDMEMBERS_K + endmember
-    with open(ef + '_k.pickle', 'wb') as f:
-        pickle.dump(ks, f)
-    with open(ef + '_k_RMSE.pickle', 'wb') as f:
-        pickle.dump(RMSE, f)
 
-
-def estimate_all_USGS_k():
+def estimate_all_USGS_k(CRISM_match):
     """
     Estimate k for all endmembers from USGS
     """
-    members = ['olivine (Fo51)',
-               'olivine (Fo80)',
-               'augite',
-               'pigeonite',
-               'magnetite',
-               'labradorite']
+    # members = ['olivine (Fo51)',
+    #            'olivine (Fo80)',
+    #            'augite',
+    #            'pigeonite',
+    #            'magnetite',
+    #            'labradorite']
+    members = ["diopside", "augite", "pigeonite", "hypersthene", 
+              "enstatite", "andesine", "labradorite", "olivine (Fo51)", "magnetite"]
+
 
     for endmember in members:
-        print("Estimating " + endmember)
-        ks, RMSE = get_best_USGS_k(endmember)
-        print("\n\n" + str(endmember) + " length: " + str(len(ks)))
-        record_estimation(endmember, ks, RMSE)
+        print("\n\nEstimating " + endmember)
+        ks, RMSE = get_best_USGS_k(endmember, CRISM_match)
+        print(str(endmember) + " length: " + str(len(ks)))
+        print("Found with error " + str(RMSE))
+        save_USGS_endmember_k(endmember, ks)
 
 
 ######################################################
 # Helper functions
-######################################################
-def get_mu_0(sample_row):
-    """
-    Gets mu_0, cosine of incidence angle 
-    :param sample_row: Pandas series from sample spectra DataFrame
-    """
-    source_angle = sample_row["SourceAngle"].values[0]
-    return get_cosine(source_angle)
-
-
-def get_mu(sample_row):
-    """
-    Gets mu, cosine of detect_angle emission/emergence angle
-    :param sample_row: Pandas series from sample spectra DataFrame
-    """
-    detect_angle = sample_row["DetectAngle"].values[0]
-    return get_cosine(detect_angle)
-
+################################################ 
 
 def get_rmse(a, b):
     """
@@ -240,19 +213,4 @@ def get_cosine(x):
 
 
 if __name__ == "__main__":
-    estimate_all_USGS_k()
-
-    # print("Estimating basaltic glass")
-    # spectra_db = get_data()
-    # k, err = get_best_RELAB_k(sid='C1BE100', spectra_db=spectra_db)
-    # record_estimation('basaltic glass', k, err)
-
-    # print("Estimating olivine")
-    # olivine_k, best_rmse = get_best_k(pure_olivine_sid, spectra_db)
-    # print("Best k for olivine is : " + str(olivine_k) + " with RMSE: " + str(best_rmse))
-
-    # enstatite_k, best_rmse = get_best_k(pure_enstatite_sid, spectra_db)
-    # print("Best k for enstatite is : " + str(enstatite_k) + " with RMSE: " + str(best_rmse))
-
-    # anorthite_k, best_rmse = get_best_k(pure_anorthite_sid, spectra_db)
-    # print("Best k for anorthite is :\n " + str(anorthite_k))
+    estimate_all_USGS_k(False) 

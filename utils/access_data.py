@@ -12,7 +12,6 @@ from utils.constants import *
 CRISM data access
 """
 
-
 def get_CRISM_wavelengths():
     """
     Get full set of wavelengths of CRISM data.
@@ -72,59 +71,80 @@ def get_CRISM_data(image_file):
 """
 USGS data access
 """
-
-
-def get_USGS_wavelengths(CRISM_match=False):
+def clean_fname(F):
     """
-    Get wavelengths for the endmember as numpy vector
+    Clean file name (to handle names like Olivine (Fo51))
     """
-    # Default to olivine (Fo51) wavelengths
-    data = get_USGS_data(endmember='olivine (Fo51)', CRISM_match=CRISM_match)
-    return data['wavelength'].values
-
+    for r in ["(", ")", " "]:
+        F = F.replace(r, "").lower()
+    return F
 
 def get_USGS_endmember_k(endmember):
     """
     Get k as numpy vector for endmember
     These were estimated using entire USGS spectra.
     """
-    file_name = ENDMEMBERS_K + endmember
+    F = K_DIR + endmember + '.pickle'
+    with open(clean_fname(F), 'rb') as handle:
+        return np.array(pickle.load(handle)) 
 
-    with open(file_name + '_k.pickle', 'rb') as handle:
-        ks = np.array(pickle.load(handle))
-
-    return ks
-
-
-def get_USGS_data(endmember, CRISM_match=False):
+def save_USGS_endmember_k(endmember, data):
     """
-    Get USGS spectral reflectance data for this endmember, as Pandas DataFrame
-    If CRISM_match = True, then keep only reflectance values for wavelengths in RW_USGS.  
+    Get k as numpy vector for endmember
+    These were estimated using entire USGS spectra.
     """
-    # Normalize filename
-    endmember = endmember.lower()
-    file_name = USGS_DATA + endmember + ".csv"
+    F = K_DIR + endmember  + '.pickle' 
+    with open(clean_fname(F), 'wb') as handle:
+        pickle.dump(data, handle)
 
-    for r in ["(", ")", " "]:
-        file_name = file_name.replace(r, "")
-
-    # Open data in Pandas DataFrame
-    data = pd.read_csv(file_name)
-
-    # Replace NULL values (which are -1.23e34) with 0
-    data.loc[data['reflectance'] < 0, 'reflectance'] = 0
-
-    data = data.round(decimals=5)
-
+def get_USGS_wavelengths(CRISM_match=False):
     if CRISM_match:
-        path = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
-        # Only keep rows with reduced wavelengths
-        with open(path + "RW_USGS.pickle", 'rb') as handle:
-            RW_USGS = pickle.load(handle)
-        rounded_RW_USGS = np.around(RW_USGS, decimals=5)
-        data = data[data['wavelength'].isin(rounded_RW_USGS)]
+        raise ValueError("Do not handle CRISM-wavelength-matching for USGS yet.")
+    F = PREPROCESSED_DATA  + "wavelengths.pickle"
+    with open(F, 'rb') as handle:
+        return pickle.load(handle) 
 
-    return data
+def get_USGS_preprocessed_data(endmember, CRISM_match=False):
+    """
+    Return reflectance for USGS endmember. 
+    It has already been preprocessed.
+    """
+    if CRISM_match:
+        raise ValueError("Do not handle CRISM-wavelength-matching for USGS yet.")
+
+    F = R_DIR + endmember + "_reflectance.pickle" 
+    with open(clean_fname(F), 'rb') as handle:
+        return pickle.load(handle) 
+
+
+
+# def get_USGS_data(endmember, CRISM_match=False):
+#     """
+#     Get USGS spectral reflectance data for this endmember, as Pandas DataFrame
+#     If CRISM_match = True, then keep only reflectance values for wavelengths in RW_USGS.  
+#     """
+#     # Normalize filename
+#     endmember = endmember.lower()
+#     for r in ["(", ")", " "]:
+#         endmember = endmember.replace(r, "")
+
+#     # Open data in Pandas DataFrame
+#     data = pd.read_csv(file_name)
+
+#     # Replace NULL values (which are -1.23e34) with 0
+#     data.loc[data['reflectance'] < 0, 'reflectance'] = 0
+
+#     data = data.round(decimals=5)
+
+#     if CRISM_match:
+#         path = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
+#         # Only keep rows with reduced wavelengths
+#         with open(path + "RW_USGS.pickle", 'rb') as handle:
+#             RW_USGS = pickle.load(handle)
+#         rounded_RW_USGS = np.around(RW_USGS, decimals=5)
+#         data = data[data['wavelength'].isin(rounded_RW_USGS)]
+
+#     return data
 
 
 """
