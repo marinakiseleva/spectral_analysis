@@ -43,12 +43,9 @@ def D_transition(mean, covariance):
     Sample from 0-mean multivariate Gaussian (with identity matrix as covariance)
     :param mean: vector of mean of Gaussian
     """
-    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(covariance, D_PRIOR_COVARIANCE)
-
-    sample = np.random.multivariate_normal(mean, covariance)
-
-    # Ensure all max are <= 800 and all min >= 50
+    covariance_matrix = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
+    np.fill_diagonal(covariance_matrix, covariance)
+    sample = np.random.multivariate_normal(mean, covariance_matrix)
     for index, v in enumerate(sample):
         if v > GRAIN_SIZE_MAX:
             sample[index] = GRAIN_SIZE_MAX
@@ -126,14 +123,14 @@ def get_log_likelihood(d, m, D):
     return math.log(get_likelihood(d, m, D))
 
 
-def transition_model(cur_m, cur_D, covariance, C):
+def transition_model(cur_m, cur_D, V, C):
     """
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
     """
     new_m = m_transition(cur_m, C)
-    new_D = D_transition(cur_D, covariance)
+    new_D = D_transition(cur_D, V)
     return new_m, new_D
 
 
@@ -189,9 +186,6 @@ def infer_datapoint(iterations, C, V,  d):
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
 
-    # Covariance diagonal for grain size sampling
-    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(covariance, V)
 
     max_prob = 0
     max_m = None
@@ -199,8 +193,7 @@ def infer_datapoint(iterations, C, V,  d):
 
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
-        new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
-
+        new_m, new_D = transition_model(cur_m, cur_D, V, C) 
         new_post = get_posterior_estimate(d, new_m, new_D)
         cur_post = get_posterior_estimate(d, cur_m, cur_D)
 
@@ -209,11 +202,12 @@ def infer_datapoint(iterations, C, V,  d):
         u = np.random.uniform(0, 1)
 
         if new_post > max_prob:
+
             max_prob = new_post
             max_m = new_m
             max_D = new_D
 
-        if phi >= u:
+        if phi >= u: 
             unchanged_i = 0
             cur_m = new_m
             cur_D = new_D
@@ -226,6 +220,7 @@ def infer_datapoint(iterations, C, V,  d):
             break
 
     print("Finished datapoint.")
+    print("Finish with cur m " + str(cur_m) + " but BEST m is " + str(max_m))
     return [cur_m, cur_D]
 
 

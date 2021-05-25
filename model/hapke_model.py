@@ -20,34 +20,22 @@ def get_mu():
     return USGS_COS_EMISSION_ANGLE
 
 
-def get_reflectance_hapke_estimate(n, k, D, wavelengths):
-    """
-    Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
-    :param mu: cosine of detect angle
-    :param mu_0: cosine of source angle 
-    :param n: real index of refraction (sclar)
-    :param k: imaginary index of refraction (scalar)
-    :param D: grain size (scalar)
-    :param wavelengths: lambdas/wavelengths of data (Numpy array)
-    :return reflectance: as Numpy array
-    """
-    w = get_w_hapke_estimate(n, k, D, wavelengths)
-    return get_derived_reflectance(w)
 
 
-def get_USGS_r_mixed_hapke_estimate(m, D, wavelengths=None):
+
+def get_USGS_r_mixed_hapke_estimate(m, D):
     """
-    Calculate reflectance of m and D using Hapke model; using spectral endmembers from USGS library
+    Calculate reflectance of m and D using Hapke model; 
+    using spectral endmembers from USGS library
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
-    if wavelengths is None:
-        wavelengths = get_USGS_wavelengths(CRISM_match=True)
+    wavelengths = get_USGS_wavelengths()
     sigmas = {}
     for endmember in m.keys():
         m_cur = m[endmember]
         D_cur = D[endmember]
-        rho = USGS_densities[endmember]
+        rho = USGS_DENSITIES[endmember]
         sigmas[endmember] = m_cur / (rho * D_cur)
     sigma_sum = sum(sigmas.values())
 
@@ -126,6 +114,19 @@ def get_w_hapke_estimate(n, k, D, wavelengths):
 
     return Se + (1 - Se) * ((1 - Si) / (1 - Si * Theta)) * Theta
 
+def get_reflectance_hapke_estimate(n, k, D, wavelengths):
+    """
+    Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
+    :param mu: cosine of detect angle
+    :param mu_0: cosine of source angle 
+    :param n: real index of refraction (sclar)
+    :param k: imaginary index of refraction (scalar)
+    :param D: grain size (scalar)
+    :param wavelengths: lambdas/wavelengths of data (Numpy array)
+    :return reflectance: as Numpy array
+    """
+    w = get_w_hapke_estimate(n, k, D, wavelengths)
+    return get_derived_reflectance(w)
 
 def get_brackets_D(n, D):
     """

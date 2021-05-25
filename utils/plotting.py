@@ -38,40 +38,21 @@ def prep_file_name(text):
 def plot_endmembers(CRISM_match=True):
     """
     Plot wavelength vs reflectance for each endmember
-    """
-    names = ['olivine (Fo51)', 'augite',
-             'labradorite', 'pigeonite', 'magnetite']
-    endmembers = ['olivinefo51', 'augite',
-                  'labradorite', 'pigeonite', 'magnetite']
+    """ 
     colors = [LIGHT_GREEN, DARK_GREEN, LIGHT_BLUE, PINK, DARK_BLUE, RED]
 
     fig, ax = plt.subplots(figsize=(4, 4), dpi=200)
 
-    for index, endmember in enumerate(endmembers):
-        data = get_USGS_data(endmember, CRISM_match=CRISM_match)
-        wavelengths = data['wavelength']
-
-        ax.plot(data['wavelength'],
-                data['reflectance'],
-                color=colors[index],
-                label=names[index])
-
-    # # Plot RELAB basaltic glass
-    # ss = get_data()
-    # wavelengths = get_RELAB_wavelengths(
-    #     spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
-    # reflectance = get_reflectance_spectra(
-    #     spectrum_id='C1BE100', spectra_db=ss, CRISM_match=CRISM_match)
-    # ax.plot(wavelengths,
-    #         reflectance,
-    #         color='purple',
-    #         label='basaltic glass')
+    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS): 
+        r = get_USGS_preprocessed_data(endmember)
+        w = get_USGS_wavelengths()
+        ax.plot(w, r, color=colors[index], label=endmember)
     ax.set_ylabel("Reflectance")
     ax.set_xlabel("Wavelength(\u03BCm)")
     ax.set_ylim((0, 1))
-    ax.set_xlim((min(wavelengths), 3))
+    ax.set_xlim((min(w), max(w)))
     plt.legend()
-    fig.savefig(MODULE_DIR + "/output/figures/endmembers.pdf")
+    fig.savefig(MODULE_DIR + "/output/endmembers.pdf")
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
