@@ -5,6 +5,8 @@ Run inference on synthetic data for any or all of the three methods.
 import numpy as np
 import math
 import os
+import pickle
+
 from model.models import *
 from preprocessing.generate_USGS_data import generate_image
 from utils.plotting import *
@@ -31,10 +33,11 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir, exp_name):
     if not os.path.exists(new_output_dir + "figures/" + save_dir):
         os.makedirs(new_output_dir + "figures/" + save_dir)
 
-    np.savetxt(new_output_dir + "data/" +
-               save_dir + "m_estimated.txt", m_est.flatten())
-    np.savetxt(new_output_dir + "data/" +
-               save_dir + "D_estimated.txt", D_est.flatten())
+    data_save = new_output_dir + "data/" + save_dir 
+    with open(data_save+"m_estimated.pickle", 'wb') as f:
+        pickle.dump(m_est, f)
+    with open(data_save+"D_estimated.pickle", 'wb') as f:
+        pickle.dump(D_est, f)
 
     plot_highd_imgs(m_est, new_output_dir + "figures/" + save_dir, True, m_actual)
     plot_highd_imgs(D_est, new_output_dir + "figures/" + save_dir, False, D_actual)
@@ -82,46 +85,41 @@ if __name__ == "__main__":
     grid_res = 4
     noise_scale = 0.001
     res = 20
-    iterations = 10
-    seg_iterations = 30000
+    iterations = 100
 
-    EXP_NAME = "TEST_NAME"
+    EXP_NAME = "TEST_SYNTHETIC"
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
 
-    # Print metadata
-    print("Generating data with: ")
-    print("\t" + str(num_mixtures) + " unique mixtures")
-    print("\t" + str(noise_scale) + " noise (sigma)")
-    print("\t" + str(grid_res) + " grid resolution")
-    print("\t" + str(res) + " pixel resolution")
-    print("\t" + str(iterations) + " iterations")
-    image = generate_image(num_mixtures=num_mixtures,
-                           grid_res=grid_res,
-                           noise_scale=noise_scale,
-                           res=res)
+    with open(PREPROCESSED_DATA + "SYNTHETIC/m_actual.pickle", 'rb') as F:
+        m_actual = pickle.load(F)
+    with open(PREPROCESSED_DATA + "SYNTHETIC/D_actual.pickle", 'rb') as F:
+        D_actual = pickle.load(F)
+    with open(PREPROCESSED_DATA + "SYNTHETIC/r_img.pickle", 'rb') as F:
+        R_image = pickle.load(F)
 
-    # with open("../output/figures/exps/6/USGS_data.pickle", 'rb') as handle:
-    #     print("\n Using loaded data.\n ")
-    #     image = pickle.load(handle)
-
-    m_actual = image.m_image
-    D_actual = image.D_image
-    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/figures/actual/")
-    np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
-    np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
+    m_actual = m_actual[18:20]
+    D_actual = D_actual[18:20]
+    R_image = R_image[18:20]
+    
+    # np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
+    # np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
 
     m_est, D_est = ind_model(iterations=iterations,
-                             image=image.r_image)
+                             image=R_image,
+                             C=10,
+                             V=50)
     print("Independent model error:")
     record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
-    m_est, D_est = seg_model(seg_iterations, iterations, image.r_image)
-    print("Seg model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
+    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/"+ EXP_NAME + "/")
 
-    m_est, D_est = mrf_model(iterations=iterations,
-                             image=image.r_image)
-    print("MRF model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "mrf/", EXP_NAME)
+    # m_est, D_est = seg_model(seg_iterations, iterations, image.r_image)
+    # print("Seg model error:")
+    # record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
+
+    # m_est, D_est = mrf_model(iterations=iterations,
+    #                          image=image.r_image)
+    # print("MRF model error:")
+    # record_output(m_actual, D_actual, m_est, D_est, "mrf/", EXP_NAME)

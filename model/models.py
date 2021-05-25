@@ -15,12 +15,14 @@ def mrf_model(iterations, image):
     return m_est, D_est
 
 
-def ind_model(iterations, image):
+def ind_model(iterations, image, C, V):
     """
     Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
     """
     m_est, D_est = infer_image(iterations=iterations,
-                               image=image)
+                               image=image,
+                               C=C,
+                               V=V)
     return m_est, D_est
 
 
