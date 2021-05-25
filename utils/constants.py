@@ -79,41 +79,25 @@ MRF_EARLY_STOP = 20  # 30
 #########################################
 
 
-INITIAL_D = 100
-
+INITIAL_D = 200
 # Min and max grain sizes for these endmembers
 # Used to generate synthetic data and in inference (D prior)
-GRAIN_SIZE_MIN = 40
-GRAIN_SIZE_MAX = 120
-# GRAIN_SIZE_MIN = 20  # 50
-# GRAIN_SIZE_MAX = 350  # 800
+GRAIN_SIZE_MIN = 60
+GRAIN_SIZE_MAX = 400 
 
 # USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
 # **Exception: basaltic glass is RELAB; removed.
-USGS_PURE_ENDMEMBERS = ['olivine (Fo51)',
-                        # 'olivine (Fo80)',
-                        'augite',
-                        'labradorite',
-                        'pigeonite',
-                        'magnetite']
-# 'basaltic glass']
+USGS_PURE_ENDMEMBERS = ['diopside',
+                        "augite",
+                        "pigeonite",
+                        "hypersthene", 
+                        "enstatite",
+                        "andesine",
+                        "labradorite", 
+                        "olivine (Fo51)",
+                        "magnetite"]
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
-
-# Optical constant n per endmember
-# from Lapotre DOI:10.1002/2016JE005133
-# ENDMEMBERS_N = {'olivine (Fo51)': 1.67,
-#                 'olivine (Fo80)': 1.67,
-#                 'augite': 1.7,  # pyroxene
-#                 'labradorite': 1.7,  # plagioclase
-#                 'pigeonite': 1.56,  # pyroxene
-#                 'magnetite': 2.42,
-#                 "C1PO17": 1.66,  # Pure RELAB olivine
-#                 "C2PE12": 1.66,  # Pure RELAB enstatite
-#                 "C1PA12": 1.57,  # Pure RELAB anorthite
-#                 "C1BE100": 2.78,  # RELAB Basaltic glass
-#                 # "basaltic glass": 2.78  # RELAB Basaltic glass, C1BE100
-#                 }
 # Calculated using Dale-Gladstone relationship
 ENDMEMBERS_N = {'diopside':1.72,
                 'augite': 1.68,   
@@ -125,20 +109,6 @@ ENDMEMBERS_N = {'diopside':1.72,
                 'olivine (Fo51)': 1.66,
                 'magnetite': 2.40} 
 
-#########################################
-# USGS 
-# USGS incidence angle : 0  (deg)
-# USGS emission angle: 30 (deg)
-#########################################
-# USGS cosine of incidence angle (deg)
-USGS_COS_INCIDENCE_ANGLE = 1
-# USGS cosine of emission angle (deg)
-USGS_COS_EMISSION_ANGLE = 0.86602540378
-
-
-
-
-# Name to type dict
 USGS_GRAIN_SIZES = {"diopside": 295,
                     "augite": 400,
                     "pigeonite":162,
@@ -148,33 +118,21 @@ USGS_GRAIN_SIZES = {"diopside": 295,
                     "labradorite":162, 
                     "olivine (Fo51)":60, 
                     "magnetite":162}
-# Grain Sizes, from Lapotre DOI:10.1002/2016JE005133
-# USGS_OLIVINE_Fo51_GS = 25
-# USGS_OLIVINE_Fo80_GS = 300
-# USGS_AUGITE_GS = 35
-# USGS_PIGEONITE_GS = 162
-# USGS_LABRADORITE_GS = 162
-# USGS_MAGNETITE_GS = 162
-# # USGS_BASALTIC_GLASS_GS = 60
-# USGS_GRAIN_SIZES = {'olivine (Fo51)': USGS_OLIVINE_Fo51_GS,
-#                     'olivine (Fo80)': USGS_OLIVINE_Fo80_GS,
-#                     'augite': USGS_AUGITE_GS,
-#                     'labradorite': USGS_LABRADORITE_GS,
-#                     'pigeonite': USGS_PIGEONITE_GS,
-#                     'magnetite': USGS_MAGNETITE_GS}
+# Densities from http://webmineral.com/ 
+USGS_DENSITIES = {"diopside": 3.4,
+                    "augite": 3.4,
+                    "pigeonite":3.38,
+                    "hypersthene":3.55, 
+                    "enstatite":3.2,
+                    "andesine":2.67,
+                    "labradorite":2.69, 
+                    "olivine (Fo51)":3.32, 
+                    "magnetite":5.15} 
 
-# 'basaltic glass': USGS_BASALTIC_GLASS_GS}
-
-
-# Densities from http://webmineral.com/ and Lapotre DOI:10.1002/2016JE005133
-USGS_densities = {'olivine (Fo51)': 3.32,
-                  'olivine (Fo80)': 3.32,
-                  'augite': 3.4,
-                  'labradorite': 2.69,
-                  'pigeonite': 3.38,
-                  'magnetite': 5.15}
-# 'basaltic glass': 2.78}
-
+# USGS incidence angle : 0  (deg)
+# USGS emission angle: 30 (deg)
+USGS_COS_INCIDENCE_ANGLE = 1
+USGS_COS_EMISSION_ANGLE = 0.86602540378
 
 #########################################
 # RELAB endmembers
