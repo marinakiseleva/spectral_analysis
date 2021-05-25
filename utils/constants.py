@@ -31,8 +31,14 @@ DARK_GREEN = "#339966"
 LIGHT_BLUE = "#668cff"
 DARK_BLUE = "#002699"
 PINK = "#ff99c2"
-RED = "#ff1a1a"
-PURPLE = "#8c1aff"
+LIGHT_ORANGE = "#ffa366"
+LIGHT_RED = "#ff8566"
+DARK_RED = "#801a00"
+LIGHT_PURPLE = "#e699ff"
+DARK_PURPLE = "#4d0066"
+LIGHT_GRAY = "#ebebe0"
+DARK_ORANGE = "#cc5200"
+
 
 
 """
@@ -45,8 +51,6 @@ NUM_CPUS = 8
 INF_BURN_IN = 100
 INF_EARLY_STOP = 400
 
-D_PRIOR_COVARIANCE = 5
-M_PRIOR_SCALE = 10
 
 """ 
 Segmentation model parameters
@@ -85,17 +89,19 @@ INITIAL_D = 200
 GRAIN_SIZE_MIN = 60
 GRAIN_SIZE_MAX = 400 
 
+
 # USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
 # **Exception: basaltic glass is RELAB; removed.
-USGS_PURE_ENDMEMBERS = ['diopside',
-                        "augite",
-                        "pigeonite",
-                        "hypersthene", 
-                        "enstatite",
-                        "andesine",
-                        "labradorite", 
-                        "olivine (Fo51)",
-                        "magnetite"]
+USGS_PURE_ENDMEMBERS = ["augite", "enstatite", "labradorite",  "olivine (Fo51)"]
+# USGS_PURE_ENDMEMBERS = ['diopside',
+#                         "augite",
+#                         "pigeonite",
+#                         "hypersthene", 
+#                         "enstatite",
+#                         "andesine",
+#                         "labradorite", 
+#                         "olivine (Fo51)",
+                        # "magnetite"]
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 # Calculated using Dale-Gladstone relationship
