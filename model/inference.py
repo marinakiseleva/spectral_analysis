@@ -14,7 +14,7 @@ from model.hapke_model import get_USGS_r_mixed_hapke_estimate
 from utils.constants import *
 
 
-def sample_dirichlet(x, C=10):
+def sample_dirichlet(x, C):
     """
     Sample from dirichlet
     :param x: Vector that will be multiplied by constant and used as alpha parameter
@@ -24,7 +24,7 @@ def sample_dirichlet(x, C=10):
     for index, value in enumerate(x):
         if value < 0.0001:
             x[index] = 0.001
-    new_x = np.random.dirichlet(alpha=x * M_PRIOR_SCALE)
+    new_x = np.random.dirichlet(alpha=x * C)
     return new_x
 
 
@@ -174,7 +174,7 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, C, V,  d):
+def infer_datapoint(iterations, C, V, d):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param iterations: Number of iterations to run over
@@ -219,8 +219,7 @@ def infer_datapoint(iterations, C, V,  d):
             print("\nEarly Stop at iter: " + str(i))
             break
 
-    print("Finished datapoint.")
-    print("Finish with cur m " + str(cur_m) + " but BEST m is " + str(max_m))
+    print("Finished datapoint.") 
     return [cur_m, cur_D]
 
 
@@ -249,11 +248,13 @@ def infer_superpixels(iterations, superpixels):
     return m_and_Ds
 
 
-def infer_image(iterations, image):
+def infer_image(iterations, image, C, V):
     """
     Infer m and D for entire image - each pixel indepedently
     :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3d dimension equal to wavelengths
+    :param C: scaling factor for sampling m from Dirichlet; transition m
+    :param V: value in covariance diagonal for sampling grain size
     """
 
     num_rows = image.shape[0]
@@ -278,8 +279,8 @@ def infer_image(iterations, image):
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
-    C = 10
-    V = 0.001
+    
+    
     func = partial(infer_datapoint, iterations, C, V)
 
     m_and_Ds = []
