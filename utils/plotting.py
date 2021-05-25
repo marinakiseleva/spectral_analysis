@@ -39,19 +39,18 @@ def plot_endmembers(CRISM_match=True):
     """
     Plot wavelength vs reflectance for each endmember
     """ 
-    colors = [LIGHT_GREEN, DARK_GREEN, LIGHT_BLUE, PINK, DARK_BLUE, RED]
-
-    fig, ax = plt.subplots(figsize=(4, 4), dpi=200)
-
+    colors = [LIGHT_GREEN,  LIGHT_BLUE, LIGHT_RED, LIGHT_PURPLE, LIGHT_ORANGE, 
+        DARK_GREEN,  DARK_RED, DARK_BLUE, DARK_PURPLE, DARK_ORANGE, PINK, LIGHT_GRAY]
+    fig, ax = plt.subplots(figsize=(6, 5), dpi=400)
+    w = get_USGS_wavelengths()
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS): 
         r = get_USGS_preprocessed_data(endmember)
-        w = get_USGS_wavelengths()
         ax.plot(w, r, color=colors[index], label=endmember)
     ax.set_ylabel("Reflectance")
     ax.set_xlabel("Wavelength(\u03BCm)")
     ax.set_ylim((0, 1))
     ax.set_xlim((min(w), max(w)))
-    plt.legend()
+    plt.legend(loc='best', fontsize=12)
     fig.savefig(MODULE_DIR + "/output/endmembers.pdf")
 
 
