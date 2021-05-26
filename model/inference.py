@@ -198,7 +198,8 @@ def infer_datapoint(d, iterations, C, V):
         ratio = new_post / cur_post
         phi = min(1, ratio)
         u = np.random.uniform(0, 1)
-        print("trying comparison: phi = " + str(phi) + " and u= " + str(u) + " so phi>=u " + str(phi>=u))
+        print("cur_m " + str(cur_m) + "\ntrying comparison: phi = " + str(phi) + " and u= " 
+            + str(u) + " so phi>=u " + str(phi>=u) + "\n new m = " + str(new_m))
 
         if phi >= u: 
             unchanged_i = 0
@@ -277,7 +278,6 @@ def infer_image(iterations, image, C, V):
     func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
 
     m_and_Ds = []
-    # Multithread over the pixels' reflectances
     m_and_Ds = pool.map(func, r_space)
 
     pool.close()
