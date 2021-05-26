@@ -263,23 +263,18 @@ def infer_image(iterations, image, C, V):
 
     print("Done indexing image. Starting processing...")
 
-    # pool = multiprocessing.Pool(NUM_CPUS)
+    pool = multiprocessing.Pool(NUM_CPUS)
 
     # # Pass in parameters that don't change for parallel processes (# of iterations)
-    # func = partial(infer_datapoint, iterations, C, V)
+    func = partial(infer_datapoint, iterations, C, V)
 
-    # m_and_Ds = []
-    # # Multithread over the pixels' reflectances
-    # m_and_Ds = pool.map(func, r_space)
-
-    # pool.close()
-    # pool.join()
-    # print("Done processing...")
     m_and_Ds = []
-    for r in r_space:
-        m_D=infer_datapoint(iterations, C, V,r)
-        print("inferred m and D " + str(m_D))
-        m_and_Ds.append(m_D)
+    # Multithread over the pixels' reflectances
+    m_and_Ds = pool.map(func, r_space)
+
+    pool.close()
+    pool.join()
+    print("Done processing...")
 
 
     # pool.map results are ordered - save them in image format
