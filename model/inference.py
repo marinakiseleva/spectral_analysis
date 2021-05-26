@@ -185,12 +185,6 @@ def infer_datapoint(iterations, C, V, d):
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
-
-
-    max_prob = 0
-    max_m = None
-    max_D = None
-
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, V, C) 
@@ -200,18 +194,10 @@ def infer_datapoint(iterations, C, V, d):
         ratio = new_post / cur_post
         phi = min(1, ratio)
         u = np.random.uniform(0, 1)
-
-        if new_post > max_prob:
-
-            max_prob = new_post
-            max_m = new_m
-            max_D = new_D
-
         if phi >= u: 
             unchanged_i = 0
             cur_m = new_m
             cur_D = new_D
-
         else:
             unchanged_i += 1
 
@@ -274,13 +260,12 @@ def infer_image(iterations, image, C, V):
             index_coords[index] = [i, j]
             r_space.append(image[i, j])
             index += 1
+
     print("Done indexing image. Starting processing...")
 
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
-    
-    
     func = partial(infer_datapoint, iterations, C, V)
 
     m_and_Ds = []
