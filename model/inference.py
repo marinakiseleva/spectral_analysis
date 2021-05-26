@@ -197,10 +197,7 @@ def infer_datapoint(d, iterations, C, V):
 
         ratio = new_post / cur_post
         phi = min(1, ratio)
-        u = np.random.uniform(0, 1)
-        print("cur_m " + str(cur_m) + "\ntrying comparison: phi = " + str(phi) + " and u= " 
-            + str(u) + " so phi>=u " + str(phi>=u) + "\n new m = " + str(new_m))
-
+        u = np.random.uniform(0, 1) 
         if phi >= u: 
             unchanged_i = 0
             cur_m = new_m
@@ -211,9 +208,7 @@ def infer_datapoint(d, iterations, C, V):
         if i > INF_BURN_IN and unchanged_i > INF_EARLY_STOP:
             print("\nEarly Stop at iter: " + str(i))
             break
-
-    print("Finished datapoint. " + str(cur_m)) 
-
+    print("Finished datapoint.") 
     return [cur_m, cur_D]
 
 
