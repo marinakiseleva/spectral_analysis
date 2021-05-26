@@ -80,14 +80,10 @@ def estimate_image(m, D):
     return r_image
 
 
-if __name__ == "__main__":
-    num_mixtures = 5
-    grid_res = 4
-    noise_scale = 0.001
-    res = 20
-    iterations = 100
+if __name__ == "__main__": 
+    iterations = 1000
 
-    EXP_NAME = "TEST_SYNTHETIC"
+    EXP_NAME = "TEST_SYNTHETIC2"
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
@@ -98,10 +94,6 @@ if __name__ == "__main__":
         D_actual = pickle.load(F)
     with open(PREPROCESSED_DATA + "SYNTHETIC/r_img.pickle", 'rb') as F:
         R_image = pickle.load(F)
-
-    m_actual = m_actual[18:20]
-    D_actual = D_actual[18:20]
-    R_image = R_image[18:20]
     
     # np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
     # np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
