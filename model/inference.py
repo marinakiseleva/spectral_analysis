@@ -174,11 +174,11 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def infer_datapoint(iterations, C, V, d):
+def infer_datapoint(d, iterations, C, V):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
-    :param iterations: Number of iterations to run over
     :param d: 1 spectral sample (1D Numpy vector) 
+    :param iterations: Number of iterations to run over
     :param C: scaling factor for sampling m from Dirichlet; transition m
     :param V: value in covariance diagonal for sampling grain size
     """
@@ -218,8 +218,9 @@ def infer_superpixels(iterations, superpixels):
 
     # Pass in parameters that don't change for parallel processes (# of iterations)
     C = 10
-    V = 0.001
-    func = partial(infer_datapoint, iterations, C, V)
+    V = 50
+    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
+
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
@@ -266,7 +267,7 @@ def infer_image(iterations, image, C, V):
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # # Pass in parameters that don't change for parallel processes (# of iterations)
-    func = partial(infer_datapoint, iterations, C, V)
+    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
