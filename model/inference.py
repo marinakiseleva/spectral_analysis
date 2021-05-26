@@ -174,6 +174,11 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
+def get_init_m_D(C):
+    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
+    cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
+    return cur_m, cur_D
+
 def infer_datapoint(d, iterations, C, V):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
@@ -183,8 +188,7 @@ def infer_datapoint(d, iterations, C, V):
     :param V: value in covariance diagonal for sampling grain size
     """
     # Initialize randomly
-    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
-    cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
+    cur_m, cur_D = get_init_m_D(C)
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, V, C) 
@@ -194,6 +198,8 @@ def infer_datapoint(d, iterations, C, V):
         ratio = new_post / cur_post
         phi = min(1, ratio)
         u = np.random.uniform(0, 1)
+        print("trying comparison: phi = " + str(phi) + " and u= " + str(u) + " so phi>=u " + str(phi>=u))
+
         if phi >= u: 
             unchanged_i = 0
             cur_m = new_m
@@ -205,7 +211,8 @@ def infer_datapoint(d, iterations, C, V):
             print("\nEarly Stop at iter: " + str(i))
             break
 
-    print("Finished datapoint.") 
+    print("Finished datapoint. " + str(cur_m)) 
+
     return [cur_m, cur_D]
 
 
@@ -277,13 +284,11 @@ def infer_image(iterations, image, C, V):
     pool.join()
     print("Done processing...")
 
-
     # pool.map results are ordered - save them in image format
     for index, pair in enumerate(m_and_Ds):
         # retrieve x, y coords
         [i, j] = index_coords[index]
         m, D = pair
-        print("setting i,j val " + str(i) +", " + str(j) +" to m= " + str(m))
         m_image[i, j] = m
         D_image[i, j] = D
 
