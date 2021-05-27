@@ -92,7 +92,10 @@ GRAIN_SIZE_MAX = 400
 
 # USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
 # **Exception: basaltic glass is RELAB; removed.
-USGS_PURE_ENDMEMBERS = ["augite", "enstatite", "labradorite",  "olivine (Fo51)"]
+USGS_PURE_ENDMEMBERS = ["augite",
+                        "enstatite", 
+                        "labradorite",  
+                        "olivine (Fo51)"]
 # USGS_PURE_ENDMEMBERS = ['diopside',
 #                         "augite",
 #                         "pigeonite",
