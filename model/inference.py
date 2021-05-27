@@ -174,21 +174,20 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-def get_init_m_D(C):
-    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
-    cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
-    return cur_m, cur_D
 
-def infer_datapoint(d, iterations, C, V):
+def infer_datapoint(d_seed, iterations, C, V):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
     :param d: 1 spectral sample (1D Numpy vector) 
-    :param iterations: Number of iterations to run over
+    :param seeds: Seed for each iteration
     :param C: scaling factor for sampling m from Dirichlet; transition m
     :param V: value in covariance diagonal for sampling grain size
     """
+    d, seed = d_seed
+    np.random.seed(seed=seed)
     # Initialize randomly
-    cur_m, cur_D = get_init_m_D(C)
+    cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
+    cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
     unchanged_i = 0  # Number of iterations since last update
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, V, C) 
@@ -264,16 +263,21 @@ def infer_image(iterations, image, C, V):
             index_coords[index] = [i, j]
             r_space.append(image[i, j])
             index += 1
+    # Create seed for each reflectance (so that each process has a random seed.)
+    # This is necessary because processes need randomness for sampling.
+    d_seeds=[]
+    for i, r in enumerate(r_space):
+        seed=np.random.randint(100000)
+        d_seeds.append([r_space[i], seed])
 
     print("Done indexing image. Starting processing...")
 
     pool = multiprocessing.Pool(NUM_CPUS)
 
-    # # Pass in parameters that don't change for parallel processes (# of iterations)
+    # Pass in parameters that don't change for parallel processes 
     func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
-
     m_and_Ds = []
-    m_and_Ds = pool.map(func, r_space)
+    m_and_Ds = pool.imap(func, d_seeds)
 
     pool.close()
     pool.join()
