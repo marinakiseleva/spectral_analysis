@@ -2,7 +2,7 @@ ipykernel
 matplotlib
 scipy
 xlrd
-ipykernel
+jupyter
 numpy
 pandas
 spectral==0.20
