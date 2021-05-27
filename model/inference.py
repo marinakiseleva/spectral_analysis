@@ -175,15 +175,16 @@ def get_posterior_estimate(d, m, D):
 
 
 
-def infer_datapoint(d_seed, iterations, C, V):
+def infer_datapoint(d_seeds_index, iterations, C, V):
     """
     Run metropolis algorithm (MCMC) to estimate m and D
-    :param d: 1 spectral sample (1D Numpy vector) 
-    :param seeds: Seed for each iteration
+    :param d_seeds_index: array that ocntains d, seed, and pixel #
+    d is 1 spectral sample (1D Numpy vector) 
+    seed is Seed for each iteration
     :param C: scaling factor for sampling m from Dirichlet; transition m
     :param V: value in covariance diagonal for sampling grain size
     """
-    d, seed = d_seed
+    d, seed, pixel_num = d_seeds_index
     np.random.seed(seed=seed)
     # Initialize randomly
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
@@ -207,7 +208,9 @@ def infer_datapoint(d_seed, iterations, C, V):
         if i > INF_BURN_IN and unchanged_i > INF_EARLY_STOP:
             print("\nEarly Stop at iter: " + str(i))
             break
-    print("Finished datapoint.") 
+    if pixel_num%10 == 0:
+        print(str(pixel_num) + "  datapoint finished.") 
+        sys.stdout.flush()
     return [cur_m, cur_D]
 
 
@@ -265,10 +268,10 @@ def infer_image(iterations, image, C, V):
             index += 1
     # Create seed for each reflectance (so that each process has a random seed.)
     # This is necessary because processes need randomness for sampling.
-    d_seeds=[]
+    d_seeds_indices =[]
     for i, r in enumerate(r_space):
         seed=np.random.randint(100000)
-        d_seeds.append([r_space[i], seed])
+        d_seeds_indices.append([r_space[i], seed, i])
 
     print("Done indexing image. Starting processing...")
 
@@ -277,7 +280,7 @@ def infer_image(iterations, image, C, V):
     # Pass in parameters that don't change for parallel processes 
     func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
     m_and_Ds = []
-    m_and_Ds = pool.imap(func, d_seeds)
+    m_and_Ds = pool.imap(func, d_seeds_indices)
 
     pool.close()
     pool.join()
