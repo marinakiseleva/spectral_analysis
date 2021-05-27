@@ -2,6 +2,7 @@
 Run inference on synthetic data for any or all of the three methods.
 
 """
+import time
 import numpy as np
 import math
 import os
@@ -81,9 +82,9 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__": 
-    iterations = 1000
+    iterations = 1500
 
-    EXP_NAME = "TEST_SYNTHETIC2"
+    EXP_NAME = "TEST_SYNTHETIC"
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
@@ -95,13 +96,19 @@ if __name__ == "__main__":
     with open(PREPROCESSED_DATA + "SYNTHETIC/r_img.pickle", 'rb') as F:
         R_image = pickle.load(F)
     
-    # np.savetxt("../output/data/actual/m_actual.txt", m_actual.flatten())
-    # np.savetxt("../output/data/actual/D_actual.txt", D_actual.flatten())
 
+    start = time.time() 
+    
     m_est, D_est = ind_model(iterations=iterations,
                              image=R_image,
                              C=10,
                              V=50)
+    end = time.time()
+    mins = (end - start)/60
+    hours = mins/60
+    print("Took " + str(int(mins)) + " minutes, or " 
+        + str(round(hours,2)) + " hours.")
+
     print("Independent model error:")
     record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
