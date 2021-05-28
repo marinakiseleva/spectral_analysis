@@ -23,10 +23,11 @@ def ind_model(iterations, image, C, V):
                                image=image,
                                C=C,
                                V=V)
+    
     return m_est, D_est
 
 
-def seg_model(seg_iterations, iterations, image):
+def seg_model(seg_iterations, iterations, image, C, V):
     """
     Use segmentation model to infer mineral assemblages and grain sizes of pixels in image
     """
@@ -37,7 +38,9 @@ def seg_model(seg_iterations, iterations, image):
     print("Number of superpixels: " + str(len(superpixels)))
 
     m_and_Ds = infer_superpixels(iterations=iterations,
-                                 superpixels=superpixels)
+                                 superpixels=superpixels,
+                                   C=C,
+                                   V=V)
 
     # Reconstruct image
     num_rows = image.shape[0]

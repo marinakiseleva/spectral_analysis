@@ -123,13 +123,16 @@ def segment_image(iterations, image):
             prev_clusters.pop(0)
         prev_clusters.append(num_clusters)
 
-        if i > SEG_BURN_IN and len(prev_clusters) == SEG_EARLY_STOP and prev_clusters.count(num_clusters) == len(prev_clusters):
+        # need X previous iterations to all have same value to stop, X=SEG_EARLY_STOP 
+        check = len(prev_clusters) == SEG_EARLY_STOP 
+        if check and prev_clusters.count(num_clusters) == len(prev_clusters):
             print("\nEarly Stopping in Segmentation, iter " + str(i))
             break
 
     """
-     Merge any like superpixels/graphs
-    Note: this is necessary because two separate clusters may be unconnected but may be of the same superpixel type.
+    Merge any like superpixels/graphs
+    Note: this is necessary because two separate clusters may be unconnected 
+    but may be of the same superpixel type.
     """
     print("Original number of superpixels: " + str(len(graphs)))
     superpixels = get_superpixels(graphs)

@@ -42,6 +42,7 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir, exp_name):
 
     plot_highd_imgs(m_est, new_output_dir + "figures/" + save_dir, True, m_actual)
     plot_highd_imgs(D_est, new_output_dir + "figures/" + save_dir, False, D_actual)
+    print("\n"+str(exp_name) + " model error:")
     print_error(m_actual, D_actual, m_est, D_est)
 
     plot_compare_highd_predictions(
@@ -99,20 +100,27 @@ if __name__ == "__main__":
 
     start = time.time() 
     
-    m_est, D_est = ind_model(iterations=iterations,
-                             image=R_image,
-                             C=10,
-                             V=50)
+    # m_est, D_est = ind_model(iterations=iterations,
+    #                          image=R_image,
+    #                          C=10,
+    #                          V=50)
+    # record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
+
+    m_est, D_est = seg_model(seg_iterations=40000, 
+                            iterations=iterations,
+                            image=R_image,
+                            C=10,
+                            V=50)
+    
+    record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
+
+    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/"+ EXP_NAME + "/")
+
     end = time.time()
     mins = (end - start)/60
     hours = mins/60
     print("Took " + str(int(mins)) + " minutes, or " 
         + str(round(hours,2)) + " hours.")
-
-    print("Independent model error:")
-    record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
-
-    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/"+ EXP_NAME + "/")
 
     # m_est, D_est = seg_model(seg_iterations, iterations, image.r_image)
     # print("Seg model error:")
