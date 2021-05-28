@@ -214,29 +214,28 @@ def infer_datapoint(d_seeds_index, iterations, C, V):
     return [cur_m, cur_D]
 
 
-def infer_superpixels(iterations, superpixels):
+def infer_superpixels(iterations, superpixels, C, V):
     """
     Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)
     """
     pool = multiprocessing.Pool(NUM_CPUS)
 
-    # Pass in parameters that don't change for parallel processes (# of iterations)
-    C = 10
-    V = 50
-    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
+    # Create seed for each reflectance (so that each process has a random seed.)
+    # This is necessary because processes need randomness for sampling.
+    d_seeds_indices =[]
+    for i, r in enumerate(superpixels):
+        seed = np.random.randint(100000)
+        d_seeds_indices.append([r, seed, i])
 
+    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
-    m_and_Ds = pool.map(func, superpixels)
-
+    m_and_Ds = pool.map(func, d_seeds_indices)
     pool.close()
     pool.join()
-    print("Done processing...")
-    # m_and_Ds = []
-    # for d in superpixels:
-    #     m_and_Ds.append(infer_datapoint(iterations, d))
+    print("Done processing...") 
     return m_and_Ds
 
 
