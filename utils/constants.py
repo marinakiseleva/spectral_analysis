@@ -54,11 +54,8 @@ INF_EARLY_STOP = 400
 
 """ 
 Segmentation model parameters
-
-MAX_SAD initial SAD to allow merging of adjacent single-pixel clusters
 SEG_BURN_IN, SEG_EARLY_STOP - for segmentation
 """
-DISTANCE_METRIC = 'SAD'
 SEG_BURN_IN = 10000
 SEG_EARLY_STOP = 1000
 
