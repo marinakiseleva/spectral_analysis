@@ -285,15 +285,18 @@ def can_merge(g1, g2, MAX_SAD):
         get_smallest_common_weight(A, B) <= get_min_max_weight(A,B)
     """
     edges = get_connecting_edges(g1, g2)
-    if len(edges) == 0:
+    if len(edges) == 0: 
         return False
+    
     if len(g1.edges) == 0 or len(g2.edges) == 0:
         # When graph has no edges, we need to use an initial baseline
         for edge in edges:
             if edge.value < MAX_SAD:
                 return True
+
     scew = get_smallest_common_weight(edges)
     mmew = get_min_max_weight(g1, g2, k=0.001)
+
     return scew <= mmew
 
 
@@ -350,6 +353,10 @@ def get_SAD(a, b):
     :param a: Numpy vector
     :param b: Numpy vector
     """
+    if (a==b).all():
+        # If reflectances are exactly equal, there is 0 distance
+        # In practice, only necessary for synthetic data.
+        return 0
     n = np.dot(a.transpose(), b)
     d = np.linalg.norm(a) * np.linalg.norm(b)
     return np.arccos(n / d)
