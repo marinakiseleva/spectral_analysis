@@ -351,12 +351,8 @@ def get_distance(a,  b):
     Get distance between 2 mineral assemblage vectors
     """
 
-    if DISTANCE_METRIC == 'SAD':
-        # spectral angle distance, SAD
-        return get_SAD(a, b)
-    else:
-        # Euclidean
-        return np.linalg.norm(a - b)
+    # Euclidean
+    return np.linalg.norm(a - b)
 
 
 def get_spatial_energy(m_image, i, j, m):
