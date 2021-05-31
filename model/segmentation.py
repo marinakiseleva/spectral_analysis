@@ -23,10 +23,6 @@ from functools import reduce
 from utils.constants import *
 
 
-"""
-MAX_SAD is the initial threshold by which to merge pixels when both segments do not have edges to compare. If their SAD is <MAX_SAD we merge them. Comes from manually examining pure data spectra vs. derived Hapke model spectra where dominant mineral is 80%. 
-
-"""
 
 
 class Graph:
@@ -98,7 +94,7 @@ def get_superpixels(graphs):
     return superpixels
 
 
-def segment_image(iterations, image):
+def segment_image(iterations, image, MAX_SAD):
     """
     Segments image using agglomerative clustering. At each iteration, randomly selects graph pair to potentially merge.
 
@@ -112,7 +108,7 @@ def segment_image(iterations, image):
         g2 = random.choice(graphs)
         if g1 == g2:
             continue
-        if can_merge(g1, g2):
+        if can_merge(g1, g2, MAX_SAD):
             g3 = merge(g1, g2)
             graphs.remove(g1)
             graphs.remove(g2)
@@ -146,9 +142,9 @@ def segment_image(iterations, image):
             compare_graph = graphs[index2]
             if index == index2:
                 continue
-            # merge superpixels if the SAD of their average reflectances < MAX_MERGE_SAD
+            # merge superpixels if the SAD of their average reflectances < MAX_SAD
             sad = get_SAD(cur_superpixel, compare_superpixel)
-            if sad < MAX_MERGE_SAD:
+            if sad < MAX_SAD:
                 cur_graph = merge(cur_graph, compare_graph)
                 skip_indices.append(index)
                 skip_indices.append(index2)
@@ -283,7 +279,7 @@ def merge(g1, g2):
     return new_graph
 
 
-def can_merge(g1, g2):
+def can_merge(g1, g2, MAX_SAD):
     """
     Boolean on whether to merge graphs. Returns True when:
         get_smallest_common_weight(A, B) <= get_min_max_weight(A,B)
