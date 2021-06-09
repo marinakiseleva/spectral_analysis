@@ -48,8 +48,7 @@ INF_BURN_IN and INF_EARLY_STOP are for pixel-independent models (pixel-independe
 """
 NUM_CPUS = 8
 
-INF_BURN_IN = 100
-INF_EARLY_STOP = 400
+INF_EARLY_STOP = 200
 
 
 """ 
