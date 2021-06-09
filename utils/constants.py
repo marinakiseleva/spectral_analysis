@@ -64,12 +64,13 @@ MRF Params
 
 BETA: locality weight
 
-MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop. Remember, average energy change should be negative.
+MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop.
+Average energy change should be negative. Return MAP.
 """
-BETA = 5
-MRF_BURN_IN = 100  # 200
-MRF_PREV_STEPS = 400  # 50
-MRF_EARLY_STOP = 20  # 30
+BETA = 100
+MRF_BURN_IN = 100 
+MRF_PREV_STEPS = 200  
+MRF_EARLY_STOP = 20  
 
 
 #########################################
