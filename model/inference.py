@@ -508,7 +508,7 @@ def infer_mrf_image(iterations, image, V, C):
     prev_energy = 0
     prev_imgs = []  # save last MRF_PREV_STEPS imgs in case of early stopping
     energy_diffs = []
-    MAP_mD = [None, None, 0]
+    MAP_mD = [None, None, 1000]
     for iteration in range(iterations):
         # Randomize order of rows and columns each iteration
         np.random.shuffle(cols)
@@ -551,4 +551,4 @@ def infer_mrf_image(iterations, image, V, C):
                 break
 
 
-    return m_image, D_image
+    return MAP_mD[:2] 
