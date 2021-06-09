@@ -128,9 +128,11 @@ def transition_model(cur_m, cur_D, V, C):
     Sample new m and D
     :param cur_m: Vector of mineral abundances
     :param cur_D: Vector of grain sizes
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
-    new_m = m_transition(cur_m, C)
     new_D = D_transition(cur_D, V)
+    new_m = m_transition(cur_m, C)
     return new_m, new_D
 
 
@@ -175,14 +177,14 @@ def get_posterior_estimate(d, m, D):
 
 
 
-def infer_datapoint(d_seeds_index, iterations, C, V):
+def infer_datapoint(d_seeds_index, iterations, V, C):
     """
-    Run metropolis algorithm (MCMC) to estimate m and D
+    Run metropolis algorithm (MCMC) to estimate m and D. Return the MAP.
     :param d_seeds_index: array that ocntains d, seed, and pixel #
     d is 1 spectral sample (1D Numpy vector) 
     seed is Seed for each iteration
-    :param C: scaling factor for sampling m from Dirichlet; transition m
-    :param V: value in covariance diagonal for sampling grain size
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
     d, seed, pixel_num = d_seeds_index
     np.random.seed(seed=seed)
@@ -190,6 +192,7 @@ def infer_datapoint(d_seeds_index, iterations, C, V):
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
     unchanged_i = 0  # Number of iterations since last update
+    MAP_mD = [None, None, 0]
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, V, C) 
         new_post = get_posterior_estimate(d, new_m, new_D)
@@ -202,22 +205,27 @@ def infer_datapoint(d_seeds_index, iterations, C, V):
             unchanged_i = 0
             cur_m = new_m
             cur_D = new_D
+            if new_post > MAP_mD[2]:
+                MAP_mD = [new_m, new_D, new_post] 
         else:
             unchanged_i += 1
 
-        if i > INF_BURN_IN and unchanged_i > INF_EARLY_STOP:
+        if unchanged_i > INF_EARLY_STOP:
             print("\nEarly Stop at iter: " + str(i))
             break
     if pixel_num%10 == 0:
         print(str(pixel_num) + "  datapoint finished.") 
         sys.stdout.flush()
-    return [cur_m, cur_D]
+
+    return MAP_mD[:2] 
 
 
-def infer_superpixels(iterations, superpixels, C, V):
+def infer_superpixels(iterations, superpixels, V, C):
     """
     Infer m and D for each superpixel independently
     :param superpixels: List of reflectances (each is Numpy array)
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
     pool = multiprocessing.Pool(NUM_CPUS)
 
@@ -228,7 +236,7 @@ def infer_superpixels(iterations, superpixels, C, V):
         seed = np.random.randint(100000)
         d_seeds_indices.append([r, seed, i])
 
-    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
+    func = partial(infer_datapoint, iterations=iterations, V=V, C=C)
 
     m_and_Ds = []
     # Multithread over the pixels' reflectances
@@ -239,13 +247,13 @@ def infer_superpixels(iterations, superpixels, C, V):
     return m_and_Ds
 
 
-def infer_image(iterations, image, C, V):
+def infer_image(iterations, image, V, C):
     """
     Infer m and D for entire image - each pixel indepedently
     :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3d dimension equal to wavelengths
-    :param C: scaling factor for sampling m from Dirichlet; transition m
-    :param V: value in covariance diagonal for sampling grain size
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
 
     num_rows = image.shape[0]
@@ -277,7 +285,7 @@ def infer_image(iterations, image, C, V):
     pool = multiprocessing.Pool(NUM_CPUS)
 
     # Pass in parameters that don't change for parallel processes 
-    func = partial(infer_datapoint, iterations=iterations, C=C, V=V)
+    func = partial(infer_datapoint, iterations=iterations, V=V, C=C)
     m_and_Ds = []
     m_and_Ds = pool.imap(func, d_seeds_indices)
 
@@ -296,27 +304,28 @@ def infer_image(iterations, image, C, V):
     return m_image, D_image
 
 
-def init_gibbs(image):
+def init_mrf(image, V, C):
     """
     Set random mineral & grain  assemblage for each pixel and return 3D Numpy array with 3rd dimension as assemblage
     :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
-    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(covariance, 10)
+    N = USGS_NUM_ENDMEMBERS
+    covariance = np.zeros((N, N))
+    np.fill_diagonal(covariance, V)
 
     num_rows = image.shape[0]
     num_cols = image.shape[1]
-    m_image = np.zeros((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-    D_image = np.zeros((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
+    m_image = np.zeros((num_rows, num_cols, N))
+    D_image = np.zeros((num_rows, num_cols, N))
     for i in range(num_rows):
         for j in range(num_cols):
             reflectance = image[i, j]
 
-            rand_m = sample_dirichlet(
-                np.array([float(1 / USGS_NUM_ENDMEMBERS)] * USGS_NUM_ENDMEMBERS))
-            rand_D = D_transition(
-                np.array([INITIAL_D] * USGS_NUM_ENDMEMBERS),
-                covariance)
+            rand_D = D_transition(np.array([INITIAL_D] * N), V)
+            rand_m = sample_dirichlet(np.array([float(1 / N)] * N), C)
+            
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D
@@ -420,20 +429,21 @@ def get_mrf_prob(m_image, D_image, i, j, m, D, d):
     return p - (e_spatial * BETA)
 
 
-def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance, C=10):
+def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C):
     """
     Run metropolis algorithm (MCMC) to estimate m and D using posterior
-    Return m_image and D_image with updated values
-    :param iterations: Number of iterations to run over
+    Return m_image and D_image with updated values 
     :param m_image: 3D Numpy array, mineral assemblages for pixels
     :param D_image: 3D Numpy array, grain sizes for pixels
     :param i: row index for datapoint d
     :param j: col index for datapoint d
-    :param d: 1 spectral sample (1D Numpy vector)
+    :param d: data, 1 spectral sample (1D Numpy vector)
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
     cur_m = m_image[i, j]
     cur_D = D_image[i, j]
-    new_m, new_D = transition_model(cur_m, cur_D, covariance, C)
+    new_m, new_D = transition_model(cur_m, cur_D, V, C) 
 
     cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d)
     new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d)
@@ -444,6 +454,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, covariance, C=10):
     if phi >= u:
         cur_m = new_m
         cur_D = new_D
+
     m_image[i, j] = cur_m
     D_image[i, j] = cur_D
     return m_image, D_image
@@ -472,37 +483,32 @@ def get_total_energy(image, m_image, D_image):
     return energy_sum
 
 
-def infer_mrf_image(iterations, image):
+def infer_mrf_image(iterations, image, V, C):
     """
     Infer m and D for entire image by minimizing:
-    - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n)
-    using Gibbs sampling.
+    - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n) 
     1. Initialize random mineral assemblages for each pixel
-    2. Loop over pixels for X iteratinos, and use MCMC to sample new assemblage for each pixel.
+    2. Loop over pixels for X iterations, and use MCMC to sample new assemblage for each pixel.
     :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
+    :param V: covariance diagonal for grain size, D
+    :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
     num_rows = image.shape[0]
-    num_cols = image.shape[1]
-    # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-    # Grain size predictions
+    num_cols = image.shape[1] 
+    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS)) 
     D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
 
-    print("Initialize pixels in image... ")
-    image_reflectances = image
-    m_image, D_image = init_gibbs(image)
-
-    # Covariance diagonal for grain size sampling
-    covariance = np.zeros((USGS_NUM_ENDMEMBERS, USGS_NUM_ENDMEMBERS))
-    np.fill_diagonal(covariance, 10)
+    print("Initialize pixels in image... ") 
+    m_image, D_image = init_mrf(image, V, C)
 
     rows = np.arange(0, num_rows)
     cols = np.arange(0, num_cols)
 
     prev_energy = 0
-    prev_imgs = []  # save last MRF_PREV_STEPS imgs incase of early stopping
+    prev_imgs = []  # save last MRF_PREV_STEPS imgs in case of early stopping
     energy_diffs = []
+    MAP_mD = [None, None, 0]
     for iteration in range(iterations):
         # Randomize order of rows and columns each iteration
         np.random.shuffle(cols)
@@ -512,24 +518,27 @@ def infer_mrf_image(iterations, image):
             for j in cols:
                 d = image[i, j]
                 m_image, D_image = infer_mrf_datapoint(
-                    m_image, D_image, i, j, d, covariance)
+                    m_image, D_image, i, j, d, V, C)
 
         # Print out iteration performance
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-
+        prev_imgs.append([m_image, D_image])
         energy = get_total_energy(image, m_image, D_image)
         energy_diff = energy - prev_energy
         energy_diffs.append(energy_diff)
+        # update MAP
+        if energy < MAP_mD[2]:
+            MAP_mD = [m_image, D_image, energy]
+
         prev_energy = energy  # reset prev energy
-
-        prev_imgs.append([m_image, D_image])
-
+        
         print("\n\n" + str(dt_string) + "  Iteration " +
               str(iteration + 1) + "/" + str(iterations))
-        print("Energy change (want negative): " + str(round(energy_diff, 4)))
         print("Total MRF Energy: " + str(round(energy, 4)))
+        print("Energy change from last iteration (want negative): " + str(round(energy_diff, 4)))
         sys.stdout.flush()
+
 
         # If average energy change last MRF_PREV_STEPS runs was less than
         # MRF_EARLY_STOP, stop
@@ -540,5 +549,6 @@ def infer_mrf_image(iterations, image):
                       str(iteration) + " with average energy " + str(a_e))
                 m_image, D_image = prev_imgs[-MRF_PREV_STEPS]
                 break
+
 
     return m_image, D_image

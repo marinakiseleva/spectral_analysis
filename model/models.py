@@ -5,29 +5,31 @@ from utils.plotting import *
 from utils.constants import *
 
 
-def mrf_model(iterations, image):
+def mrf_model(iterations, image, V, C):
     """
     Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
     """
     m_est, D_est = infer_mrf_image(iterations=iterations,
-                                   image=image)
+                                   image=image,
+                                   V=V,
+                                   C=C)
 
     return m_est, D_est
 
 
-def ind_model(iterations, image, C, V):
+def ind_model(iterations, image, V, C):
     """
     Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
     """
     m_est, D_est = infer_image(iterations=iterations,
                                image=image,
-                               C=C,
-                               V=V)
+                               V=V,
+                               C=C)
     
     return m_est, D_est
 
 
-def seg_model(seg_iterations, iterations, image, C, V, MAX_SAD):
+def seg_model(seg_iterations, iterations, image, V, C, MAX_SAD):
     """
     Use segmentation model to infer mineral assemblages and grain sizes of pixels in image
     """
@@ -40,8 +42,8 @@ def seg_model(seg_iterations, iterations, image, C, V, MAX_SAD):
 
     m_and_Ds = infer_superpixels(iterations=iterations,
                                  superpixels=superpixels,
-                                   C=C,
-                                   V=V)
+                                 V=V,
+                                 C=C)
 
     # Reconstruct image
     num_rows = image.shape[0]
