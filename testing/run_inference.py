@@ -83,9 +83,11 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__": 
-    iterations = 1500
+    iterations = 15
 
-    EXP_NAME = "TEST_SYNTHETIC"
+    EXP_NAME = "TEST_MAP"
+
+    print("Testing Seg and MRF models with " + str(iterations) + " iterations.")
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
@@ -106,13 +108,13 @@ if __name__ == "__main__":
                             # C=10)
     # record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
-    # m_est, D_est = seg_model(seg_iterations=40000, 
-    #                         iterations=iterations,
-    #                         image=R_image,
-    #                         V=50,
-    #                         C=10)
+    m_est, D_est = seg_model(seg_iterations=40000, 
+                            iterations=iterations,
+                            image=R_image,
+                            V=50,
+                            C=10)
     
-    # record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
+    record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
 
     m_est, D_est = mrf_model(iterations=iterations,
                             image=R_image,
@@ -129,8 +131,3 @@ if __name__ == "__main__":
     print("Took " + str(int(mins)) + " minutes, or " 
         + str(round(hours,2)) + " hours.")
 
-
-    # m_est, D_est = mrf_model(iterations=iterations,
-    #                          image=image.r_image)
-    # print("MRF model error:")
-    # record_output(m_actual, D_actual, m_est, D_est, "mrf/", EXP_NAME)
