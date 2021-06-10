@@ -84,19 +84,21 @@ def estimate_image(m, D):
 
 if __name__ == "__main__": 
     iterations = 15
+    NOISE = "_noise_0.005"
 
     EXP_NAME = "TEST_MAP"
+    
 
     print("Testing Seg and MRF models with " + str(iterations) + " iterations.")
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
 
-    with open(PREPROCESSED_DATA + "SYNTHETIC/m_actual.pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/m_actual" + NOISE+".pickle", 'rb') as F:
         m_actual = pickle.load(F)
-    with open(PREPROCESSED_DATA + "SYNTHETIC/D_actual.pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/D_actual" + NOISE+".pickle", 'rb') as F:
         D_actual = pickle.load(F)
-    with open(PREPROCESSED_DATA + "SYNTHETIC/r_img.pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/r_img." + NOISE+"pickle", 'rb') as F:
         R_image = pickle.load(F)
     
 
