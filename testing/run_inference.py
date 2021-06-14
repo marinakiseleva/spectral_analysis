@@ -85,6 +85,7 @@ def estimate_image(m, D):
 if __name__ == "__main__": 
     iterations = 15
     NOISE = "_noise_" + str(0.005)
+    max_sad = 0.029
     EXP_NAME = "TEST_MAP"
     
 
@@ -113,7 +114,8 @@ if __name__ == "__main__":
                             iterations=iterations,
                             image=R_image,
                             V=50,
-                            C=10)
+                            C=10,
+                            MAX_SAD=max_sad)
     
     record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
 
