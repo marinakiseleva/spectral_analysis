@@ -93,11 +93,11 @@ if __name__ == "__main__":
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
 
-    with open(PREPROCESSED_DATA + "SYNTHETIC/m_actual" + NOISE +".pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/m_actual_" + NOISE +".pickle", 'rb') as F:
         m_actual = pickle.load(F)
-    with open(PREPROCESSED_DATA + "SYNTHETIC/D_actual" + NOISE +".pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/D_actual_" + NOISE +".pickle", 'rb') as F:
         D_actual = pickle.load(F)
-    with open(PREPROCESSED_DATA + "SYNTHETIC/r_img" + NOISE + ".pickle", 'rb') as F:
+    with open(PREPROCESSED_DATA + "SYNTHETIC/r_img_" + NOISE + ".pickle", 'rb') as F:
         R_image = pickle.load(F)
     
 
