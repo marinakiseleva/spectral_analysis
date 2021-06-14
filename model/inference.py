@@ -416,7 +416,7 @@ def get_spatial_energy(m_image, i, j, m):
     return e_spatial
 
 
-def get_mrf_prob(m_image, D_image, i, j, m, D, d):
+def get_mrf_prob(m_image, D_image, i, j, m, D, d, beta):
     """
     Get joint probability of this pixel i,j in image
     """
@@ -426,10 +426,10 @@ def get_mrf_prob(m_image, D_image, i, j, m, D, d):
     # rejecting candidates.
     p = get_posterior_estimate(d, m, D)
     # joint prob is likelihood - spatial energy
-    return p - (e_spatial * BETA)
+    return p - (e_spatial * beta)
 
 
-def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C):
+def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C, beta):
     """
     Run metropolis algorithm (MCMC) to estimate m and D using posterior
     Return m_image and D_image with updated values 
@@ -445,8 +445,8 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C):
     cur_D = D_image[i, j]
     new_m, new_D = transition_model(cur_m, cur_D, V, C) 
 
-    cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d)
-    new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d)
+    cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d, beta)
+    new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d, beta)
 
     ratio = new / cur
     phi = min(1, ratio)
@@ -460,7 +460,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C):
     return m_image, D_image
 
 
-def get_total_energy(image, m_image, D_image):
+def get_total_energy(image, m_image, D_image, beta):
     """
     Get the total MRF energy; we want this to decrease at each iteration
     :param m_image: 3D Numpy array, mineral assemblages for pixels
@@ -477,29 +477,31 @@ def get_total_energy(image, m_image, D_image):
             D = D_image[x, y]
             e_spatial = get_spatial_energy(m_image, x, y, m)
             e_spectral = -get_log_posterior_estimate(d, m, D)
-            pixel_energy = e_spectral + (e_spatial * BETA)
+            pixel_energy = e_spectral + (e_spatial * beta)
             energy_sum += (pixel_energy)
 
     return energy_sum
 
 
-def infer_mrf_image(iterations, image, V, C):
+def infer_mrf_image(beta, iterations, image, V, C):
     """
     Infer m and D for entire image by minimizing:
     - log(P(y_i | x_i)) + sum_{n in neighbors} SAD(y_i, y_n) 
     1. Initialize random mineral assemblages for each pixel
     2. Loop over pixels for X iterations, and use MCMC to sample new assemblage for each pixel.
+    :param beta: smoothness parameter 
     :param iterations: Number of MCMC iterations to run for each datapoint
     :param image: 3D Numpy array with 3rd dimension equal to # of wavelengths
     :param V: covariance diagonal for grain size, D
     :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
+    
     """
     num_rows = image.shape[0]
     num_cols = image.shape[1] 
     m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS)) 
     D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
 
-    print("Initialize pixels in image... ") 
+    print("Initialize pixels in image for beta=" + str(beta) + "... ") 
     m_image, D_image = init_mrf(image, V, C)
 
     rows = np.arange(0, num_rows)
@@ -518,13 +520,13 @@ def infer_mrf_image(iterations, image, V, C):
             for j in cols:
                 d = image[i, j]
                 m_image, D_image = infer_mrf_datapoint(
-                    m_image, D_image, i, j, d, V, C)
+                    m_image, D_image, i, j, d, V, C, beta)
 
         # Print out iteration performance
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
         prev_imgs.append([m_image, D_image])
-        energy = get_total_energy(image, m_image, D_image)
+        energy = get_total_energy(image, m_image, D_image, beta)
         energy_diff = energy - prev_energy
         energy_diffs.append(energy_diff)
         # update MAP
@@ -532,11 +534,13 @@ def infer_mrf_image(iterations, image, V, C):
             MAP_mD = [m_image, D_image, energy]
 
         prev_energy = energy  # reset prev energy
-        
-        print("\n\n" + str(dt_string) + "  Iteration " +
-              str(iteration + 1) + "/" + str(iterations))
-        print("Total MRF Energy: " + str(round(energy, 4)))
-        print("Energy change from last iteration (want negative): " + str(round(energy_diff, 4)))
+    
+        ps = "Iteration " + str(iteration + 1) + "/" + str(iterations) 
+        ps += " for beta=" + str(beta)
+        ps += "; total MRF Energy: " + str(round(energy, 2))
+        ps += "; energy change from last iteration (want negative): " + str(round(energy_diff, 2))
+        print("\n"+ps)
+
         sys.stdout.flush()
 
 
