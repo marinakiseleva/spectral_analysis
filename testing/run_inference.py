@@ -83,13 +83,14 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__": 
-    iterations = 15
-    NOISE = "_noise_" + str(0.005)
+    iterations = 10
+    noise_num = 0.005
+    NOISE = "_noise_" + str(noise_num)
     max_sad = 0.029
-    EXP_NAME = "TEST_MAP"
+    EXP_NAME = "TEST_SYN_COMP"
     
 
-    print("Testing Seg and MRF models with " + str(iterations) + " iterations.")
+    print("Testing Ind vs Seg vs MRF models with: " + str(iterations) + " iterations and noise= " + str(noise_num))
 
     if not os.path.exists('../output/' + EXP_NAME):
         os.makedirs('../output/' + EXP_NAME)
@@ -104,11 +105,11 @@ if __name__ == "__main__":
 
     start = time.time() 
     
-    # m_est, D_est = ind_model(iterations=iterations,
-    #                          image=R_image,
-    #                          V=50,
-                            # C=10)
-    # record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
+    m_est, D_est = ind_model(iterations=iterations,
+                             image=R_image,
+                             V=50,
+                             C=10)
+    record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
     m_est, D_est = seg_model(seg_iterations=40000, 
                             iterations=iterations,
