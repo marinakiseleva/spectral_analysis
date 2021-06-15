@@ -24,14 +24,12 @@ def mrf_model(iterations, image, V, C):
     #                                V=V,
     #                                C=C)
 
-    betas = [1, 10]
+    betas = [0.1, 1, 10, 100]
     mDs = []
     # Multithread over the pixels' reflectances
     mDs = pool.map(func, betas)
     pool.close()
     pool.join()
-
-    print("length of mDs " + str(len(mDs)))
 
     energies = []
     for i, mD in enumerate(mDs):
@@ -40,9 +38,7 @@ def mrf_model(iterations, image, V, C):
         energies.append(energy)
     min_i = energies.index(min(energies))
 
-    print(energies)
-    print("min index energy: " + str(min_i))
-    
+    print("\n\noptimal beta="+ str(betas[min_i]))    
 
     return mDs[min_i]
 

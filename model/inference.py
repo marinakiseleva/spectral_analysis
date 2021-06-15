@@ -176,7 +176,6 @@ def get_posterior_estimate(d, m, D):
     return ll  # * m_prior * D_prior
 
 
-
 def infer_datapoint(d_seeds_index, iterations, V, C):
     """
     Run metropolis algorithm (MCMC) to estimate m and D. Return the MAP.
@@ -192,7 +191,7 @@ def infer_datapoint(d_seeds_index, iterations, V, C):
     cur_m = sample_dirichlet(np.random.random(USGS_NUM_ENDMEMBERS), C)
     cur_D = np.full(shape=USGS_NUM_ENDMEMBERS, fill_value=INITIAL_D)
     unchanged_i = 0  # Number of iterations since last update
-    MAP_mD = [None, None, 0]
+    MAP_mD = [cur_m, cur_D, 0]
     for i in range(iterations):
         new_m, new_D = transition_model(cur_m, cur_D, V, C) 
         new_post = get_posterior_estimate(d, new_m, new_D)
@@ -510,7 +509,7 @@ def infer_mrf_image(beta, iterations, image, V, C):
     prev_energy = 0
     prev_imgs = []  # save last MRF_PREV_STEPS imgs in case of early stopping
     energy_diffs = []
-    MAP_mD = [None, None, 1000]
+    MAP_mD = [m_image, D_image, 1000]
     for iteration in range(iterations):
         # Randomize order of rows and columns each iteration
         np.random.shuffle(cols)
