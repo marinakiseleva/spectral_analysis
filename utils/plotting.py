@@ -189,6 +189,7 @@ def plot_actual_m(actual, output_dir=None):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_actual = actual[:, :, index]
 
+        plt.axis("off")
         axp = ax.imshow(endmember_actual, vmin=0, vmax=1)
         ax.set_title("Actual")
 
