@@ -40,8 +40,8 @@ def record_output(m_actual, D_actual, m_est, D_est, save_dir, exp_name):
     with open(data_save+"D_estimated.pickle", 'wb') as f:
         pickle.dump(D_est, f)
 
-    plot_highd_imgs(m_est, new_output_dir + "figures/" + save_dir, True, m_actual)
-    plot_highd_imgs(D_est, new_output_dir + "figures/" + save_dir, False, D_actual)
+    plot_highd_imgs(m_est, new_output_dir + "figures/" + save_dir, "m", m_actual)
+    plot_highd_imgs(D_est, new_output_dir + "figures/" + save_dir, "D", D_actual)
     print("\n"+str(exp_name) + " model error:")
     print_error(m_actual, D_actual, m_est, D_est)
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     noise_num = 0.005
     NOISE = "_noise_" + str(noise_num)
     max_sad = 0.029
-    EXP_NAME = "TEST_SYN_COMP"
+    EXP_NAME = "TEST_SYN_COMP_" + str(iterations) + "_ITERS"
     
 
     print("Testing Ind vs Seg vs MRF models with: " + str(iterations) + " iterations and noise= " + str(noise_num))
@@ -127,7 +127,9 @@ if __name__ == "__main__":
     
     record_output(m_actual, D_actual, m_est, D_est, "mrf/", EXP_NAME)
 
-    plot_actual_m(m_actual, output_dir=MODULE_DIR + "/output/"+ EXP_NAME + "/")
+    out_dir = MODULE_DIR + "/output/"+ EXP_NAME + "/"
+    plot_actual(m_actual, output_dir=out_dir)
+    plot_actual(D_actual, output_dir=out_dir, mOrD="D")
 
     end = time.time()
     mins = (end - start)/60
