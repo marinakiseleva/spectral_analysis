@@ -35,7 +35,7 @@ def prep_file_name(text):
 #     ax.imshow(img)
 
 
-def plot_endmembers(CRISM_match=True):
+def plot_endmembers():
     """
     Plot wavelength vs reflectance for each endmember
     """ 
@@ -45,13 +45,13 @@ def plot_endmembers(CRISM_match=True):
     w = get_USGS_wavelengths()
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS): 
         r = get_USGS_preprocessed_data(endmember)
-        ax.plot(w, r, color=colors[index], label=endmember)
-    ax.set_ylabel("Reflectance")
-    ax.set_xlabel("Wavelength(\u03BCm)")
+        ax.plot(w, r, color=colors[index], label=endmember, linewidth=3)
+    ax.set_ylabel("Reflectance", fontsize=12)
+    ax.set_xlabel("Wavelength(\u03BCm)", fontsize=12)
     ax.set_ylim((0, 1))
     ax.set_xlim((min(w), max(w)))
-    plt.legend(loc='best', fontsize=12)
-    fig.savefig(MODULE_DIR + "/output/endmembers.pdf")
+    plt.legend( bbox_to_anchor=(1.05, 0.8), fontsize=12)
+    fig.savefig(MODULE_DIR + "/output/endmembers.pdf", bbox_inches='tight')
 
 
 def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
@@ -153,54 +153,69 @@ def interpolate_image(img):
     return np.interp(img, (img.min(), img.max()), (0, 1))
 
 
-def plot_highd_imgs(img, output_dir, m, actual=None):
+def plot_highd_imgs(img, output_dir, mOrD, actual=None):
     """
     Plots each endmember on different heatmap plot
     :param img: Numpy 3D array with > 3 endmember proportions per pixel
     """
+
+    if mOrD == "m":
+       v_min = 0
+       v_max = 1
+       plot_type = "m"
+    elif  mOrD == "D":
+       v_min = GRAIN_SIZE_MIN
+       v_max = GRAIN_SIZE_MAX
+       plot_type = "D"
+
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_img = img[:, :, index]
-        plt.axis("off")
+        plt_title = endmember
         if actual is not None:
             e_actual = actual[:, :, index]
             rmse = math.sqrt(np.mean((e_actual - endmember_img)**2))
-            ax.set_title(endmember + ", RMSE: " + str(round(rmse, 3)))
-        else:
-            ax.set_title(endmember)
-        if m:
-            axp = ax.imshow(endmember_img, vmin=0, vmax=1)
-            fig.savefig(output_dir + endmember + "_m.pdf", bbox_inches='tight')
+            # rename title with RMSE
+            plt_title += ", RMSE: " + str(round(rmse, 3))
 
-        else:
-            axp = ax.imshow(endmember_img, vmin=GRAIN_SIZE_MIN, vmax=GRAIN_SIZE_MAX)
-            fig.savefig(output_dir + endmember + "_D.pdf", bbox_inches='tight')
+        plt.axis("off")
+        ax.set_title(plt_title)
+        axp = ax.imshow(endmember_img, vmin=v_min, vmax=v_max)
+        fig.savefig(output_dir + endmember + "_" + plot_type + ".pdf", 
+            bbox_inches='tight')
         # cb = plt.colorbar(mappable=axp, ax=ax)
 
     return fig
 
 
-def plot_actual_m(actual, output_dir=None):
+def plot_actual(actual, output_dir, mOrD="m"):
     """
     Plot actual for each endmember separately 
     :param actual: Numpy 3D array with > 3 endmember proportions per pixel
     """
+    if mOrD == "m":
+       v_min = 0
+       v_max = 1
+       plot_type = "m"
+    elif  mOrD == "D":
+       v_min = GRAIN_SIZE_MIN
+       v_max = GRAIN_SIZE_MAX
+       plot_type = "D"
+
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
         endmember_actual = actual[:, :, index]
 
         plt.axis("off")
-        axp = ax.imshow(endmember_actual, vmin=0, vmax=1)
+        axp = ax.imshow(endmember_actual, vmin=v_min, vmax=v_max)
         ax.set_title("Actual")
 
         # cb = plt.colorbar(mappable=axp, ax=ax)
-        if output_dir is not None:
-            fig.savefig(output_dir + "m_actual_" +
-                        endmember + ".pdf", bbox_inches='tight')
-        else:
-            fig.savefig(MODULE_DIR + "/output/figures/m_actual_" +
+        
+        fig.savefig(output_dir + plot_type + "_actual_" +
                         endmember + ".pdf", bbox_inches='tight')
     return fig
+
 
 
 def plot_compare_highd_predictions(actual, pred, output_dir=None):
