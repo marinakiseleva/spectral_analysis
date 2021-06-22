@@ -2,6 +2,7 @@ import numpy as np
 import multiprocessing
 
 from model.inference import *
+from model.mrf_inference import MRFModel
 from model.segmentation import segment_image, get_superpixels
 from utils.plotting import *
 from utils.constants import *
@@ -9,38 +10,41 @@ from utils.constants import *
 
 def mrf_model(iterations, image, V, C):
     """
-    Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
+    MRF model, with single setting for beta
     """
 
     pool = multiprocessing.Pool(NUM_CPUS)
 
-    func = partial(infer_mrf_image, iterations=iterations,
-                                   image=image,
-                                   V=V,
-                                   C=C)
+    model = MRFModel(beta = 10, 
+                    iterations=iterations,
+                    image=image,
+                    V=V,
+                    C=C)
 
-    # m_est, D_est = infer_mrf_image(iterations=iterations,
+    # func = partial(infer_mrf_image, iterations=iterations,
     #                                image=image,
     #                                V=V,
     #                                C=C)
+ 
 
-    betas = [0.1, 1, 10, 100]
-    mDs = []
-    # Multithread over the pixels' reflectances
-    mDs = pool.map(func, betas)
-    pool.close()
-    pool.join()
+    # betas = [0.1, 1, 10, 100]
+    # mDs = []
+    # # Multithread over the pixels' reflectances
+    # mDs = pool.map(func, betas)
+    # pool.close()
+    # pool.join()
 
-    energies = []
-    for i, mD in enumerate(mDs):
-        energy = get_total_energy(image, mD[0], mD[1], betas[i])
+    # energies = []
+    # for i, mD in enumerate(mDs):
+    #     energy = get_total_energy(image, mD[0], mD[1], betas[i])
 
-        energies.append(energy)
-    min_i = energies.index(min(energies))
+    #     energies.append(energy)
+    # min_i = energies.index(min(energies))
 
-    print("\n\noptimal beta="+ str(betas[min_i]))    
+    # print("\n\noptimal beta="+ str(betas[min_i]))    
 
-    return mDs[min_i]
+    # return mDs[min_i]
+    return model.infer_mrf_image()
 
 
 def ind_model(iterations, image, V, C):
