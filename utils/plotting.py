@@ -197,7 +197,7 @@ def plot_actual(actual, output_dir, mOrD="m"):
        v_min = 0
        v_max = 1
        plot_type = "m"
-    elif  mOrD == "D":
+    elif mOrD == "D":
        v_min = GRAIN_SIZE_MIN
        v_max = GRAIN_SIZE_MAX
        plot_type = "D"
