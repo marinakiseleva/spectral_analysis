@@ -1,3 +1,4 @@
+testing/*.out
 dist/
 build/
 *.log
