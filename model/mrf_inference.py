@@ -194,7 +194,9 @@ def create_blocks(num_rows, num_cols):
                 xmax = num_rows - 1
             if j == n_blocks - 1:
                 ymax = num_cols - 1
-            rec_blocks.append([xmin, xmax, ymin, ymax])
+            # Need to +1 because end of numpy indexing is exclusive
+            # i.e. x[10:12] gets values at indices 10 and 11, not 12.
+            rec_blocks.append([xmin, xmax+1, ymin, ymax+1])
     return rec_blocks
 
 def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
@@ -205,6 +207,7 @@ def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
     num_rows = r_image.shape[0]
     num_cols = r_image.shape[1] 
     rec_blocks = create_blocks(num_rows, num_cols)
+    
 
     # For each block, save m, D, and reflectance for block of image
     img_data =[]
@@ -228,6 +231,7 @@ def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
     # Reconstruct from blocks
     for i, block in enumerate(rec_blocks):
         xmin, xmax, ymin, ymax = block
+
         m, D = m_and_Ds[i]
         m_image[xmin:xmax, ymin:ymax, :] = m 
         D_image[xmin:xmax, ymin:ymax, :] = D
@@ -285,8 +289,6 @@ def infer_mrf_image(beta, iterations, r_image, V, C):
         ps += "; total MRF Energy: " + str(round(energy, 2))
         ps += "; energy change from last iteration (want negative): " + str(round(energy_diff, 2))
         print("\n"+ps)
-
-        print("m image shape " + str(m_image.shape))
 
         sys.stdout.flush()
         # If average energy change last MRF_PREV_STEPS runs was less than
