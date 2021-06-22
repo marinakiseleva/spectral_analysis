@@ -2,7 +2,7 @@ import numpy as np
 import multiprocessing
 
 from model.inference import *
-from model.mrf_inference import MRFModel
+from model.mrf_inference import infer_mrf_image
 from model.segmentation import segment_image, get_superpixels
 from utils.plotting import *
 from utils.constants import *
@@ -15,9 +15,9 @@ def mrf_model(iterations, image, V, C):
 
     pool = multiprocessing.Pool(NUM_CPUS)
 
-    model = MRFModel(beta = 10, 
+    return infer_mrf_image(beta = 1, 
                     iterations=iterations,
-                    image=image,
+                    r_image=image,
                     V=V,
                     C=C)
 
@@ -44,7 +44,7 @@ def mrf_model(iterations, image, V, C):
     # print("\n\noptimal beta="+ str(betas[min_i]))    
 
     # return mDs[min_i]
-    return model.infer_mrf_image()
+    # return model.infer_mrf_image()
 
 
 def ind_model(iterations, image, V, C):
