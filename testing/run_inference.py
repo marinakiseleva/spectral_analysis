@@ -83,11 +83,11 @@ def estimate_image(m, D):
 
 
 if __name__ == "__main__": 
-    iterations = 10
+    iterations = 200
     noise_num = 0.005
     NOISE = "_noise_" + str(noise_num)
     max_sad = 0.029
-    EXP_NAME = "TEST_SYN_COMP_" + str(iterations) + "_ITERS"
+    EXP_NAME = "TEST_PARALLEL_MRF_" + str(iterations) + "_ITERS"
     
 
     print("Testing Ind vs Seg vs MRF models with: " + str(iterations) + " iterations and noise= " + str(noise_num))
@@ -105,20 +105,20 @@ if __name__ == "__main__":
 
     start = time.time() 
     
-    m_est, D_est = ind_model(iterations=iterations,
-                             image=R_image,
-                             V=50,
-                             C=10)
-    record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
+    # m_est, D_est = ind_model(iterations=iterations,
+    #                          image=R_image,
+    #                          V=50,
+    #                          C=10)
+    # record_output(m_actual, D_actual, m_est, D_est, "ind/", EXP_NAME)
 
-    m_est, D_est = seg_model(seg_iterations=40000, 
-                            iterations=iterations,
-                            image=R_image,
-                            V=50,
-                            C=10,
-                            MAX_SAD=max_sad)
+    # m_est, D_est = seg_model(seg_iterations=40000, 
+    #                         iterations=iterations,
+    #                         image=R_image,
+    #                         V=50,
+    #                         C=10,
+    #                         MAX_SAD=max_sad)
     
-    record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
+    # record_output(m_actual, D_actual, m_est, D_est, "seg/", EXP_NAME)
 
     m_est, D_est = mrf_model(iterations=iterations,
                             image=R_image,
