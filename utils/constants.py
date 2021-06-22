@@ -10,8 +10,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
 
 DATA_DIR = ROOT_DIR + "/../data/"
-CATALOGUE_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/catalogues/"
-RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RELAB/RelabDB2018Dec31/data/"
+CATALOGUE_PATH = DATA_DIR + "lab_spectra/RelabDatabase2020Dec31/catalogues/"
+RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RelabDatabase2020Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
 PREPROCESSED_DATA = DATA_DIR + "PREPROCESSED_DATA/"
 R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
@@ -95,7 +95,7 @@ USGS_PURE_ENDMEMBERS = ["augite",
 #                         "andesine",
 #                         "labradorite", 
 #                         "olivine (Fo51)",
-                        # "magnetite"]
+#                         "magnetite"]
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 # Calculated using Dale-Gladstone relationship
