@@ -1,6 +1,7 @@
 """
 Runs  inference on the model to estimate the posterior p(m,D|d)
 """
+import time
 import sys
 from datetime import datetime
 from functools import partial
@@ -175,14 +176,16 @@ def create_blocks(num_rows, num_cols):
     """
     Split image up into blocks over which to run parallel
     """
-    # Given N CPUs, create N or more blocks where each block has a min width/height
-    n_blocks = int(math.sqrt(NUM_CPUS))
-    block_width = int(num_cols/n_blocks)
-    block_height = int(num_rows/n_blocks)
+    # Create 6x6 blocks
+    block_width = 6
+    block_height = 6
+
+    n_blocks_vert = math.ceil(num_rows/block_height)
+    n_blocks_horiz = math.ceil(num_cols/block_width)
 
     rec_blocks = []
-    for i in range(n_blocks):
-        for j in range(n_blocks):
+    for i in range(n_blocks_vert):
+        for j in range(n_blocks_horiz):
             # x vals signify rows, y vals signify cols
             xmin = i*block_height
             xmax = xmin+block_height - 1
@@ -190,9 +193,9 @@ def create_blocks(num_rows, num_cols):
             ymin = j*block_width
             ymax = ymin+block_width - 1
             # If block is end of row or col, extend to fill rest of img
-            if i == n_blocks - 1:
+            if i == n_blocks_vert - 1:
                 xmax = num_rows - 1
-            if j == n_blocks - 1:
+            if j == n_blocks_horiz - 1:
                 ymax = num_cols - 1
             # Need to +1 because end of numpy indexing is exclusive
             # i.e. x[10:12] gets values at indices 10 and 11, not 12.
@@ -207,7 +210,7 @@ def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
     num_rows = r_image.shape[0]
     num_cols = r_image.shape[1] 
     rec_blocks = create_blocks(num_rows, num_cols)
-    
+
 
     # For each block, save m, D, and reflectance for block of image
     img_data =[]
@@ -267,6 +270,9 @@ def infer_mrf_image(beta, iterations, r_image, V, C):
     energy_diffs = []
     MAP_mD = [m_image, D_image, 1000]
     for iteration in range(iterations):
+
+        start = time.time() 
+
         m_image, D_image = parallel_mrf_iter(V, C, beta, m_image, D_image, r_image)
         
 
@@ -285,11 +291,11 @@ def infer_mrf_image(beta, iterations, r_image, V, C):
         prev_energy = energy  # reset prev energy
     
         ps = "Iteration " + str(iteration + 1) + "/" + str(iterations) 
+        ps += " took " + str((round(time.time() - start,3))) + " seconds."
         ps += " for beta=" + str(beta)
         ps += "; total MRF Energy: " + str(round(energy, 2))
         ps += "; energy change from last iteration (want negative): " + str(round(energy_diff, 2))
         print("\n"+ps)
-
         sys.stdout.flush()
         # If average energy change last MRF_PREV_STEPS runs was less than
         # MRF_EARLY_STOP, stop
@@ -300,6 +306,7 @@ def infer_mrf_image(beta, iterations, r_image, V, C):
                       str(iteration) + " with average energy " + str(a_e))
                 m_image, D_image = prev_imgs[-MRF_PREV_STEPS]
                 break
+
 
 
     return MAP_mD[:2] 
