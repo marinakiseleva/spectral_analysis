@@ -28,57 +28,33 @@ def get_CRISM_RWs():
     with open(PREPROCESSED_DATA + "CRISM/RW_CRISM.pickle", 'rb') as handle:
         return pickle.load(handle)
 
-def get_CRISM_wavelengths(CRISM_img_dir, CRISM_match=False):
+def get_CRISM_wavelengths(img_dir, CRISM_match=False):
     """
     Get full set of wavelengths of CRISM data.
-    :param CRISM_img_dir: Directory of CRISM image. Also the image name.
+    :param img_dir: Directory of CRISM image. Also the image name.
     """
     if CRISM_match:
         return get_CRISM_RWs()
 
-    F = PREPROCESSED_DATA + "CRISM/" + CRISM_img_dir + "/wavelengths.pickle"
+    F = PREPROCESSED_DATA + "CRISM/" + img_dir + "/wavelengths.pickle"
     with open(F, 'rb') as handle:
         wavelengths = pickle.load(handle)
     return wavelengths
 
-def get_CRISM_data(image_file, CRISM_img_dir):
+def get_CRISM_data(file_name, img_dir):
     """
     Gets CRISM data and reduce wavelengths to match USGS.
-    :param image_file: File name of Pickled image.
-    :param CRISM_img_dir: Directory of CRISM image. Also the image name.
+    :param file_name: Full path and file name of Pickled CRISM image.
+    :param img_dir: Directory of CRISM image.
     """
-
-    raise ValueError("NOT DONE!!!")
-
-    if 'pickle' not in image_file:
-        return ValueError("get_CRISM_data only handles pickles.")
-
-    with open(image_file, 'rb') as handle:
+    with open(file_name, 'rb') as handle:
         loaded_img = pickle.load(handle)
 
-    orig_wavelengths = get_CRISM_wavelengths(CRISM_img_dir)
+    orig_wavelengths = get_CRISM_wavelengths(img_dir, True)
     matched_wavelengths = get_CRISM_RWs()
 
     indices = np.argwhere(np.isin(orig_wavelengths, matched_wavelengths)).flatten()
-    newimg = np.take(loaded_img, indices, axis=2)
-
-
-    # keep_indices = []  # indices of spectra to keep.
-    # for index, w in enumerate(img_wavelengths):
-    #     if w in RW_CRISM:
-    #         keep_indices.append(index)
-
-    # if len(keep_indices) != len(RW_CRISM):
-    #     raise ValueError("Issue normalizing wavelengths of CRISM img. ")
-
-    # # Create new image with only these wavelengths
-    # newimg = np.zeros((loaded_img.shape[0], loaded_img.shape[1], len(RW_CRISM)))
-    # for xindex, row in enumerate(loaded_img):
-    #     for yindex, val in enumerate(row):
-    #         # Only keep values with reduced wavelengths
-    #         newimg[xindex, yindex] = np.take(val, keep_indices)
-
-    return newimg
+    return np.take(loaded_img, indices, axis=2)
 
 
 ####################################################
