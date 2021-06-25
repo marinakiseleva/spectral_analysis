@@ -296,8 +296,7 @@ def plot_CRISM_img(loaded_img, save_name):
     axp = ax.imshow(loaded_img[:, :, PLOTTING_BAND],
                     origin='upper', cmap='bone')
     plt.axis("off")
-    plt.savefig(DATA_DIR + 'PREPROCESSED_DATA/' +
-                save_name + ".pdf", bbox_inches='tight')
+    plt.savefig(save_name, bbox_inches='tight')
     plt.show()
 
 
@@ -305,8 +304,8 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords, save_name):
     """
     Plots original passed in image of frt0002037a_07_if165 and its zoomed in selected region used for testing. The x,y of the subsection are in layer_CRISM_data.py
     :param loaded_img: img 
-    :param coords: List of [X, Y, max_x, max_y] where these values are based on the subsection of image: img[X:max_x, Y:max_y, :]
-
+    :param coords: List of [min_col, max_col, min_row, max_row] where these values are based on the subsection of image: img[X:max_x, Y:max_y, :]
+    :param save_name: Full path to file name to save in
     """
     PLOTTING_BAND = 100  # 24
     fig, ax = plt.subplots(figsize=(5, 5), dpi=300)
@@ -347,8 +346,7 @@ def plot_zoomed_sectioned_CRISM(loaded_img, coords, save_name):
 
     # Can't use because it flips inner image
     # ax.indicate_inset_zoom(axins, edgecolor='red')
-    plt.savefig(DATA_DIR + 'PREPROCESSED_DATA/' +
-                save_name + ".pdf", bbox_inches='tight')
+    plt.savefig(save_name, bbox_inches='tight')
     plt.show()
 
 
