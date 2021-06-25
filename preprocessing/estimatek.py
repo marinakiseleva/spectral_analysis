@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Exploring data provided by RELAB
+# Estimate optical constant k. Does either for USGS-exact wavelengths
+# or USGS reduced to CRISM wavelenghts (which vary by image)
 #
-# Documentation available:
-# http://www.planetary.brown.edu/relabdata/catalogues/Catalogue_README.html
-
 import pickle
 
 import pandas as pd
@@ -145,7 +143,7 @@ def get_best_USGS_k(endmember, CRISM_match=False):
         print(str(index) + " / " + str(len(wavelengths)))
 
         # X values from 10^-14 to 1, in log space
-        X = 1000
+        X = 10000
         k_space = np.logspace(-14, -1, X)
         pool = multiprocessing.Pool(NUM_CPUS)
 
@@ -175,15 +173,16 @@ def estimate_all_USGS_k(CRISM_match):
     """
     Estimate k for all endmembers from USGS
     """
-    # members = ['olivine (Fo51)',
-    #            'olivine (Fo80)',
-    #            'augite',
-    #            'pigeonite',
-    #            'magnetite',
-    #            'labradorite']
-    members = ["diopside", "augite", "pigeonite", "hypersthene", 
-              "enstatite", "andesine", "labradorite", "olivine (Fo51)", "magnetite"]
 
+    members = ['diopside',
+                "augite",
+                "pigeonite",
+                "hypersthene", 
+                "enstatite",
+                "andesine",
+                "labradorite", 
+                "olivine (Fo51)",
+                "magnetite"]
 
     for endmember in members:
         print("\n\nEstimating " + endmember)
@@ -213,4 +212,6 @@ def get_cosine(x):
 
 
 if __name__ == "__main__":
-    estimate_all_USGS_k(False) 
+
+    print("Matching CRISM-USGS wavelengths.")
+    estimate_all_USGS_k(True) 
