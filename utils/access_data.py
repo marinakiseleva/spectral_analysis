@@ -8,69 +8,82 @@ import spectral.io.envi as envi
 from utils.constants import *
 
 
-"""
-CRISM data access
-"""
+####################################################
+############# CRISM data access        #############
+####################################################
 
-def get_CRISM_wavelengths():
+
+
+def get_CRISM_RWs_USGS():
     """
-    Get full set of wavelengths of CRISM data.
+    Get reduced wavelengths of USGS; those matched to CRISM
     """
-
-    filename = DATA_DIR + "PREPROCESSED_DATA/" + 'CRISM_wavelengths.pickle'
-    with open(filename, 'rb') as handle:
-        wavelengths = pickle.load(handle)
-    return wavelengths
-
+    with open(PREPROCESSED_DATA + "CRISM/RW_USGS.pickle", 'rb') as handle:
+        return pickle.load(handle)
 
 def get_CRISM_RWs():
     """
-    Get reduced wavelengths of CRISM; those matched to lab spectra
+    Get reduced wavelengths of CRISM; those matched to USGS
     """
-    crism_w = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/RW_CRISM.pickle"
-    with open(crism_w, 'rb') as handle:
-        RW_CRISM = pickle.load(handle)
-    return RW_CRISM
+    with open(PREPROCESSED_DATA + "CRISM/RW_CRISM.pickle", 'rb') as handle:
+        return pickle.load(handle)
 
-
-def get_CRISM_data(image_file):
+def get_CRISM_wavelengths(CRISM_img_dir, CRISM_match=False):
     """
-    Gets CRISM data this directory & name.
+    Get full set of wavelengths of CRISM data.
+    :param CRISM_img_dir: Directory of CRISM image. Also the image name.
+    """
+    if CRISM_match:
+        return get_CRISM_RWs()
+
+    F = PREPROCESSED_DATA + "CRISM/" + CRISM_img_dir + "/wavelengths.pickle"
+    with open(F, 'rb') as handle:
+        wavelengths = pickle.load(handle)
+    return wavelengths
+
+def get_CRISM_data(image_file, CRISM_img_dir):
+    """
+    Gets CRISM data and reduce wavelengths to match USGS.
     :param image_file: File name of Pickled image.
+    :param CRISM_img_dir: Directory of CRISM image. Also the image name.
     """
+
+    raise ValueError("NOT DONE!!!")
+
     if 'pickle' not in image_file:
         return ValueError("get_CRISM_data only handles pickles.")
 
     with open(image_file, 'rb') as handle:
         loaded_img = pickle.load(handle)
 
-    path = DATA_DIR + "PREPROCESSED_DATA/"
-    with open(path + "CRISM_wavelengths.pickle", 'rb') as handle:
-        img_wavelengths = pickle.load(handle)
+    orig_wavelengths = get_CRISM_wavelengths(CRISM_img_dir)
+    matched_wavelengths = get_CRISM_RWs()
 
-    RW_CRISM = get_CRISM_RWs()
+    indices = np.argwhere(np.isin(orig_wavelengths, matched_wavelengths)).flatten()
+    newimg = np.take(loaded_img, indices, axis=2)
 
-    keep_indices = []  # indices of spectra to keep.
-    for index, w in enumerate(img_wavelengths):
-        if w in RW_CRISM:
-            keep_indices.append(index)
 
-    if len(keep_indices) != len(RW_CRISM):
-        raise ValueError("Issue normalizing wavelengths of CRISM img. ")
+    # keep_indices = []  # indices of spectra to keep.
+    # for index, w in enumerate(img_wavelengths):
+    #     if w in RW_CRISM:
+    #         keep_indices.append(index)
 
-    # Create new image with only these wavelengths
-    newimg = np.zeros((loaded_img.shape[0], loaded_img.shape[1], len(RW_CRISM)))
-    for xindex, row in enumerate(loaded_img):
-        for yindex, val in enumerate(row):
-            # Only keep values with reduced wavelengths
-            newimg[xindex, yindex] = np.take(val, keep_indices)
+    # if len(keep_indices) != len(RW_CRISM):
+    #     raise ValueError("Issue normalizing wavelengths of CRISM img. ")
+
+    # # Create new image with only these wavelengths
+    # newimg = np.zeros((loaded_img.shape[0], loaded_img.shape[1], len(RW_CRISM)))
+    # for xindex, row in enumerate(loaded_img):
+    #     for yindex, val in enumerate(row):
+    #         # Only keep values with reduced wavelengths
+    #         newimg[xindex, yindex] = np.take(val, keep_indices)
 
     return newimg
 
 
-"""
-USGS data access
-"""
+####################################################
+############# USGS data access         #############
+####################################################
 def clean_name(E):
     """
     Clean endmember name (to handle names like Olivine (Fo51))
@@ -99,7 +112,8 @@ def save_USGS_endmember_k(endmember, data):
 
 def get_USGS_wavelengths(CRISM_match=False):
     if CRISM_match:
-        raise ValueError("Do not handle CRISM-wavelength-matching for USGS yet.")
+        return get_CRISM_RWs_USGS()
+
     F = PREPROCESSED_DATA  + "wavelengths.pickle"
     with open(F, 'rb') as handle:
         return pickle.load(handle) 
@@ -109,48 +123,23 @@ def get_USGS_preprocessed_data(endmember, CRISM_match=False):
     Return reflectance for USGS endmember. 
     It has already been preprocessed.
     """
-    if CRISM_match:
-        raise ValueError("Do not handle CRISM-wavelength-matching for USGS yet.")
-
+    r = None
     F = R_DIR + clean_name(endmember) + "_reflectance.pickle" 
     with open(F, 'rb') as handle:
-        return pickle.load(handle) 
+        r = pickle.load(handle) 
+
+    if CRISM_match:
+        orig_wavelengths = get_USGS_wavelengths()
+        matched_wavelengths = get_CRISM_RWs_USGS()
+        indices = np.argwhere(np.isin(orig_wavelengths, matched_wavelengths)).flatten()
+        r = np.take(r,indices)
+    return r
 
 
 
-# def get_USGS_data(endmember, CRISM_match=False):
-#     """
-#     Get USGS spectral reflectance data for this endmember, as Pandas DataFrame
-#     If CRISM_match = True, then keep only reflectance values for wavelengths in RW_USGS.  
-#     """
-#     # Normalize filename
-#     endmember = endmember.lower()
-#     for r in ["(", ")", " "]:
-#         endmember = endmember.replace(r, "")
-
-#     # Open data in Pandas DataFrame
-#     data = pd.read_csv(file_name)
-
-#     # Replace NULL values (which are -1.23e34) with 0
-#     data.loc[data['reflectance'] < 0, 'reflectance'] = 0
-
-#     data = data.round(decimals=5)
-
-#     if CRISM_match:
-#         path = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
-#         # Only keep rows with reduced wavelengths
-#         with open(path + "RW_USGS.pickle", 'rb') as handle:
-#             RW_USGS = pickle.load(handle)
-#         rounded_RW_USGS = np.around(RW_USGS, decimals=5)
-#         data = data[data['wavelength'].isin(rounded_RW_USGS)]
-
-#     return data
-
-
-"""
-RELAB data access
-"""
-
+####################################################
+############# RELAB data access        #############
+####################################################
 
 def get_data():
     """

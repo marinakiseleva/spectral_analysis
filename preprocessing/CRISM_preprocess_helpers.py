@@ -44,7 +44,8 @@ def layer_image(S_IMG, L_IMG, S_W, L_W):
 
 def record_layered_data(img_dir, pixel_dir, img_save_name):
     """
-    Save layered image and corresponding layered wavelengths of 2 CRISM images, in same directories they are from
+    Save layered image and corresponding layered wavelengths of 2 CRISM images, 
+    in same directories they are from.
     """
     img_s = envi.open(file=img_dir + 's_trr3_CAT.hdr')
     img_l = envi.open(file=img_dir + 'l_trr3_CAT.hdr')
@@ -83,9 +84,7 @@ def match_lists(CRISM_wavelengths, USGS_wavelengths):
     for index, C_val in enumerate(CRISM_wavelengths):
         if U_index == len(USGS_wavelengths):
             break
-
         U_val = USGS_wavelengths[U_index]
-
         if C_val >= U_val:
             U_index += 1
             new_CRISM.append(C_val)
@@ -94,27 +93,39 @@ def match_lists(CRISM_wavelengths, USGS_wavelengths):
     return new_CRISM, new_USGS
 
 
-def record_reduced_spectra():
+def record_CRISM_USGS_reduced_wavelengths(CRISM_img_dir):
     """
-    Saves the wavelengths that are found to be as equal as possible between USGS (olivine Fo80)  and CRISM (random pixel from passed-in image) spectra.  The unique wavelengths are saved per data source because this is how their spectral values will be accessed.
+    Saves the wavelengths that are found to be as equal as possible 
+    between USGS (olivine Fo80) and CRISM (random pixel from passed-in image) spectra. 
     """
     # Get data
-    USGS_data = get_USGS_data("olivine (Fo80)", CRISM_match=False)
-    USGS_wavelengths = USGS_data['wavelength'].values.tolist()
-    CRISM_wavelengths = get_CRISM_wavelengths()
+    USGS_wavelengths = get_USGS_wavelengths()
+    CRISM_wavelengths = get_CRISM_wavelengths(CRISM_img_dir)
 
     # Match USGS to CRISM
-    CRISM_reduced, USGS_reduced = match_lists(CRISM_wavelengths, USGS_wavelengths)
+    precision = 0.002
+    new_CRISM_W = []
+    new_USGS_W = []
+    for i, u in enumerate(USGS_wavelengths):
+        for i_c, c in enumerate(CRISM_wavelengths):
+            if abs(c-u) <= precision:
+                new_CRISM_W.append(c)
+                new_USGS_W.append(u)
+                break
 
-    path = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
+    path = PREPROCESSED_DATA + "CRISM/"
     with open(path + 'RW_USGS.pickle', 'wb') as f:
-        pickle.dump(USGS_reduced, f)
+        pickle.dump(new_USGS_W, f)
     with open(path + 'RW_CRISM.pickle', 'wb') as f:
-        pickle.dump(CRISM_reduced, f)
+        pickle.dump(new_CRISM_W, f)
 
-    rmse = np.sqrt(np.mean((np.array(CRISM_reduced) - np.array(USGS_reduced))**2))
+    rmse = np.sqrt(np.mean((np.array(new_CRISM_W) - np.array(new_USGS_W))**2))
     print("CRISM reduced from " + str(len(CRISM_wavelengths)) +
-          " to " + str(len(CRISM_reduced)))
+          " to " + str(len(new_CRISM_W)))
     print("USGS reduced from " + str(len(USGS_wavelengths)) +
-          " to " + str(len(USGS_reduced)))
+          " to " + str(len(new_USGS_W)))
     print("RMSE between normalized wavelength vectors: " + str(rmse))
+
+    return new_CRISM_W, new_USGS_W
+
+
