@@ -17,7 +17,14 @@ PREPROCESSED_DATA = DATA_DIR + "PREPROCESSED_DATA/"
 R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
 K_DIR = PREPROCESSED_DATA + "K/"
 
-# ENDMEMBERS_K = DATA_DIR + "PREPROCESSED_DATA/FILE_CONSTANTS/"
+
+######################################
+## K_DIR
+## K/SYN is matched to our synthetic data [default]
+## K/CRISM is matched to particular CRISM test file. 
+## Manually change below if want to use different K data. And estimate K using preprocessing/estimatek.py
+K_DIR += "SYN/"
+######################################
 
 
 """
