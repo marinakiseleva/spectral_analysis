@@ -1,3 +1,15 @@
+######################################################
+################## Important Info   ##################
+"""
+Make sure K_DIR is set correctly. 
+CUST_K_DIR = "SYN" for synthetic data
+CUST_K_DIR = "frt00010628_07"  to test that CRISM Image
+"""
+CUST_K_DIR = "frt00010628_07"
+
+######################################################
+
+
 import os
 import pickle
 
@@ -15,17 +27,7 @@ RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RelabDatabase2020Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
 PREPROCESSED_DATA = DATA_DIR + "PREPROCESSED_DATA/"
 R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
-K_DIR = PREPROCESSED_DATA + "K/"
-
-
-######################################
-## K_DIR
-## K/SYN is matched to our synthetic data [default]
-## K/CRISM is matched to particular CRISM test file. 
-## Manually change below if want to use different K data. And estimate K using preprocessing/estimatek.py
-K_DIR += "SYN/"
-######################################
-
+K_DIR = PREPROCESSED_DATA + "K/" + CUST_K_DIR + "/"
 
 """
 For plotting
@@ -45,7 +47,6 @@ LIGHT_PURPLE = "#e699ff"
 DARK_PURPLE = "#4d0066"
 LIGHT_GRAY = "#ebebe0"
 DARK_ORANGE = "#cc5200"
-
 
 
 """
@@ -71,9 +72,9 @@ MRF Params
 MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop.
 Average energy change should be negative. Return MAP.
 """
-MRF_BURN_IN = 100 
-MRF_PREV_STEPS = 200  
-MRF_EARLY_STOP = 20  
+MRF_BURN_IN = 100
+MRF_PREV_STEPS = 200
+MRF_EARLY_STOP = 20
 
 
 #########################################
@@ -85,56 +86,56 @@ INITIAL_D = 200
 # Min and max grain sizes for these endmembers
 # Used to generate synthetic data and in inference (D prior)
 GRAIN_SIZE_MIN = 60
-GRAIN_SIZE_MAX = 400 
+GRAIN_SIZE_MAX = 400
 
 
 # USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
 # **Exception: basaltic glass is RELAB; removed.
 USGS_PURE_ENDMEMBERS = ["augite",
-                        "enstatite", 
-                        "labradorite",  
+                        "enstatite",
+                        "labradorite",
                         "olivine (Fo51)"]
 # USGS_PURE_ENDMEMBERS = ['diopside',
 #                         "augite",
 #                         "pigeonite",
-#                         "hypersthene", 
+#                         "hypersthene",
 #                         "enstatite",
 #                         "andesine",
-#                         "labradorite", 
+#                         "labradorite",
 #                         "olivine (Fo51)",
 #                         "magnetite"]
 USGS_NUM_ENDMEMBERS = len(USGS_PURE_ENDMEMBERS)
 
 # Calculated using Dale-Gladstone relationship
-ENDMEMBERS_N = {'diopside':1.72,
-                'augite': 1.68,   
+ENDMEMBERS_N = {'diopside': 1.72,
+                'augite': 1.68,
                 'pigeonite': 1.71,
-                'hypersthene' : 1.69,
+                'hypersthene': 1.69,
                 'enstatite': 1.66,
-                'andesine':1.47,
-                'labradorite': 1.53, 
+                'andesine': 1.47,
+                'labradorite': 1.53,
                 'olivine (Fo51)': 1.66,
-                'magnetite': 2.40} 
+                'magnetite': 2.40}
 
 USGS_GRAIN_SIZES = {"diopside": 295,
                     "augite": 400,
-                    "pigeonite":162,
-                    "hypersthene":200, 
-                    "enstatite":36,
-                    "andesine":290,
-                    "labradorite":162, 
-                    "olivine (Fo51)":60, 
-                    "magnetite":162}
-# Densities from http://webmineral.com/ 
+                    "pigeonite": 162,
+                    "hypersthene": 200,
+                    "enstatite": 36,
+                    "andesine": 290,
+                    "labradorite": 162,
+                    "olivine (Fo51)": 60,
+                    "magnetite": 162}
+# Densities from http://webmineral.com/
 USGS_DENSITIES = {"diopside": 3.4,
-                    "augite": 3.4,
-                    "pigeonite":3.38,
-                    "hypersthene":3.55, 
-                    "enstatite":3.2,
-                    "andesine":2.67,
-                    "labradorite":2.69, 
-                    "olivine (Fo51)":3.32, 
-                    "magnetite":5.15} 
+                  "augite": 3.4,
+                  "pigeonite": 3.38,
+                  "hypersthene": 3.55,
+                  "enstatite": 3.2,
+                  "andesine": 2.67,
+                  "labradorite": 2.69,
+                  "olivine (Fo51)": 3.32,
+                  "magnetite": 5.15}
 
 # USGS incidence angle : 0  (deg)
 # USGS emission angle: 30 (deg)

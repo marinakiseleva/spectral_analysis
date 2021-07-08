@@ -4,11 +4,12 @@
 # Estimate optical constant k. Does either for USGS-exact wavelengths
 # or USGS reduced to CRISM wavelenghts (which vary by image)
 #
+import os
 import pickle
-
+import math
 import pandas as pd
 import numpy as np
-import math
+
 
 from functools import partial
 import multiprocessing
@@ -121,7 +122,7 @@ def get_endmember_k_RMSE(data, grainsize, wavelength, index, n, k):
         n=n,
         k=k,
         D=grainsize,
-        wavelengths=wavelength) 
+        wavelengths=wavelength)
     return get_rmse(data[index], r_e)
 
 
@@ -132,7 +133,7 @@ def get_best_USGS_k(endmember, CRISM_match=False):
     """
     # get endmember reflectance
     reflectance = get_USGS_preprocessed_data(endmember, CRISM_match)
-    wavelengths=get_USGS_wavelengths(CRISM_match)
+    wavelengths = get_USGS_wavelengths(CRISM_match)
     grainsize = USGS_GRAIN_SIZES[endmember]
     n = ENDMEMBERS_N[endmember]
 
@@ -168,21 +169,22 @@ def get_best_USGS_k(endmember, CRISM_match=False):
     return ks, RMSE
 
 
-
 def estimate_all_USGS_k(CRISM_match):
     """
     Estimate k for all endmembers from USGS
     """
-
+    print("\nGoing to save in K_DIR = " + K_DIR + "\n")
+    if not os.path.exists(K_DIR):
+        os.makedirs(K_DIR)
     members = ['diopside',
-                "augite",
-                "pigeonite",
-                "hypersthene", 
-                "enstatite",
-                "andesine",
-                "labradorite", 
-                "olivine (Fo51)",
-                "magnetite"]
+               "augite",
+               "pigeonite",
+               "hypersthene",
+               "enstatite",
+               "andesine",
+               "labradorite",
+               "olivine (Fo51)",
+               "magnetite"]
 
     for endmember in members:
         print("\n\nEstimating " + endmember)
@@ -194,7 +196,7 @@ def estimate_all_USGS_k(CRISM_match):
 
 ######################################################
 # Helper functions
-################################################ 
+################################################
 
 def get_rmse(a, b):
     """
@@ -214,4 +216,4 @@ def get_cosine(x):
 if __name__ == "__main__":
 
     print("Matching CRISM-USGS wavelengths.")
-    estimate_all_USGS_k(True) 
+    estimate_all_USGS_k(True)
