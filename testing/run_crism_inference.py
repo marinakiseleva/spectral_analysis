@@ -101,7 +101,7 @@ def estimate_image_reflectance(m, D, wavelengths):
 
 
 if __name__ == "__main__":
-    iterations = 3
+    iterations = 10
     seg_iterations = 30000
 
     # os.system("taskset -p -c 1-3 %d" % os.getpid())
@@ -119,17 +119,24 @@ if __name__ == "__main__":
     print("CRISM image size " + str(img.shape))
 
     img = img[5:10, 5:10]
+    # Keep  0 and 1th indices, incidence and emission angles.
+    angle_img = angle_img[5:10, 5:10, :2]
 
     # Independent
-    m_est, D_est = infer_image(iterations=60, image=img,
-                               V=50,
-                               C=10)
+    m_est, D_est = ind_model(iterations=iterations,
+                             image=img,
+                             V=50,
+                             C=10,
+                             angle_img=angle_img)
     save_data_and_figs(m_est, D_est, "ind")
 
     # m_est, D_est = seg_model(seg_iterations, iterations, img)
     # save_data_and_figs(m_est, D_est, "seg")
-
-    # m_est, D_est = mrf_model(iterations, img)
-    # save_data_and_figs(m_est, D_est, "mrf")
+    m_est, D_est = mrf_model(iterations=iterations,
+                             image=img,
+                             V=50,
+                             C=10,
+                             angle_img=angle_img)
+    save_data_and_figs(m_est, D_est, "mrf")
 
     plot_colorbar()
