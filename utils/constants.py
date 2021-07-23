@@ -18,24 +18,29 @@ R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
 K_DIR = PREPROCESSED_DATA + "K/"
 
 
+########################################
+########################################
+# UPDATE WHEN USING CRISM
+
+CRISM_RUN = True
+
+########################################
+########################################
+
+
 #########################################
 # Endmember constants/variables
 #########################################
-
-
 INITIAL_D = 200
 # Min and max grain sizes for these endmembers
 # Used to generate synthetic data and in inference (D prior)
 GRAIN_SIZE_MIN = 50
 GRAIN_SIZE_MAX = 800
 
-CRISM_RUN = True
-
 
 #########################################
 # CRISM
 #########################################
-
 # CRISM incidence angle: DDR Index  0
 # CRISM emission angle: DDR Index  1
 CRISM_COS_INCIDENCE_ANGLE_INDEX = 0
@@ -45,7 +50,6 @@ CRISM_COS_EMISSION_ANGLE_INDEX = 1
 #########################################
 # USGS
 #########################################
-
 USGS_PURE_ENDMEMBERS = ["augite",
                         "enstatite",
                         "labradorite",

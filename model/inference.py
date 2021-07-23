@@ -179,9 +179,7 @@ def get_posterior_estimate(d, m, D):
 def infer_datapoint(d_seeds_index, iterations, V, C):
     """
     Run metropolis algorithm (MCMC) to estimate m and D. Return the MAP.
-    :param d_seeds_index: array that ocntains d, seed, and pixel #
-    d is 1 spectral sample (1D Numpy vector) 
-    seed is Seed for each iteration
+    :param d_seeds_index: [reflectance, seed, pixel num] (1D Numpy vector)  
     :param V: covariance diagonal for grain size, D
     :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
@@ -193,30 +191,30 @@ def infer_datapoint(d_seeds_index, iterations, V, C):
     unchanged_i = 0  # Number of iterations since last update
     MAP_mD = [cur_m, cur_D, 0]
     for i in range(iterations):
-        new_m, new_D = transition_model(cur_m, cur_D, V, C) 
+        new_m, new_D = transition_model(cur_m, cur_D, V, C)
         new_post = get_posterior_estimate(d, new_m, new_D)
         cur_post = get_posterior_estimate(d, cur_m, cur_D)
 
         ratio = new_post / cur_post
         phi = min(1, ratio)
-        u = np.random.uniform(0, 1) 
-        if phi >= u: 
+        u = np.random.uniform(0, 1)
+        if phi >= u:
             unchanged_i = 0
             cur_m = new_m
             cur_D = new_D
             if new_post > MAP_mD[2]:
-                MAP_mD = [new_m, new_D, new_post] 
+                MAP_mD = [new_m, new_D, new_post]
         else:
             unchanged_i += 1
 
         if unchanged_i > INF_EARLY_STOP:
             print("\nEarly Stop at iter: " + str(i))
             break
-    if pixel_num%10 == 0:
-        print(str(pixel_num) + "  datapoint finished.") 
+    if pixel_num % 10 == 0:
+        print(str(pixel_num) + "  datapoint finished.")
         sys.stdout.flush()
 
-    return MAP_mD[:2] 
+    return MAP_mD[:2]
 
 
 def infer_superpixels(iterations, superpixels, V, C):
@@ -230,7 +228,7 @@ def infer_superpixels(iterations, superpixels, V, C):
 
     # Create seed for each reflectance (so that each process has a random seed.)
     # This is necessary because processes need randomness for sampling.
-    d_seeds_indices =[]
+    d_seeds_indices = []
     for i, r in enumerate(superpixels):
         seed = np.random.randint(100000)
         d_seeds_indices.append([r, seed, i])
@@ -242,8 +240,58 @@ def infer_superpixels(iterations, superpixels, V, C):
     m_and_Ds = pool.map(func, d_seeds_indices)
     pool.close()
     pool.join()
-    print("Done processing...") 
+    print("Done processing...")
     return m_and_Ds
+
+
+def infer_points_parallel(iterations, V, C, d_seeds_indices):
+    """
+    Infer data points as pool
+    """
+    print("Starting parallel processing...")
+
+    pool = multiprocessing.Pool(NUM_CPUS)
+
+    # Pass in parameters that don't change for parallel processes
+    func = partial(infer_datapoint,
+                   iterations=iterations,
+                   V=V,
+                   C=C)
+    m_and_Ds = []
+    m_and_Ds = pool.imap(func, d_seeds_indices)
+
+    pool.close()
+    pool.join()
+    print("Done processing...")
+    return m_and_Ds
+
+
+def reconstruct_image(num_rows, num_cols, index_coords, m_and_Ds):
+    """
+    Create 2D m and D image from list of inferred m and D 
+    """
+
+    # Mineral assemblage predictions
+    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
+    # Grain size predictions
+    D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
+
+    # pool.map results are ordered - save them in image format
+    for index, pair in enumerate(m_and_Ds):
+        # retrieve x, y coords
+        [i, j] = index_coords[index]
+        m, D = pair
+        m_image[i, j] = m
+        D_image[i, j] = D
+    return m_image, D_image
+
+
+def cos_img(img):
+    """
+    Take cos of each value in image and save cos(img)
+    """
+    rad_img = np.radians(img)
+    return np.cos(rad_img)
 
 
 def infer_image(iterations, image, V, C):
@@ -254,51 +302,28 @@ def infer_image(iterations, image, V, C):
     :param V: covariance diagonal for grain size, D
     :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
-
     num_rows = image.shape[0]
     num_cols = image.shape[1]
 
-    # Mineral assemblage predictions
-    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-    # Grain size predictions
-    D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
-
-    # For clarity: create map from numeric index to X,Y coords in image
-    index = 0
-    index_coords = {}  # List index to image index
+    # index_coords Map from list index to X,Y coords in image
+    index_coords = {}
     r_space = []  # List of reflectances for image
+    index = 0
     for i in range(num_rows):
         for j in range(num_cols):
             index_coords[index] = [i, j]
             r_space.append(image[i, j])
             index += 1
-    # Create seed for each reflectance (so that each process has a random seed.)
-    # This is necessary because processes need randomness for sampling.
-    d_seeds_indices =[]
+
+    d_seeds_indices = []
     for i, r in enumerate(r_space):
-        seed=np.random.randint(100000)
+        # Each parallel process needs random seed for sampling
+        seed = np.random.randint(100000)
         d_seeds_indices.append([r_space[i], seed, i])
 
-    print("Done indexing image. Starting processing...")
+    m_and_Ds = infer_points_parallel(iterations, V, C, d_seeds_indices)
 
-    pool = multiprocessing.Pool(NUM_CPUS)
-
-    # Pass in parameters that don't change for parallel processes 
-    func = partial(infer_datapoint, iterations=iterations, V=V, C=C)
-    m_and_Ds = []
-    m_and_Ds = pool.imap(func, d_seeds_indices)
-
-    pool.close()
-    pool.join()
-    print("Done processing...")
-
-    # pool.map results are ordered - save them in image format
-    for index, pair in enumerate(m_and_Ds):
-        # retrieve x, y coords
-        [i, j] = index_coords[index]
-        m, D = pair
-        m_image[i, j] = m
-        D_image[i, j] = D
+    m_image, D_image = reconstruct_image(num_rows, num_cols, index_coords, m_and_Ds)
 
     return m_image, D_image
 
@@ -324,7 +349,6 @@ def init_mrf(image, V, C):
 
             rand_D = D_transition(np.array([INITIAL_D] * N), V)
             rand_m = sample_dirichlet(np.array([float(1 / N)] * N), C)
-            
 
             m_image[i, j] = rand_m
             D_image[i, j] = rand_D

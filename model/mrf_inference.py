@@ -13,7 +13,6 @@ from model.inference import *
 from utils.constants import *
 
 
-
 def init_mrf(r_image, V, C):
     """
     Set random mineral & grain  assemblage for each pixel and return 3D Numpy array with 3rd dimension as assemblage
@@ -87,6 +86,7 @@ def get_spatial_energy(m_image, i, j, m):
 
     return e_spatial
 
+
 def get_total_energy(m_image, D_image, r_image, beta):
     """
     Get the total MRF energy; we want this to decrease at each iteration
@@ -108,6 +108,7 @@ def get_total_energy(m_image, D_image, r_image, beta):
             energy_sum += (pixel_energy)
 
     return energy_sum
+
 
 def get_mrf_prob(m_image, D_image, i, j, m, D, d, beta):
     """
@@ -134,7 +135,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C, beta):
     """
     cur_m = m_image[i, j]
     cur_D = D_image[i, j]
-    new_m, new_D = transition_model(cur_m, cur_D, V, C) 
+    new_m, new_D = transition_model(cur_m, cur_D, V, C)
 
     cur = get_mrf_prob(m_image, D_image, i, j, cur_m, cur_D, d, beta)
     new = get_mrf_prob(m_image, D_image, i, j, new_m, new_D, d, beta)
@@ -149,6 +150,7 @@ def infer_mrf_datapoint(m_image, D_image, i, j, d, V, C, beta):
     m_image[i, j] = cur_m
     D_image[i, j] = cur_D
     return m_image, D_image
+
 
 def mrf_iter(data, V, C, beta):
     """
@@ -180,18 +182,18 @@ def create_blocks(num_rows, num_cols):
     block_width = 6
     block_height = 6
 
-    n_blocks_vert = math.ceil(num_rows/block_height)
-    n_blocks_horiz = math.ceil(num_cols/block_width)
+    n_blocks_vert = math.ceil(num_rows / block_height)
+    n_blocks_horiz = math.ceil(num_cols / block_width)
 
     rec_blocks = []
     for i in range(n_blocks_vert):
         for j in range(n_blocks_horiz):
             # x vals signify rows, y vals signify cols
-            xmin = i*block_height
-            xmax = xmin+block_height - 1
-            
-            ymin = j*block_width
-            ymax = ymin+block_width - 1
+            xmin = i * block_height
+            xmax = xmin + block_height - 1
+
+            ymin = j * block_width
+            ymax = ymin + block_width - 1
             # If block is end of row or col, extend to fill rest of img
             if i == n_blocks_vert - 1:
                 xmax = num_rows - 1
@@ -199,8 +201,9 @@ def create_blocks(num_rows, num_cols):
                 ymax = num_cols - 1
             # Need to +1 because end of numpy indexing is exclusive
             # i.e. x[10:12] gets values at indices 10 and 11, not 12.
-            rec_blocks.append([xmin, xmax+1, ymin, ymax+1])
+            rec_blocks.append([xmin, xmax + 1, ymin, ymax + 1])
     return rec_blocks
+
 
 def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
     """
@@ -208,17 +211,16 @@ def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
     Break image up into chunks and infer each in parallel.
     """
     num_rows = r_image.shape[0]
-    num_cols = r_image.shape[1] 
+    num_cols = r_image.shape[1]
     rec_blocks = create_blocks(num_rows, num_cols)
 
-
     # For each block, save m, D, and reflectance for block of image
-    img_data =[]
+    img_data = []
     for block in rec_blocks:
         xmin, xmax, ymin, ymax = block
-        m_S  = m_image[xmin:xmax, ymin:ymax, :].copy()
-        D_S  = D_image[xmin:xmax, ymin:ymax, :].copy()
-        r_S  = r_image[xmin:xmax, ymin:ymax, :].copy()
+        m_S = m_image[xmin:xmax, ymin:ymax, :].copy()
+        D_S = D_image[xmin:xmax, ymin:ymax, :].copy()
+        r_S = r_image[xmin:xmax, ymin:ymax, :].copy()
         seed = np.random.randint(100000)
         img_data.append([m_S, D_S, r_S, seed])
 
@@ -236,10 +238,38 @@ def parallel_mrf_iter(V, C, beta, m_image, D_image, r_image):
         xmin, xmax, ymin, ymax = block
 
         m, D = m_and_Ds[i]
-        m_image[xmin:xmax, ymin:ymax, :] = m 
+        m_image[xmin:xmax, ymin:ymax, :] = m
         D_image[xmin:xmax, ymin:ymax, :] = D
 
     return m_image, D_image
+
+
+def print_iter(iteration, iterations, beta, energy, energy_diff, start):
+    """
+    Print iteration details
+    """
+
+    ps = "Iteration " + str(iteration + 1) + "/" + str(iterations)
+    ps += " took " + str((round(time.time() - start, 3))) + " seconds."
+    ps += " for beta=" + str(beta)
+    ps += "; total MRF Energy: " + str(round(energy, 2))
+    ps += "; energy change from last iteration (want negative): " + \
+        str(round(energy_diff, 2))
+    print("\n" + ps)
+    sys.stdout.flush()
+
+
+def check_early_stop(energy_diffs, iteration):
+    """
+    If average energy change last MRF_PREV_STEPS runs was less than
+    MRF_EARLY_STOP, stop
+    """
+    if len(energy_diffs) > MRF_BURN_IN:
+        a_e = np.average(energy_diffs[-MRF_PREV_STEPS:])
+        if a_e > MRF_EARLY_STOP:
+            print("\nMRF Early Stop at iteration " +
+                  str(iteration) + " with average energy " + str(a_e))
+            return True
 
 
 def infer_mrf_image(beta, iterations, r_image, V, C):
@@ -254,59 +284,32 @@ def infer_mrf_image(beta, iterations, r_image, V, C):
     :param V: covariance diagonal for grain size, D
     :param C: scaling factor for sampling mineral assemblage from Dirichlet, m
     """
-    num_rows = r_image.shape[0]
-    num_cols = r_image.shape[1] 
-    m_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS)) 
-    D_image = np.ones((num_rows, num_cols, USGS_NUM_ENDMEMBERS))
 
-    print("Initialize pixels in image for beta=" + str(beta) + "... ") 
+    print("Initialize MRF for beta=" + str(beta) + "... ")
     m_image, D_image = init_mrf(r_image, V, C)
 
-    rows = np.arange(0, num_rows)
-    cols = np.arange(0, num_cols)
-
     prev_energy = 0
-    prev_imgs = []  # save last MRF_PREV_STEPS imgs in case of early stopping
     energy_diffs = []
     MAP_mD = [m_image, D_image, 1000]
     for iteration in range(iterations):
 
-        start = time.time() 
+        start = time.time()
 
         m_image, D_image = parallel_mrf_iter(V, C, beta, m_image, D_image, r_image)
-        
 
         # Print out iteration performance
-        now = datetime.now()
-        dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        prev_imgs.append([m_image, D_image])
         energy = get_total_energy(m_image, D_image, r_image, beta)
-        energy_diff = energy - prev_energy
-        energy_diffs.append(energy_diff)
-
         # update MAP
         if energy < MAP_mD[2]:
             MAP_mD = [m_image, D_image, energy]
 
+        energy_diff = energy - prev_energy
+        energy_diffs.append(energy_diff)
         prev_energy = energy  # reset prev energy
-    
-        ps = "Iteration " + str(iteration + 1) + "/" + str(iterations) 
-        ps += " took " + str((round(time.time() - start,3))) + " seconds."
-        ps += " for beta=" + str(beta)
-        ps += "; total MRF Energy: " + str(round(energy, 2))
-        ps += "; energy change from last iteration (want negative): " + str(round(energy_diff, 2))
-        print("\n"+ps)
-        sys.stdout.flush()
-        # If average energy change last MRF_PREV_STEPS runs was less than
-        # MRF_EARLY_STOP, stop
-        if len(energy_diffs) > MRF_BURN_IN:
-            a_e = np.average(energy_diffs[-MRF_PREV_STEPS:])
-            if a_e > MRF_EARLY_STOP:
-                print("\nMRF Early Stop at iteration " +
-                      str(iteration) + " with average energy " + str(a_e))
-                m_image, D_image = prev_imgs[-MRF_PREV_STEPS]
-                break
 
+        print_iter(iteration, iterations, beta, energy, energy_diff, start)
 
+        if check_early_stop(energy_diffs, iteration):
+            break
 
-    return MAP_mD[:2] 
+    return MAP_mD[:2]

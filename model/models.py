@@ -2,30 +2,38 @@ import numpy as np
 import multiprocessing
 
 from model.inference import *
+from model.CRISM_inference import infer_CRISM_image, infer_mrf_image_CRISM
 from model.mrf_inference import infer_mrf_image
 from model.segmentation import segment_image, get_superpixels
 from utils.plotting import *
 from utils.constants import *
 
 
-def mrf_model(iterations, image, V, C):
+def mrf_model(iterations, image, V, C, angle_img=None):
     """
     MRF model, with single setting for beta
     """
+    if angle_img is not None:
+        return infer_mrf_image_CRISM(beta=1,
+                                     iterations=iterations,
+                                     r_image=image,
+                                     angle_img=angle_img,
+                                     V=V,
+                                     C=C)
 
-    pool = multiprocessing.Pool(NUM_CPUS)
+    else:
+        return infer_mrf_image(beta=1,
+                               iterations=iterations,
+                               r_image=image,
+                               V=V,
+                               C=C)
 
-    return infer_mrf_image(beta = 1, 
-                    iterations=iterations,
-                    r_image=image,
-                    V=V,
-                    C=C)
+    # pool = multiprocessing.Pool(NUM_CPUS)
 
     # func = partial(infer_mrf_image, iterations=iterations,
     #                                image=image,
     #                                V=V,
     #                                C=C)
- 
 
     # betas = [0.1, 1, 10, 100]
     # mDs = []
@@ -41,21 +49,26 @@ def mrf_model(iterations, image, V, C):
     #     energies.append(energy)
     # min_i = energies.index(min(energies))
 
-    # print("\n\noptimal beta="+ str(betas[min_i]))    
+    # print("\n\noptimal beta="+ str(betas[min_i]))
 
     # return mDs[min_i]
     # return model.infer_mrf_image()
 
 
-def ind_model(iterations, image, V, C):
+def ind_model(iterations, image, V, C, angle_img=None):
     """
     Use pixel-independent model to infer mineral assemblages and grain sizes of pixels in image
     """
-    m_est, D_est = infer_image(iterations=iterations,
-                               image=image,
-                               V=V,
-                               C=C)
-    
+    if CRISM_RUN:
+        m_est, D_est = infer_CRISM_image(iterations=iterations,
+                                         image=image,
+                                         angle_img=angle_img,
+                                         V=V, C=C)
+    else:
+        m_est, D_est = infer_image(iterations=iterations,
+                                   image=image,
+                                   V=V, C=C)
+
     return m_est, D_est
 
 
