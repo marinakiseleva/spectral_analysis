@@ -20,7 +20,7 @@ def get_mu():
     return USGS_COS_EMISSION_ANGLE
 
 
-def get_USGS_r_mixed_hapke_estimate(m, D):
+def get_USGS_r_mixed_hapke_estimate(m, D, angles=None):
     """
     Calculate reflectance of m and D using Hapke model; 
     using spectral endmembers from USGS library
@@ -48,7 +48,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
         # Gets mixture of SSAs of endmembers as single SSA:
         w_mix = w_mix + (F[endmember] * w)
 
-    r = get_derived_reflectance(w_mix)
+    r = get_derived_reflectance(w_mix, angles)
     return r
 
 
@@ -82,15 +82,21 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
 #     return r
 
 
-def get_derived_reflectance(w):
+def get_derived_reflectance(w, angles=None):
     """
     Get reflectance from SSA
     :param w: SSA (Numpy array)
     :param mu: cosine of detect angle
     :param mu_0: cosine of source angle
     """
-    mu = get_mu()
-    mu_0 = get_mu_0()
+
+    if angles is None:
+        mu = get_mu()
+        mu_0 = get_mu_0()
+    else:
+        mu = angles[CRISM_COS_INCIDENCE_ANGLE_INDEX]
+        mu_0 = angles[CRISM_COS_EMISSION_ANGLE_INDEX]
+
     d = 4 * (mu + mu_0)
     return (w / d) * get_H(mu, w) * get_H(mu_0, w)
 
