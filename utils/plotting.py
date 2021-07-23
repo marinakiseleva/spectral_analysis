@@ -11,7 +11,7 @@ import matplotlib.patches as patches
 from utils.constants import *
 from utils.access_data import *
 from model.inference import get_log_likelihood
-from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
+# from model.hapke_model import get_synthetic_r_mixed_hapke_estimate
 
 
 def prep_file_name(text):
@@ -38,112 +38,112 @@ def prep_file_name(text):
 def plot_endmembers():
     """
     Plot wavelength vs reflectance for each endmember
-    """ 
-    colors = [LIGHT_GREEN,  LIGHT_BLUE, LIGHT_RED, LIGHT_PURPLE, LIGHT_ORANGE, 
-        DARK_GREEN,  DARK_RED, DARK_BLUE, DARK_PURPLE, DARK_ORANGE, PINK, LIGHT_GRAY]
+    """
+    colors = [LIGHT_GREEN,  LIGHT_BLUE, LIGHT_RED, LIGHT_PURPLE, LIGHT_ORANGE,
+              DARK_GREEN,  DARK_RED, DARK_BLUE, DARK_PURPLE, DARK_ORANGE, PINK, LIGHT_GRAY]
     fig, ax = plt.subplots(figsize=(6, 5), dpi=400)
     w = get_USGS_wavelengths()
-    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS): 
+    for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         r = get_USGS_preprocessed_data(endmember)
         ax.plot(w, r, color=colors[index], label=endmember, linewidth=3)
     ax.set_ylabel("Reflectance", fontsize=12)
     ax.set_xlabel("Wavelength(\u03BCm)", fontsize=12)
     ax.set_ylim((0, 1))
     ax.set_xlim((min(w), max(w)))
-    plt.legend( bbox_to_anchor=(1.05, 0.8), fontsize=12)
+    plt.legend(bbox_to_anchor=(1.05, 0.8), fontsize=12)
     fig.savefig(MODULE_DIR + "/output/endmembers.pdf", bbox_inches='tight')
 
 
-def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
-    """
-    Compares passed-in sample spectra to derived spectra using m and D.
-    """
-    def get_SAD(a, b):
-        """
-        Get spectral angle distance:
-            d(i,j) =  (i^T * j) / ( ||i|| ||j|| )
-        :param a: Numpy vector
-        :param b: Numpy vector
-        """
-        n = np.dot(a.transpose(), b)
-        d = np.linalg.norm(a) * np.linalg.norm(b)
-        return np.arccos(n / d)
+# def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
+#     """
+#     Compares passed-in sample spectra to derived spectra using m and D.
+#     """
+#     def get_SAD(a, b):
+#         """
+#         Get spectral angle distance:
+#             d(i,j) =  (i^T * j) / ( ||i|| ||j|| )
+#         :param a: Numpy vector
+#         :param b: Numpy vector
+#         """
+#         n = np.dot(a.transpose(), b)
+#         d = np.linalg.norm(a) * np.linalg.norm(b)
+#         return np.arccos(n / d)
 
-    # Set metadata names
-    if SID not in sids_names:
-        sid_name = "Mixture"
-    else:
-        sid_name = sids_names[SID]
+#     # Set metadata names
+#     if SID not in sids_names:
+#         sid_name = "Mixture"
+#     else:
+#         sid_name = sids_names[SID]
 
-    min_grain = min(D_map.values())
-    max_grain = max(D_map.values())
-    grain_text = ""
-    if min_grain == max_grain:
-        grain_text = str(min_grain)
-    else:
-        grain_text = str(min_grain) + " - " + str(max_grain)
+#     min_grain = min(D_map.values())
+#     max_grain = max(D_map.values())
+#     grain_text = ""
+#     if min_grain == max_grain:
+#         grain_text = str(min_grain)
+#     else:
+#         grain_text = str(min_grain) + " - " + str(max_grain)
 
-    # Get reflectance
-    data_reflectance = get_reflectance_spectra(SID, spectra_db)
-    ll = get_log_likelihood(data_reflectance, m_map, D_map)
-    # Derive reflectance from m and D
-    estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
+#     # Get reflectance
+#     data_reflectance = get_reflectance_spectra(SID, spectra_db)
+#     ll = get_log_likelihood(data_reflectance, m_map, D_map)
+#     # Derive reflectance from m and D
+#     estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
 
-    print("For " + sid_name)
-    print("Log Likelihood: " + str(round(ll, 3)))
-    print("SAD : " + str(get_SAD(data_reflectance, estimated_reflectance)))
+#     print("For " + sid_name)
+#     print("Log Likelihood: " + str(round(ll, 3)))
+#     print("SAD : " + str(get_SAD(data_reflectance, estimated_reflectance)))
 
-    # fig, axes = plt.subplots(2, 1, constrained_layout=True)
-    # fig, axes = plt.subplots(1, 2, dpi=200)
-    fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    ax1.set_ylim((0, 1))
-    ax1.plot(c_wavelengths, data_reflectance, label='Actual', color='crimson')
-    ax1.set_title("Actual vs Estimated")
-    ax1.set_ylabel("Reflectance")
-    ax1.set_xlabel("Wavelength")
+#     # fig, axes = plt.subplots(2, 1, constrained_layout=True)
+#     # fig, axes = plt.subplots(1, 2, dpi=200)
+#     fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+#     ax1.set_ylim((0, 1))
+#     ax1.plot(c_wavelengths, data_reflectance, label='Actual', color='crimson')
+#     ax1.set_title("Actual vs Estimated")
+#     ax1.set_ylabel("Reflectance")
+#     ax1.set_xlabel("Wavelength")
 
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    ax2.set_ylim((0, 1))
-    ax2.plot(c_wavelengths, estimated_reflectance, label='Estimated', color='pink')
-    fig.legend()
-    fig.suptitle(sid_name + ", for grain sizes: " + grain_text, fontsize=14, x=.6)
-    # rect : tuple (left, bottom, right, top)
-    fig.tight_layout(rect=[0, 0, 1.2, .9])
+#     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+#     ax2.set_ylim((0, 1))
+#     ax2.plot(c_wavelengths, estimated_reflectance, label='Estimated', color='pink')
+#     fig.legend()
+#     fig.suptitle(sid_name + ", for grain sizes: " + grain_text, fontsize=14, x=.6)
+#     # rect : tuple (left, bottom, right, top)
+#     fig.tight_layout(rect=[0, 0, 1.2, .9])
 
 
-def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
-    """
-    Plots multiple reflectances on same plot
-    """
-    fig, ax = plt.subplots(1, 1, constrained_layout=True,
-                           figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-    colormap = cm.get_cmap('Paired')
-    for index, m_map in enumerate(m_maps):
-        D_map = D_maps[index]
-        SID_name = sids_names[SIDs[index]]
-        estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
+# def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
+#     """
+#     Plots multiple reflectances on same plot
+#     """
+#     fig, ax = plt.subplots(1, 1, constrained_layout=True,
+#                            figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+#     colormap = cm.get_cmap('Paired')
+#     for index, m_map in enumerate(m_maps):
+#         D_map = D_maps[index]
+#         SID_name = sids_names[SIDs[index]]
+#         estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
 
-        min_grain = min(D_map.values())
-        max_grain = max(D_map.values())
-        grain_text = ""
-        if min_grain == max_grain:
-            grain_text = str(min_grain)
-        else:
-            grain_text = str(min_grain) + " - " + str(max_grain)
+#         min_grain = min(D_map.values())
+#         max_grain = max(D_map.values())
+#         grain_text = ""
+#         if min_grain == max_grain:
+#             grain_text = str(min_grain)
+#         else:
+#             grain_text = str(min_grain) + " - " + str(max_grain)
 
-        ax.plot(c_wavelengths,
-                estimated_reflectance,
-                color=colormap.colors[index],
-                label=SID_name + ", grain size : " + grain_text)
-        ax.set_xlabel("Wavelength")
-        ax.set_ylabel("Reflectance")
-        ax.legend()
+#         ax.plot(c_wavelengths,
+#                 estimated_reflectance,
+#                 color=colormap.colors[index],
+#                 label=SID_name + ", grain size : " + grain_text)
+#         ax.set_xlabel("Wavelength")
+#         ax.set_ylabel("Reflectance")
+#         ax.legend()
 
-        plt.ylim((0, 1))
+#         plt.ylim((0, 1))
 
-    fig.suptitle(title, fontsize=14)
+#     fig.suptitle(title, fontsize=14)
 
-    fig.savefig(MODULE_DIR + "/output/data/" + prep_file_name(title) + ".pdf")
+#     fig.savefig(MODULE_DIR + "/output/data/" + prep_file_name(title) + ".pdf")
 
 
 def interpolate_image(img):
@@ -160,13 +160,11 @@ def plot_highd_imgs(img, output_dir, mOrD, actual=None):
     """
 
     if mOrD == "m":
-       v_min = 0
-       v_max = 1
-       plot_type = "m"
-    elif  mOrD == "D":
-       v_min = GRAIN_SIZE_MIN
-       v_max = GRAIN_SIZE_MAX
-       plot_type = "D"
+        v_min = 0
+        v_max = 1
+    elif mOrD == "D":
+        v_min = GRAIN_SIZE_MIN
+        v_max = GRAIN_SIZE_MAX
 
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -181,8 +179,8 @@ def plot_highd_imgs(img, output_dir, mOrD, actual=None):
         plt.axis("off")
         ax.set_title(plt_title)
         axp = ax.imshow(endmember_img, vmin=v_min, vmax=v_max)
-        fig.savefig(output_dir + endmember + "_" + plot_type + ".pdf", 
-            bbox_inches='tight')
+        fig.savefig(output_dir + endmember + "_" + mOrD + ".pdf",
+                    bbox_inches='tight')
         # cb = plt.colorbar(mappable=axp, ax=ax)
 
     return fig
@@ -194,13 +192,13 @@ def plot_actual(actual, output_dir, mOrD="m"):
     :param actual: Numpy 3D array with > 3 endmember proportions per pixel
     """
     if mOrD == "m":
-       v_min = 0
-       v_max = 1
-       plot_type = "m"
+        v_min = 0
+        v_max = 1
+        plot_type = "m"
     elif mOrD == "D":
-       v_min = GRAIN_SIZE_MIN
-       v_max = GRAIN_SIZE_MAX
-       plot_type = "D"
+        v_min = GRAIN_SIZE_MIN
+        v_max = GRAIN_SIZE_MAX
+        plot_type = "D"
 
     for index, endmember in enumerate(USGS_PURE_ENDMEMBERS):
         fig, ax = plt.subplots(1, 1, figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
@@ -211,11 +209,10 @@ def plot_actual(actual, output_dir, mOrD="m"):
         ax.set_title("Actual")
 
         # cb = plt.colorbar(mappable=axp, ax=ax)
-        
-        fig.savefig(output_dir + plot_type + "_actual_" +
-                        endmember + ".pdf", bbox_inches='tight')
-    return fig
 
+        fig.savefig(output_dir + plot_type + "_actual_" +
+                    endmember + ".pdf", bbox_inches='tight')
+    return fig
 
 
 def plot_compare_highd_predictions(actual, pred, output_dir=None):

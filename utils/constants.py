@@ -1,80 +1,21 @@
-######################################################
-################## Important Info   ##################
-"""
-Make sure K_DIR is set correctly. 
-CUST_K_DIR = "SYN" for synthetic data
-CUST_K_DIR = "frt00010628_07"  to test that CRISM Image
-"""
-CUST_K_DIR = "frt00010628_07"
-
-######################################################
-
-
 import os
 import pickle
 
-"""
-DIRECTORIES
-"""
+#########################################
+# Directories
+#########################################
+
 # ROOT_DIR is one level above module root
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/../.."
 # Module directory, contains model, preprocessing, etc.
 MODULE_DIR = os.path.dirname(os.path.abspath(__file__)) + "/.."
-
 DATA_DIR = ROOT_DIR + "/../data/"
 CATALOGUE_PATH = DATA_DIR + "lab_spectra/RelabDatabase2020Dec31/catalogues/"
 RELAB_DATA_PATH = DATA_DIR + "lab_spectra/RelabDatabase2020Dec31/data/"
 USGS_DATA = DATA_DIR + "lab_spectra/USGS/"
 PREPROCESSED_DATA = DATA_DIR + "PREPROCESSED_DATA/"
 R_DIR = PREPROCESSED_DATA + "REFLECTANCE/"
-K_DIR = PREPROCESSED_DATA + "K/" + CUST_K_DIR + "/"
-
-"""
-For plotting
-"""
-FIG_WIDTH = 6
-FIG_HEIGHT = 4
-DPI = 240
-LIGHT_GREEN = "#b3e6b3"
-DARK_GREEN = "#339966"
-LIGHT_BLUE = "#668cff"
-DARK_BLUE = "#002699"
-PINK = "#ff99c2"
-LIGHT_ORANGE = "#ffa366"
-LIGHT_RED = "#ff8566"
-DARK_RED = "#801a00"
-LIGHT_PURPLE = "#e699ff"
-DARK_PURPLE = "#4d0066"
-LIGHT_GRAY = "#ebebe0"
-DARK_ORANGE = "#cc5200"
-
-
-"""
-Model parameters
-
-INF_BURN_IN and INF_EARLY_STOP are for pixel-independent models (pixel-independent and segmentation model.)
-"""
-NUM_CPUS = 8
-
-INF_EARLY_STOP = 200
-
-
-""" 
-Segmentation model parameters
-SEG_BURN_IN, SEG_EARLY_STOP - for segmentation
-"""
-SEG_BURN_IN = 10000
-SEG_EARLY_STOP = 1000
-
-
-""" 
-MRF Params
-MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop.
-Average energy change should be negative. Return MAP.
-"""
-MRF_BURN_IN = 100
-MRF_PREV_STEPS = 200
-MRF_EARLY_STOP = 20
+K_DIR = PREPROCESSED_DATA + "K/"
 
 
 #########################################
@@ -85,12 +26,26 @@ MRF_EARLY_STOP = 20
 INITIAL_D = 200
 # Min and max grain sizes for these endmembers
 # Used to generate synthetic data and in inference (D prior)
-GRAIN_SIZE_MIN = 60
-GRAIN_SIZE_MAX = 400
+GRAIN_SIZE_MIN = 50
+GRAIN_SIZE_MAX = 800
+
+CRISM_RUN = True
 
 
-# USGS endmembers for CRISM testing (and used to generate USGS synthetic data)
-# **Exception: basaltic glass is RELAB; removed.
+#########################################
+# CRISM
+#########################################
+
+# CRISM incidence angle: DDR Index  0
+# CRISM emission angle: DDR Index  1
+CRISM_COS_INCIDENCE_ANGLE_INDEX = 0
+CRISM_COS_EMISSION_ANGLE_INDEX = 1
+
+
+#########################################
+# USGS
+#########################################
+
 USGS_PURE_ENDMEMBERS = ["augite",
                         "enstatite",
                         "labradorite",
@@ -142,14 +97,42 @@ USGS_DENSITIES = {"diopside": 3.4,
 USGS_COS_INCIDENCE_ANGLE = 1
 USGS_COS_EMISSION_ANGLE = 0.86602540378
 
-#########################################
-# RELAB endmembers
 
-# olivine
-# enstatite
-# anorthite
-# Other minerals, even mixtures of these 3, may have different constants.
 #########################################
+# Model parameters
+#########################################
+
+# parallel threads
+NUM_CPUS = 8
+
+"""
+INF_EARLY_STOP are for pixel-independent models (pixel-independent and segmentation model.)
+"""
+INF_EARLY_STOP = 200
+
+
+""" 
+Segmentation model parameters
+SEG_BURN_IN, SEG_EARLY_STOP - for segmentation
+"""
+SEG_BURN_IN = 10000
+SEG_EARLY_STOP = 1000
+
+
+""" 
+MRF Params
+MRF_EARLY_STOP: after burn-in, if average energy over last MRF_PREV_STEPS runs is greater than MRF_EARLY_STOP, we stop.
+Average energy change should be negative. Return MAP.
+"""
+MRF_BURN_IN = 100
+MRF_PREV_STEPS = 200
+MRF_EARLY_STOP = 20
+
+
+#########################################
+# RELAB
+#########################################
+
 RELAB_WAVELENGTH_COUNT = 211
 # USGS incidence angle (deg)
 RELAB_INCIDENCE_ANGLE = 30
@@ -176,3 +159,23 @@ all_sids = pure_endmembers
 sids_densities = {pure_olivine_sid: 3.32,
                   pure_enstatite_sid: 3.2,
                   pure_anorthite_sid: 2.73}
+
+
+#########################################
+# Plotting
+#########################################
+FIG_WIDTH = 6
+FIG_HEIGHT = 4
+DPI = 240
+LIGHT_GREEN = "#b3e6b3"
+DARK_GREEN = "#339966"
+LIGHT_BLUE = "#668cff"
+DARK_BLUE = "#002699"
+PINK = "#ff99c2"
+LIGHT_ORANGE = "#ffa366"
+LIGHT_RED = "#ff8566"
+DARK_RED = "#801a00"
+LIGHT_PURPLE = "#e699ff"
+DARK_PURPLE = "#4d0066"
+LIGHT_GRAY = "#ebebe0"
+DARK_ORANGE = "#cc5200"

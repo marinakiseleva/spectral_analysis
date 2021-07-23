@@ -20,9 +20,6 @@ def get_mu():
     return USGS_COS_EMISSION_ANGLE
 
 
-
-
-
 def get_USGS_r_mixed_hapke_estimate(m, D):
     """
     Calculate reflectance of m and D using Hapke model; 
@@ -30,7 +27,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
-    wavelengths = get_USGS_wavelengths()
+    wavelengths = get_USGS_wavelengths(CRISM_match=CRISM_RUN)
     sigmas = {}
     for endmember in m.keys():
         m_cur = m[endmember]
@@ -55,34 +52,34 @@ def get_USGS_r_mixed_hapke_estimate(m, D):
     return r
 
 
-def get_synthetic_r_mixed_hapke_estimate(m, D):
-    """
-    Calculate reflectance of m and D using Hapke model; using spectral endmembers from RELAB library
-    :param m: Map from SID to abundance
-    :param D: Map from SID to grain size
-    """
-    sigmas = {}
-    for endmember in m.keys():
-        m_cur = m[endmember]
-        D_cur = D[endmember]
-        rho = sids_densities[endmember]
-        sigmas[endmember] = m_cur / (rho * D_cur)
+# def get_synthetic_r_mixed_hapke_estimate(m, D):
+#     """
+#     Calculate reflectance of m and D using Hapke model; using spectral endmembers from RELAB library
+#     :param m: Map from SID to abundance
+#     :param D: Map from SID to grain size
+#     """
+#     sigmas = {}
+#     for endmember in m.keys():
+#         m_cur = m[endmember]
+#         D_cur = D[endmember]
+#         rho = sids_densities[endmember]
+#         sigmas[endmember] = m_cur / (rho * D_cur)
 
-    sigma_sum = sum(sigmas.values())
-    # F is the mapping of fractional abundances
-    F = {s: v / sigma_sum for s, v in sigmas.items()}
+#     sigma_sum = sum(sigmas.values())
+#     # F is the mapping of fractional abundances
+#     F = {s: v / sigma_sum for s, v in sigmas.items()}
 
-    w_mix = np.zeros(len(c_wavelengths))
-    for endmember in m.keys():
-        D_cur = D[endmember]
-        n = ENDMEMBERS_N[endmember]
-        k = np.array(sids_k[endmember])
-        w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
+#     w_mix = np.zeros(len(c_wavelengths))
+#     for endmember in m.keys():
+#         D_cur = D[endmember]
+#         n = ENDMEMBERS_N[endmember]
+#         k = np.array(sids_k[endmember])
+#         w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
 
-        w_mix = w_mix + (F[endmember] * w)
+#         w_mix = w_mix + (F[endmember] * w)
 
-    r = get_derived_reflectance(w_mix)
-    return r
+#     r = get_derived_reflectance(w_mix)
+#     return r
 
 
 def get_derived_reflectance(w):
@@ -114,6 +111,7 @@ def get_w_hapke_estimate(n, k, D, wavelengths):
 
     return Se + (1 - Se) * ((1 - Si) / (1 - Si * Theta)) * Theta
 
+
 def get_reflectance_hapke_estimate(n, k, D, wavelengths):
     """
     Gets reflectance of SSA estimated from Hapke model (first gets SSA, then gets reflectance)
@@ -127,6 +125,7 @@ def get_reflectance_hapke_estimate(n, k, D, wavelengths):
     """
     w = get_w_hapke_estimate(n, k, D, wavelengths)
     return get_derived_reflectance(w)
+
 
 def get_brackets_D(n, D):
     """

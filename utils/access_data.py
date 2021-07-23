@@ -25,14 +25,6 @@ def save_CRISM_RWs(new_USGS_W, new_CRISM_W):
         pickle.dump(new_CRISM_W, f)
 
 
-def get_CRISM_RWs_USGS():
-    """
-    Get reduced wavelengths of USGS; those matched to CRISM
-    """
-    with open(PREPROCESSED_DATA + "CRISM/RW_USGS.pickle", 'rb') as handle:
-        return pickle.load(handle)
-
-
 def get_CRISM_RWs():
     """
     Get reduced wavelengths of CRISM; those matched to USGS
@@ -70,16 +62,15 @@ def save_CRISM_data(new_img, img_save_name):
         pickle.dump(new_img, f)
 
 
-def get_CRISM_data(file_name, img_dir):
+def get_CRISM_data(file_name):
     """
     Gets CRISM data and reduce wavelengths to match USGS.
     :param file_name: Full path and file name of Pickled CRISM image.
-    :param img_dir: Directory of CRISM image.
     """
     with open(file_name, 'rb') as handle:
         loaded_img = pickle.load(handle)
 
-    orig_wavelengths = get_CRISM_wavelengths(img_dir, True)
+    orig_wavelengths = get_CRISM_wavelengths(True)
     matched_wavelengths = get_CRISM_RWs()
 
     indices = np.argwhere(np.isin(orig_wavelengths, matched_wavelengths)).flatten()
@@ -116,6 +107,14 @@ def save_USGS_endmember_k(endmember, data):
     F = K_DIR + clean_name(endmember) + '.pickle'
     with open(F, 'wb') as handle:
         pickle.dump(data, handle)
+
+
+def get_CRISM_RWs_USGS():
+    """
+    Get reduced wavelengths of USGS; those matched to CRISM
+    """
+    with open(PREPROCESSED_DATA + "CRISM/RW_USGS.pickle", 'rb') as handle:
+        return pickle.load(handle)
 
 
 def get_USGS_wavelengths(CRISM_match=False):
