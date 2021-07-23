@@ -42,16 +42,31 @@ def save_data_and_figs(m_est, D_est, model_type):
     print("\nCompleted " + str(model_type) + " model.")
     # Save output
 
-    data_save_dir = "../output/data/crism/" + model_type + "/"
+    data_save_dir = MODULE_DIR + "/output/data/crism/" + model_type + "/"
+    fig_save_dir = MODULE_DIR + "/output/figures/crism/" + model_type + "/"
+
+    if not os.path.exists(MODULE_DIR + "/output/figures/crism/"):
+        os.mkdir(MODULE_DIR + "/output/figures/crism/")
+
+    if not os.path.exists(data_save_dir):
+        os.mkdir(data_save_dir)
+
+    if not os.path.exists(fig_save_dir):
+        os.mkdir(fig_save_dir)
+
     np.savetxt(data_save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt(data_save_dir + "D_estimated.txt", D_est.flatten())
 
-    plot_highd_imgs(m_est, "../output/figures/crism/" + model_type + "/m_", True)
-
-    plot_highd_imgs(D_est, "../output/figures/crism/" + model_type + "/D_", False)
+    plot_highd_imgs(img=m_est,
+                    output_dir=fig_save_dir,
+                    mOrD="m",
+                    actual=None)
+    plot_highd_imgs(img=D_est,
+                    output_dir=fig_save_dir,
+                    mOrD="D",
+                    actual=None)
 
     # Compare reflectances in certain bands.
-
     wavelengths = get_CRISM_RWs()
     est = estimate_image_reflectance(m_est, D_est, wavelengths)
     # bands = [30, 80, 150]
@@ -80,7 +95,7 @@ def estimate_image_reflectance(m, D, wavelengths):
             cur_D = D[row, element]
             m_dict = convert_arr_to_dict(cur_m)
             D_dict = convert_arr_to_dict(cur_D)
-            restimate = get_USGS_r_mixed_hapke_estimate(m_dict, D_dict, wavelengths)
+            restimate = get_USGS_r_mixed_hapke_estimate(m_dict, D_dict)
             r_image[row, element] = restimate
     return r_image
 
@@ -95,20 +110,26 @@ if __name__ == "__main__":
     print("\t" + str(iterations) + " MCMC iterations")
     print("\t" + str(seg_iterations) + " segmentation iterations")
 
-    PREPROCESSED_IMG_DIR = DATA_DIR + 'PREPROCESSED_DATA/'
-    image_file = PREPROCESSED_IMG_DIR + 'gobabeb.pickle'
+    F = PREPROCESSED_DATA + "CRISM/frt00010628.pickle"
+    F2 = PREPROCESSED_DATA + "CRISM/frt00010628_angles.pickle"
+    img = get_CRISM_data(F)
+    with open(F2, 'rb') as handle:
+        angle_img = pickle.load(handle)
 
-    image = get_CRISM_data(image_file)
+    print("CRISM image size " + str(img.shape))
 
-    print("CRISM image size " + str(image.shape))
+    img = img[5:10, 5:10]
 
     # Independent
-    # m_est, D_est = infer_image(iterations=60, image=image)
+    m_est, D_est = infer_image(iterations=60, image=img,
+                               V=50,
+                               C=10)
+    save_data_and_figs(m_est, D_est, "ind")
 
-    m_est, D_est = seg_model(seg_iterations, iterations, image)
-    save_data_and_figs(m_est, D_est, "seg")
+    # m_est, D_est = seg_model(seg_iterations, iterations, img)
+    # save_data_and_figs(m_est, D_est, "seg")
 
-    m_est, D_est = mrf_model(iterations, image)
-    save_data_and_figs(m_est, D_est, "mrf")
+    # m_est, D_est = mrf_model(iterations, img)
+    # save_data_and_figs(m_est, D_est, "mrf")
 
     plot_colorbar()

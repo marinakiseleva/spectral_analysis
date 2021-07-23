@@ -1,4 +1,11 @@
 """
+OLD 
+OLD
+OLD
+
+There is a new way of making synthetic test images.
+
+
 Generates data by the following steps:
 
 1. Create grid-based image with X different regions of unique mineralogy & label each region numerically
