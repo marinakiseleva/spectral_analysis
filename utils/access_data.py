@@ -118,19 +118,6 @@ def save_USGS_endmember_k(endmember, data):
         pickle.dump(data, handle)
 
 
-def save_USGS_wavelengths():
-    """
-    Select wavelengths of one USGS endmember and save to file
-    """
-    # Save USGS Wavelengths
-
-    wavelengths, mags = get_endmember_data(cur_endmember="labradorite")
-
-    F = PREPROCESSED_DATA + "USGS_wavelengths.pickle"
-    with open(F, 'wb') as handle:
-        pickle.dump(wavelengths, handle)
-
-
 def get_USGS_wavelengths(CRISM_match=False):
     if CRISM_match:
         return get_CRISM_RWs_USGS()

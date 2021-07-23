@@ -176,7 +176,7 @@ def estimate_all_USGS_k(CRISM_match):
     print("\nGoing to save in K_DIR = " + K_DIR + "\n")
     if not os.path.exists(K_DIR):
         os.makedirs(K_DIR)
-    members = ['diopside',
+    members = ["diopside",
                "augite",
                "pigeonite",
                "hypersthene",

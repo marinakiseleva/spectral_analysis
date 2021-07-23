@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from utils.constants import *
 
 
-def get_endmember_data(cur_endmember):
+def get_orig_USGS_endmember(cur_endmember):
     ENDMEMBER_PATH = USGS_DATA + cur_endmember + "/"
     df = pd.read_csv(ENDMEMBER_PATH + "reflectance.txt",
                      delimiter="\t", names=['reflectance'], skiprows=1)
@@ -44,7 +44,8 @@ def get_endmember_data(cur_endmember):
 
 def preprocess_USGS():
     """
-    Save USGS data in proper directory, and trim NULL values at ends
+    Save reflectance for each USGS endmember in R_DIR. 
+    Save USGS wavelengths (Same for each endmember) in PREPROCESSED_DATA. 
     """
     print("Saving the wavelengths in USGS endmembers.")
     endmembers = ["diopside", "augite", "pigeonite", "hypersthene",
@@ -56,17 +57,15 @@ def preprocess_USGS():
         os.makedirs(R_DIR)
 
     for endmember in endmembers:
-        W, M = get_endmember_data(endmember)
+        W, M = get_orig_USGS_endmember(endmember)
         # Save endmember data as pickle, clipping first 9 and last 9 reflectances.
         W = W[10:-9]
         M = M[10:-9]
         with open(R_DIR + endmember + "_reflectance.pickle", 'wb') as f:
             pickle.dump(M, f)
 
-    W, M = get_endmember_data("diopside")
-    W = W[10:-9]
-    with open(PREPROCESSED_DATA + "USGS_wavelengths.pickle", 'wb') as f:
-        pickle.dump(W, f)
+        with open(PREPROCESSED_DATA + "USGS_wavelengths.pickle", 'wb') as f:
+            pickle.dump(W, f)
 
     # WS=[]
     # for i, v in enumerate(WS):
