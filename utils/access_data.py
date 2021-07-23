@@ -6,12 +6,23 @@ import pandas as pd
 import numpy as np
 import spectral.io.envi as envi
 from utils.constants import *
-
+from preprocessing.USGS_preprocessing_helpers import *
 
 ####################################################
 ############# CRISM data access        #############
 ####################################################
 
+
+def save_CRISM_RWs(new_USGS_W, new_CRISM_W):
+    """
+    Record reduced wavelengths
+    """
+
+    path = PREPROCESSED_DATA + "CRISM/"
+    with open(path + 'RW_USGS.pickle', 'wb') as f:
+        pickle.dump(new_USGS_W, f)
+    with open(path + 'RW_CRISM.pickle', 'wb') as f:
+        pickle.dump(new_CRISM_W, f)
 
 
 def get_CRISM_RWs_USGS():
@@ -21,6 +32,7 @@ def get_CRISM_RWs_USGS():
     with open(PREPROCESSED_DATA + "CRISM/RW_USGS.pickle", 'rb') as handle:
         return pickle.load(handle)
 
+
 def get_CRISM_RWs():
     """
     Get reduced wavelengths of CRISM; those matched to USGS
@@ -28,18 +40,35 @@ def get_CRISM_RWs():
     with open(PREPROCESSED_DATA + "CRISM/RW_CRISM.pickle", 'rb') as handle:
         return pickle.load(handle)
 
-def get_CRISM_wavelengths(img_dir, CRISM_match=False):
+
+def save_CRISM_wavelengths(combined_ws):
+    """
+    Save wavelengths of matched CRISM img
+    """
+    with open(DATA_DIR + "PREPROCESSED_DATA/CRISM/" + 'CRISM_wavelengths.pickle', 'wb') as f:
+        pickle.dump(combined_ws, f)
+
+
+def get_CRISM_wavelengths(CRISM_match=False):
     """
     Get full set of wavelengths of CRISM data.
-    :param img_dir: Directory of CRISM image. Also the image name.
     """
     if CRISM_match:
         return get_CRISM_RWs()
 
-    F = PREPROCESSED_DATA + "CRISM/" + img_dir + "/wavelengths.pickle"
+    F = PREPROCESSED_DATA + "CRISM/CRISM_wavelengths.pickle"
     with open(F, 'rb') as handle:
         wavelengths = pickle.load(handle)
     return wavelengths
+
+
+def save_CRISM_data(new_img, img_save_name):
+    """
+    Save CRISM img
+    """
+    with open(DATA_DIR + "PREPROCESSED_DATA/CRISM/" + img_save_name + '.pickle', 'wb') as f:
+        pickle.dump(new_img, f)
+
 
 def get_CRISM_data(file_name, img_dir):
     """
@@ -68,6 +97,7 @@ def clean_name(E):
         E = E.replace(r, "")
     return E
 
+
 def get_USGS_endmember_k(endmember):
     """
     Get k as numpy vector for endmember
@@ -75,24 +105,40 @@ def get_USGS_endmember_k(endmember):
     """
     F = K_DIR + clean_name(endmember) + '.pickle'
     with open(F, 'rb') as handle:
-        return np.array(pickle.load(handle)) 
+        return np.array(pickle.load(handle))
+
 
 def save_USGS_endmember_k(endmember, data):
     """
     Get k as numpy vector for endmember
     These were estimated using entire USGS spectra.
     """
-    F = K_DIR + clean_name(endmember)  + '.pickle' 
+    F = K_DIR + clean_name(endmember) + '.pickle'
     with open(F, 'wb') as handle:
         pickle.dump(data, handle)
+
+
+def save_USGS_wavelengths():
+    """
+    Select wavelengths of one USGS endmember and save to file
+    """
+    # Save USGS Wavelengths
+
+    wavelengths, mags = get_endmember_data(cur_endmember="labradorite")
+
+    F = PREPROCESSED_DATA + "USGS_wavelengths.pickle"
+    with open(F, 'wb') as handle:
+        pickle.dump(wavelengths, handle)
+
 
 def get_USGS_wavelengths(CRISM_match=False):
     if CRISM_match:
         return get_CRISM_RWs_USGS()
 
-    F = PREPROCESSED_DATA  + "wavelengths.pickle"
+    F = PREPROCESSED_DATA + "USGS_wavelengths.pickle"
     with open(F, 'rb') as handle:
-        return pickle.load(handle) 
+        return pickle.load(handle)
+
 
 def get_USGS_preprocessed_data(endmember, CRISM_match=False):
     """
@@ -100,17 +146,16 @@ def get_USGS_preprocessed_data(endmember, CRISM_match=False):
     It has already been preprocessed.
     """
     r = None
-    F = R_DIR + clean_name(endmember) + "_reflectance.pickle" 
+    F = R_DIR + clean_name(endmember) + "_reflectance.pickle"
     with open(F, 'rb') as handle:
-        r = pickle.load(handle) 
+        r = pickle.load(handle)
 
     if CRISM_match:
         orig_wavelengths = get_USGS_wavelengths()
         matched_wavelengths = get_CRISM_RWs_USGS()
         indices = np.argwhere(np.isin(orig_wavelengths, matched_wavelengths)).flatten()
-        r = np.take(r,indices)
+        r = np.take(r, indices)
     return r
-
 
 
 ####################################################
