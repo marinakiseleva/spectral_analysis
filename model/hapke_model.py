@@ -27,6 +27,17 @@ def get_USGS_r_mixed_hapke_estimate(m, D, angles=None):
     :param m: Map from SID to abundance
     :param D: Map from SID to grain size
     """
+    w_mix = get_mixed_SSA(m, D)
+    return get_derived_reflectance(w_mix, angles)
+
+
+def get_mixed_SSA(m, D):
+    """
+    Calculate mixed SSA of m and D using Hapke model; 
+    using spectral endmembers from USGS library
+    :param m: Map from SID to abundance
+    :param D: Map from SID to grain size
+    """
     wavelengths = get_USGS_wavelengths(CRISM_match=CRISM_RUN)
     sigmas = {}
     for endmember in m.keys():
@@ -48,38 +59,7 @@ def get_USGS_r_mixed_hapke_estimate(m, D, angles=None):
         # Gets mixture of SSAs of endmembers as single SSA:
         w_mix = w_mix + (F[endmember] * w)
 
-    r = get_derived_reflectance(w_mix, angles)
-    return r
-
-
-# def get_synthetic_r_mixed_hapke_estimate(m, D):
-#     """
-#     Calculate reflectance of m and D using Hapke model; using spectral endmembers from RELAB library
-#     :param m: Map from SID to abundance
-#     :param D: Map from SID to grain size
-#     """
-#     sigmas = {}
-#     for endmember in m.keys():
-#         m_cur = m[endmember]
-#         D_cur = D[endmember]
-#         rho = sids_densities[endmember]
-#         sigmas[endmember] = m_cur / (rho * D_cur)
-
-#     sigma_sum = sum(sigmas.values())
-#     # F is the mapping of fractional abundances
-#     F = {s: v / sigma_sum for s, v in sigmas.items()}
-
-#     w_mix = np.zeros(len(c_wavelengths))
-#     for endmember in m.keys():
-#         D_cur = D[endmember]
-#         n = ENDMEMBERS_N[endmember]
-#         k = np.array(sids_k[endmember])
-#         w = get_w_hapke_estimate(n, k, D_cur, np.array(c_wavelengths))
-
-#         w_mix = w_mix + (F[endmember] * w)
-
-#     r = get_derived_reflectance(w_mix)
-#     return r
+    return w_mix
 
 
 def get_derived_reflectance(w, angles=None):

@@ -54,61 +54,52 @@ def plot_endmembers():
     fig.savefig(MODULE_DIR + "/output/endmembers.pdf", bbox_inches='tight')
 
 
-# def plot_estimated_versus_actual(SID, spectra_db, m_map, D_map):
-#     """
-#     Compares passed-in sample spectra to derived spectra using m and D.
-#     """
-#     def get_SAD(a, b):
-#         """
-#         Get spectral angle distance:
-#             d(i,j) =  (i^T * j) / ( ||i|| ||j|| )
-#         :param a: Numpy vector
-#         :param b: Numpy vector
-#         """
-#         n = np.dot(a.transpose(), b)
-#         d = np.linalg.norm(a) * np.linalg.norm(b)
-#         return np.arccos(n / d)
+def plot_spectra(rs, CRISM_match, names, colors):
+    """
+    """
+    wavelengths = get_CRISM_RWs_USGS()
 
-#     # Set metadata names
-#     if SID not in sids_names:
-#         sid_name = "Mixture"
-#     else:
-#         sid_name = sids_names[SID]
+    fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    for i in range(len(rs)):
+        ax1.set_ylim((0, 1))
+        ax1.plot(wavelengths,
+                 rs[i],
+                 label=names[i],
+                 color=colors[i])
+        ax1.set_ylabel("Reflectance")
+        ax1.set_xlabel("Wavelength")
+    fig.legend()
+    # rect : tuple (left, bottom, right, top)
+    fig.tight_layout(rect=[0, 0, 1.2, .9])
 
-#     min_grain = min(D_map.values())
-#     max_grain = max(D_map.values())
-#     grain_text = ""
-#     if min_grain == max_grain:
-#         grain_text = str(min_grain)
-#     else:
-#         grain_text = str(min_grain) + " - " + str(max_grain)
+    return ax1
 
-#     # Get reflectance
-#     data_reflectance = get_reflectance_spectra(SID, spectra_db)
-#     ll = get_log_likelihood(data_reflectance, m_map, D_map)
-#     # Derive reflectance from m and D
-#     estimated_reflectance = get_synthetic_r_mixed_hapke_estimate(m_map, D_map)
 
-#     print("For " + sid_name)
-#     print("Log Likelihood: " + str(round(ll, 3)))
-#     print("SAD : " + str(get_SAD(data_reflectance, estimated_reflectance)))
+def compare_spectra(r_est, r_actual, CRISM_match, name):
+    """
+    """
+    wavelengths = get_CRISM_RWs_USGS()
 
-#     # fig, axes = plt.subplots(2, 1, constrained_layout=True)
-#     # fig, axes = plt.subplots(1, 2, dpi=200)
-#     fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
-#     ax1.set_ylim((0, 1))
-#     ax1.plot(c_wavelengths, data_reflectance, label='Actual', color='crimson')
-#     ax1.set_title("Actual vs Estimated")
-#     ax1.set_ylabel("Reflectance")
-#     ax1.set_xlabel("Wavelength")
+    fig, ax1 = plt.subplots(figsize=(FIG_WIDTH, FIG_HEIGHT), dpi=DPI)
+    ax1.set_ylim((0, 1))
+    ax1.plot(wavelengths,
+             r_actual,
+             label='Actual',
+             color='crimson')
+    ax1.set_title("Actual vs Estimated")
+    ax1.set_ylabel("Reflectance")
+    ax1.set_xlabel("Wavelength")
 
-#     ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-#     ax2.set_ylim((0, 1))
-#     ax2.plot(c_wavelengths, estimated_reflectance, label='Estimated', color='pink')
-#     fig.legend()
-#     fig.suptitle(sid_name + ", for grain sizes: " + grain_text, fontsize=14, x=.6)
-#     # rect : tuple (left, bottom, right, top)
-#     fig.tight_layout(rect=[0, 0, 1.2, .9])
+    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+    ax2.set_ylim((0, 1))
+    ax2.plot(wavelengths,
+             r_est,
+             label='Estimated',
+             color='pink')
+    fig.legend()
+    fig.suptitle(name, fontsize=14, x=.6)
+    # rect : tuple (left, bottom, right, top)
+    fig.tight_layout(rect=[0, 0, 1.2, .9])
 
 
 # def plot_overlay_reflectances(SIDs, m_maps, D_maps, title):
