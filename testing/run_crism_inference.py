@@ -42,17 +42,19 @@ def save_data_and_figs(m_est, D_est, model_type):
     print("\nCompleted " + str(model_type) + " model.")
     # Save output
 
+
     data_save_dir = MODULE_DIR + "/output/data/crism/" + model_type + "/"
     fig_save_dir = MODULE_DIR + "/output/figures/crism/" + model_type + "/"
 
-    if not os.path.exists(MODULE_DIR + "/output/figures/crism/"):
-        os.mkdir(MODULE_DIR + "/output/figures/crism/")
-
-    if not os.path.exists(data_save_dir):
-        os.mkdir(data_save_dir)
-
-    if not os.path.exists(fig_save_dir):
-        os.mkdir(fig_save_dir)
+    #  Make all missing dirs.
+    b = MODULE_DIR + "/output/"
+    mkdirs = [b+"figures/", b+"data/", b+"figures/crism/", b+"data/crism/",
+                b+"figures/crism/" + model_type +"/", 
+                 b+"data/crism/" + model_type+ "/",  
+                 data_save_dir, fig_save_dir]
+    for m in mkdirs:
+        if not os.path.exists(m):
+            os.mkdir(m)
 
     np.savetxt(data_save_dir + "m_estimated.txt", m_est.flatten())
     np.savetxt(data_save_dir + "D_estimated.txt", D_est.flatten())
