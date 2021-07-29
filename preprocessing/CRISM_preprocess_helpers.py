@@ -53,11 +53,11 @@ def get_new_borders(img):
     """
     Get new row min/max and col min/max based on what pixel values are all zeros.
     """
-    d = np.all(img == 0, axis=2)
+    d = np.all(img == 65535, axis=2)
     row_min = 0
-    row_max = d.shape[0]
+    row_max = img.shape[0]
     col_min = 0
-    col_max = d.shape[1]
+    col_max = img.shape[1]
     for rowindex, row in enumerate(d):
         if row[0] == False:
             row_min = rowindex
@@ -68,16 +68,14 @@ def get_new_borders(img):
             col_min = colindex
             break
 
-    num_rows = d.shape[0]
-    num_cols = d.shape[1]
-    i = num_rows - 1
+    i = row_max - 1
     while i >= 0:
         if row[i] == False:
             row_max = i + 1
             break
         i = i - 1
 
-    j = num_cols - 1
+    j = col_max - 1
     while j >= 0:
         if d[0][j] == False:
             col_max = j + 1
@@ -100,7 +98,7 @@ def reduce_image(img, row_min, row_max, col_min, col_max):
     return img[row_min:row_max, col_min:col_max, :]
 
 
-def layer_CRISM(img_s, img_l, pixel_dir, img_save_name):
+def layer_CRISM(img_s, img_l,  pixel_dir, img_save_name):
     """
     Save layered image and corresponding layered wavelengths of 2 CRISM images, 
     in same directories they are from.
@@ -111,17 +109,40 @@ def layer_CRISM(img_s, img_l, pixel_dir, img_save_name):
     l_ws = pd.read_csv(pixel_dir + "lpixel.csv",
                        header=None)[0].values
 
-    new_img = layer_image(S_IMG=img_s[:, :, :],
-                          L_IMG=img_l[:, :, :],
+    new_img = layer_image(S_IMG=img_s,
+                          L_IMG=img_l,
                           S_W=s_ws,
                           L_W=l_ws)
 
+    # Get indices to drop (those that have any NULLs.)
+    NULL_Rs = set()
+    SAM_PIXEL = new_img[200, 200]
+    for i, r in enumerate(SAM_PIXEL):
+        if (r == 65535):
+            print("drop i = " + str(i))
+            NULL_Rs.add(i)
+
+    NULL_Rs = list(NULL_Rs)
+    print("Dropping indices: " + str(NULL_Rs))
+
+    combined_ws = np.concatenate((s_ws, l_ws))
+
+    # Make list of indices to keep based on those that we drop.
+    keep_W_Indices = []
+    for i in range(len(combined_ws)):
+        if i not in NULL_Rs:
+            keep_W_Indices.append(i)
+
+    combined_ws = np.take(combined_ws, keep_W_Indices, axis=0)
+    img = np.take(new_img, keep_W_Indices, axis=2)
+
     # Save joined image
-    save_CRISM_data(new_img, img_save_name)
+    save_CRISM_data(img, img_save_name)
 
     # Save wavelengths used.
-    combined_ws = np.concatenate((s_ws, l_ws))
     save_CRISM_wavelengths(combined_ws)
+
+    return img
 
 
 def get_images(img_dir, d_img_name, s_img_name, l_img_name):
@@ -129,19 +150,16 @@ def get_images(img_dir, d_img_name, s_img_name, l_img_name):
     """
     # Replace all NULLs with zeros
     ddr_img = envi.open(file=img_dir + d_img_name + '.hdr')
-    ddr_img = remove_nulls(ddr_img)
+    # ddr_img = remove_nulls(ddr_img)
+    ddr_img = ddr_img[:, :, :]
 
     s_img = envi.open(file=img_dir + s_img_name + '.hdr')
-    s_img = remove_nulls(s_img)
+    # s_img = remove_nulls(s_img)
+    s_img = s_img[:, :, :]
 
     l_img = envi.open(file=img_dir + l_img_name + '.hdr')
-    l_img = remove_nulls(l_img)
-
-    # Crop parts of image filled with NULLs (zeros)
-    row_min, row_max, col_min, col_max = get_new_borders(s_img)
-    s_img = reduce_image(s_img, row_min, row_max, col_min, col_max)
-    l_img = reduce_image(l_img, row_min, row_max, col_min, col_max)
-    ddr_img = reduce_image(ddr_img, row_min, row_max, col_min, col_max)
+    # l_img = remove_nulls(l_img)
+    l_img = l_img[:, :, :]
 
     return ddr_img, s_img, l_img
 
